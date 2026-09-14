@@ -1,12 +1,15 @@
 import 'dotenv/config'
 import express from 'express'
 import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { OAuth2Client } from 'google-auth-library'
 import { parse, serialize } from 'cookie'
 import { createSession, deleteSession, getUserBySession, pruneSessions, upsertGoogleUser } from './db.js'
 
 const app = express()
-const port = Number(process.env.AUTH_PORT || 8787)
+const port = Number(process.env.PORT || process.env.AUTH_PORT || 8787)
 const isProduction = process.env.NODE_ENV === 'production'
 const sessionCookie = 'penny_session'
 const oauthStateCookie = 'penny_oauth_state'
@@ -15,6 +18,8 @@ const clientId = process.env.GOOGLE_CLIENT_ID
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET
 const redirectUri = process.env.GOOGLE_REDIRECT_URI || `http://localhost:${port}/auth/google/callback`
 const client = clientId && clientSecret ? new OAuth2Client(clientId, clientSecret, redirectUri) : null
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const distPath = path.join(projectRoot, 'dist')
 
 app.use(express.json({ limit: '32kb' }))
 
@@ -119,6 +124,16 @@ app.post('/auth/logout', (req, res) => {
 })
 
 app.get('/health', (_req, res) => res.json({ ok: true }))
+
+if (fs.existsSync(path.join(distPath, 'index.html'))) {
+  app.use(express.static(distPath))
+  app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/auth') && req.path !== '/health') {
+      return res.sendFile(path.join(distPath, 'index.html'))
+    }
+    next()
+  })
+}
 
 setInterval(pruneSessions, 60 * 60 * 1000).unref()
 app.listen(port, () => console.log(`Auth server listening on http://localhost:${port}`))
