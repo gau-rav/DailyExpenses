@@ -1,11 +1,10 @@
-const REMOTE_API_URL = import.meta.env.VITE_EXPENSES_API_URL || ''
-export const DATA_MODE = import.meta.env.VITE_DATA_MODE || 'local'
-const API_URL = DATA_MODE === 'sheets' && import.meta.env.DEV ? '/api/expenses' : REMOTE_API_URL
+export const DATA_MODE = import.meta.env.VITE_DATA_MODE || 'mongo'
+const API_URL = DATA_MODE === 'mongo' ? '/api/expenses' : ''
 const CACHE_KEY = 'penny-expenses'
 const QUEUE_KEY = 'penny-expense-sync-queue'
 let lastExpensesSource = 'unknown'
 
-export const isApiConfigured = DATA_MODE === 'sheets' && Boolean(API_URL)
+export const isApiConfigured = DATA_MODE === 'mongo'
 
 export function getLastExpensesSource() {
   return lastExpensesSource
@@ -28,7 +27,7 @@ function writeQueue(queue) {
 }
 
 async function request(payload) {
-  if (!isApiConfigured) throw new Error('Google Sheets mode is not configured')
+  if (!isApiConfigured) throw new Error('MongoDB mode is not configured')
   const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
   const data = await response.json()
   if (!data.ok) throw new Error(data.error || 'Google Sheets request failed')
@@ -67,7 +66,7 @@ export async function fetchExpenses() {
   }
   try {
     const data = await (await fetch(API_URL)).json()
-    if (!data.ok) throw new Error(data.error || 'Unable to read Google Sheet')
+    if (!data.ok) throw new Error(data.error || 'Unable to read MongoDB expenses')
     const expenses = data.expenses.map(normalizeExpense).filter(expense => !expense.deletedAt)
     writeExpenseCache(expenses)
     lastExpensesSource = 'remote'

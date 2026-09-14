@@ -1,4 +1,9 @@
-import 'dotenv/config'
+import dotenv from 'dotenv'
+
+dotenv.config({
+  path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local',
+})
+dotenv.config()
 import express from 'express'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
@@ -6,7 +11,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { OAuth2Client } from 'google-auth-library'
 import { parse, serialize } from 'cookie'
-import { createSession, deleteSession, getUserBySession, pruneSessions, upsertGoogleUser } from './db.js'
+import { connectDatabase, createExpense, createSession, deleteExpense, deleteSession, getUserBySession, listExpenses, pruneSessions, purgeExpense, restoreExpense, updateExpense, upsertGoogleUser } from './db.js'
 
 const app = express()
 const port = Number(process.env.PORT || process.env.AUTH_PORT || 8787)
@@ -16,7 +21,7 @@ const oauthStateCookie = 'penny_oauth_state'
 const oauthVerifierCookie = 'penny_oauth_verifier'
 const clientId = process.env.GOOGLE_CLIENT_ID
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET
-const redirectUri = process.env.GOOGLE_REDIRECT_URI || `http://localhost:${port}/auth/google/callback`
+const redirectUri = process.env.GOOGLE_REDIRECT_URI || `http://localhost:${port}/api/auth/google/callback`
 const client = clientId && clientSecret ? new OAuth2Client(clientId, clientSecret, redirectUri) : null
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const distPath = path.join(projectRoot, 'dist')
@@ -53,7 +58,7 @@ function requireConfig(res) {
   return true
 }
 
-app.get('/auth/google', async (req, res) => {
+app.get(['/auth/google', '/api/auth/google'], async (req, res) => {
   if (!requireConfig(res)) return
 
   const state = crypto.randomBytes(24).toString('base64url')
@@ -75,7 +80,7 @@ app.get('/auth/google', async (req, res) => {
   res.redirect(url)
 })
 
-app.get('/auth/google/callback', async (req, res) => {
+app.get(['/auth/google/callback', '/api/auth/google/callback'], async (req, res) => {
   try {
     if (!requireConfig(res)) return
     const { code, state, error } = req.query
@@ -95,14 +100,14 @@ app.get('/auth/google/callback', async (req, res) => {
     const payload = ticket.getPayload()
     if (!payload?.sub || !payload.email || !payload.email_verified) throw new Error('Google account email is not verified')
 
-    const user = upsertGoogleUser({
+    const user = await upsertGoogleUser({
       sub: payload.sub,
       email: payload.email,
       name: payload.name || payload.email,
       picture: payload.picture || '',
       emailVerified: Boolean(payload.email_verified),
     })
-    const session = createSession(user.id)
+    const session = await createSession(user.id)
     setCookie(res, sessionCookie, session.rawToken, { maxAge: 60 * 60 * 24 * 7 })
     res.redirect(process.env.APP_URL || 'http://localhost:5173')
   } catch (error) {
@@ -111,19 +116,50 @@ app.get('/auth/google/callback', async (req, res) => {
   }
 })
 
-app.get('/auth/me', (req, res) => {
-  const user = getUserBySession(getCookie(req, sessionCookie))
+app.get(['/auth/me', '/api/auth/me'], async (req, res) => {
+  const user = await getUserBySession(getCookie(req, sessionCookie))
   if (!user) return res.status(401).json({ authenticated: false })
   res.json({ authenticated: true, user: publicUser(user) })
 })
 
-app.post('/auth/logout', (req, res) => {
-  deleteSession(getCookie(req, sessionCookie))
+app.post(['/auth/logout', '/api/auth/logout'], async (req, res) => {
+  await deleteSession(getCookie(req, sessionCookie))
   clearCookie(res, sessionCookie)
   res.json({ ok: true })
 })
 
 app.get('/health', (_req, res) => res.json({ ok: true }))
+
+app.get('/api/expenses', async (req, res) => {
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+    const deleted = req.query.includeDeleted === 'true'
+    res.json({ ok: true, expenses: await listExpenses(user.id, false), deleted: deleted ? await listExpenses(user.id, true) : [] })
+  } catch (error) {
+    console.error('Expense read failed', error)
+    res.status(500).json({ ok: false, error: 'Unable to read expenses' })
+  }
+})
+
+app.post('/api/expenses', async (req, res) => {
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+    const { action, expense, id } = req.body || {}
+    let result
+    if (action === 'add') result = await createExpense(user.id, expense)
+    else if (action === 'update') result = await updateExpense(user.id, expense)
+    else if (action === 'delete') result = await deleteExpense(user.id, id)
+    else if (action === 'restore') result = await restoreExpense(user.id, id)
+    else if (action === 'purge') result = await purgeExpense(user.id, id)
+    else throw new Error('Unsupported action')
+    res.json({ ok: true, result })
+  } catch (error) {
+    console.error('Expense write failed', error)
+    res.status(400).json({ ok: false, error: error.message || 'Unable to save expense' })
+  }
+})
 
 if (fs.existsSync(path.join(distPath, 'index.html'))) {
   app.use(express.static(distPath))
@@ -135,8 +171,18 @@ if (fs.existsSync(path.join(distPath, 'index.html'))) {
   })
 }
 
-setInterval(pruneSessions, 60 * 60 * 1000).unref()
-app.listen(port, () => console.log(`Auth server listening on http://localhost:${port}`))
+setInterval(() => pruneSessions().catch(error => console.error('Session cleanup failed', error)), 60 * 60 * 1000).unref()
+
+export { app }
+
+if (process.env.NETLIFY !== 'true') {
+  connectDatabase()
+    .then(() => app.listen(port, () => console.log(`Auth server listening on http://localhost:${port}`)))
+    .catch(error => {
+      console.error('MongoDB connection failed', error)
+      process.exitCode = 1
+    })
+}
 
 function publicUser(user) {
   return { id: user.id, email: user.email, name: user.name, picture: user.picture || '' }

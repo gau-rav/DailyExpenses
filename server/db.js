@@ -1,51 +1,59 @@
-import Database from 'better-sqlite3'
 import crypto from 'node:crypto'
-import fs from 'node:fs'
-import path from 'node:path'
+import dotenv from 'dotenv'
+import { MongoClient } from 'mongodb'
 
-const dbPath = process.env.AUTH_DB_PATH || 'data/penny-auth.sqlite'
-fs.mkdirSync(path.dirname(path.resolve(dbPath)), { recursive: true })
-const db = new Database(dbPath)
-db.pragma('journal_mode = WAL')
-db.pragma('foreign_keys = ON')
+dotenv.config({
+  path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local',
+})
+dotenv.config()
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    google_sub TEXT NOT NULL UNIQUE,
-    email TEXT NOT NULL UNIQUE,
-    name TEXT NOT NULL,
-    picture TEXT,
-    email_verified INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-  );
+const mongoUri = process.env.MONGODB_URI
+const databaseName = process.env.MONGODB_DB_NAME || 'penny_expenses'
 
-  CREATE TABLE IF NOT EXISTS sessions (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token_hash TEXT NOT NULL UNIQUE,
-    expires_at TEXT NOT NULL,
-    created_at TEXT NOT NULL
-  );
+let client
+let database
 
-  CREATE INDEX IF NOT EXISTS sessions_token_hash_idx ON sessions(token_hash);
-  CREATE INDEX IF NOT EXISTS sessions_expires_at_idx ON sessions(expires_at);
-`)
+export async function connectDatabase() {
+  if (!mongoUri) throw new Error('MONGODB_URI is not configured')
 
-const findUser = db.prepare('SELECT * FROM users WHERE google_sub = ?')
-const insertUser = db.prepare(`INSERT INTO users
-  (id, google_sub, email, name, picture, email_verified, created_at, updated_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
-const updateUser = db.prepare(`UPDATE users SET email = ?, name = ?, picture = ?,
-  email_verified = ?, updated_at = ? WHERE id = ?`)
+  client = new MongoClient(mongoUri, { serverSelectionTimeoutMS: 10000 })
+  await client.connect()
+  database = client.db(databaseName)
 
-export function upsertGoogleUser(profile) {
-  const now = new Date().toISOString()
-  const existing = findUser.get(profile.sub)
+  await database.collection('users').createIndex({ google_sub: 1 }, { unique: true })
+  await database.collection('users').createIndex({ email: 1 }, { unique: true })
+  await database.collection('sessions').createIndex({ token_hash: 1 }, { unique: true })
+  await database.collection('sessions').createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 })
+  await database.collection('expenses').createIndex({ user_id: 1, id: 1 }, { unique: true })
+  await database.collection('expenses').createIndex({ user_id: 1, deletedAt: 1 })
+
+  console.log(`Connected to MongoDB database: ${databaseName}`)
+}
+
+function users() {
+  if (!database) throw new Error('MongoDB is not connected')
+  return database.collection('users')
+}
+
+function sessions() {
+  if (!database) throw new Error('MongoDB is not connected')
+  return database.collection('sessions')
+}
+
+export async function upsertGoogleUser(profile) {
+  const now = new Date()
+  const existing = await users().findOne({ google_sub: profile.sub })
+
   if (existing) {
-    updateUser.run(profile.email, profile.name, profile.picture || '', profile.emailVerified ? 1 : 0, now, existing.id)
-    return { ...existing, email: profile.email, name: profile.name, picture: profile.picture || '', email_verified: profile.emailVerified ? 1 : 0 }
+    const updated = {
+      email: profile.email,
+      name: profile.name,
+      picture: profile.picture || '',
+      email_verified: Boolean(profile.emailVerified),
+      updated_at: now,
+    }
+    await users().updateOne({ _id: existing._id }, { $set: updated })
+    return { ...existing, ...updated }
   }
 
   const user = {
@@ -54,36 +62,140 @@ export function upsertGoogleUser(profile) {
     email: profile.email,
     name: profile.name,
     picture: profile.picture || '',
-    email_verified: profile.emailVerified ? 1 : 0,
+    email_verified: Boolean(profile.emailVerified),
     created_at: now,
     updated_at: now,
   }
-  insertUser.run(user.id, user.google_sub, user.email, user.name, user.picture, user.email_verified, user.created_at, user.updated_at)
+
+  await users().insertOne(user)
   return user
 }
 
-export function createSession(userId, ttlSeconds = 60 * 60 * 24 * 7) {
+export async function createSession(userId, ttlSeconds = 60 * 60 * 24 * 7) {
   const rawToken = crypto.randomBytes(32).toString('base64url')
   const now = new Date()
-  const expires = new Date(now.getTime() + ttlSeconds * 1000).toISOString()
-  db.prepare('INSERT INTO sessions (id, user_id, token_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?)')
-    .run(crypto.randomUUID(), userId, hashToken(rawToken), expires, now.toISOString())
+  const expires = new Date(now.getTime() + ttlSeconds * 1000)
+
+  await sessions().insertOne({
+    id: crypto.randomUUID(),
+    user_id: userId,
+    token_hash: hashToken(rawToken),
+    expires_at: expires,
+    created_at: now,
+  })
+
   return { rawToken, expires }
 }
 
-export function getUserBySession(rawToken) {
+export async function getUserBySession(rawToken) {
   if (!rawToken) return null
-  const row = db.prepare(`SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id
-    WHERE s.token_hash = ? AND s.expires_at > ?`).get(hashToken(rawToken), new Date().toISOString())
-  return row || null
+
+  const session = await sessions().findOne({
+    token_hash: hashToken(rawToken),
+    expires_at: { $gt: new Date() },
+  })
+
+  if (!session) return null
+  return users().findOne({ id: session.user_id })
 }
 
-export function deleteSession(rawToken) {
-  if (rawToken) db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(hashToken(rawToken))
+export async function deleteSession(rawToken) {
+  if (rawToken) await sessions().deleteOne({ token_hash: hashToken(rawToken) })
 }
 
-export function pruneSessions() {
-  db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(new Date().toISOString())
+export async function pruneSessions() {
+  await sessions().deleteMany({ expires_at: { $lte: new Date() } })
+}
+
+function expenses() {
+  if (!database) throw new Error('MongoDB is not connected')
+  return database.collection('expenses')
+}
+
+export async function listExpenses(userId, deleted = false) {
+  const rows = await expenses().find({ user_id: userId, deletedAt: deleted ? { $ne: '' } : '' }).sort({ date: -1, createdAt: -1 }).toArray()
+  return rows.map(publicExpense)
+}
+
+export async function createExpense(userId, input) {
+  const expense = normalizeExpense({
+    ...input,
+    id: input.id || crypto.randomUUID(),
+    user_id: userId,
+    createdAt: input.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    deletedAt: '',
+  })
+  await expenses().insertOne(expense)
+  return publicExpense(expense)
+}
+
+export async function updateExpense(userId, input) {
+  if (!input?.id) throw new Error('Expense id is required')
+  const updated = normalizeExpense({ ...input, user_id: userId, updatedAt: new Date().toISOString() })
+  const result = await expenses().findOneAndUpdate({ user_id: userId, id: input.id }, { $set: updated }, { returnDocument: 'after' })
+  if (!result) throw new Error('Expense not found')
+  return publicExpense(result)
+}
+
+export async function deleteExpense(userId, id) {
+  const now = new Date().toISOString()
+  const result = await expenses().findOneAndUpdate({ user_id: userId, id }, { $set: { deletedAt: now, updatedAt: now } }, { returnDocument: 'after' })
+  if (!result) throw new Error('Expense not found')
+  return publicExpense(result)
+}
+
+export async function restoreExpense(userId, id) {
+  const result = await expenses().findOneAndUpdate({ user_id: userId, id }, { $set: { deletedAt: '', updatedAt: new Date().toISOString() } }, { returnDocument: 'after' })
+  if (!result) throw new Error('Expense not found')
+  return publicExpense(result)
+}
+
+export async function purgeExpense(userId, id) {
+  const result = await expenses().deleteOne({ user_id: userId, id })
+  if (!result.deletedCount) throw new Error('Expense not found')
+  return { id, deleted: true, permanent: true }
+}
+
+function normalizeExpense(expense) {
+  return {
+    id: String(expense.id || ''),
+    user_id: String(expense.user_id || ''),
+    title: String(expense.title || '').trim(),
+    amount: Number(expense.amount || 0),
+    category: String(expense.category || ''),
+    payment: String(expense.payment || ''),
+    date: dateOnly(expense.date),
+    dueDate: dateOnly(expense.dueDate),
+    notes: String(expense.notes || ''),
+    recurring: expense.recurring === true || String(expense.recurring).toLowerCase() === 'true',
+    status: String(expense.status || 'Pending'),
+    createdAt: timestamp(expense.createdAt),
+    updatedAt: timestamp(expense.updatedAt),
+    deletedAt: timestamp(expense.deletedAt),
+  }
+}
+
+function publicExpense(expense) {
+  const { _id, user_id, ...publicValue } = expense
+  return publicValue
+}
+
+function dateOnly(value) {
+  if (!value) return ''
+  if (value instanceof Date) return value.toISOString().slice(0, 10)
+  const text = String(value)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text
+  const match = text.match(/^(\d{4}-\d{2}-\d{2})T/)
+  return match ? match[1] : ''
+}
+
+function timestamp(value) {
+  if (!value) return ''
+  if (value instanceof Date) return value.toISOString()
+  const text = String(value)
+  const parsed = new Date(text)
+  return isNaN(parsed.getTime()) ? text : parsed.toISOString()
 }
 
 function hashToken(token) {
