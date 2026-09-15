@@ -1,4 +1,17 @@
-# Google authentication setup
+# Authentication setup
+
+> Temporary mode: Google OAuth is disabled in the application. Use the dummy email/password login below until real email credentials are implemented.
+
+## Temporary local login
+
+Set these server-side environment variables (or use the defaults):
+
+```env
+AUTH_DUMMY_EMAIL=shikha99135@gmail.com
+AUTH_DUMMY_PASSWORD=penny123
+```
+
+Open the app and sign in with `shikha99135@gmail.com` and `penny123`. A MongoDB-backed user and HTTP-only session are created automatically. The Google OAuth instructions below are retained only for the later re-enable step.
 
 This project uses a Node/Express backend for Google OAuth. Google tokens are handled only on the server. The browser receives an HTTP-only session cookie; access and refresh tokens are never stored in localStorage.
 

@@ -20,7 +20,10 @@ export async function connectDatabase() {
   await client.connect()
   database = client.db(databaseName)
 
-  await database.collection('users').createIndex({ google_sub: 1 }, { unique: true })
+  // Google OAuth is temporarily disabled. Keep this partial index so password-only
+  // users can coexist with any legacy Google users already in the database.
+  await database.collection('users').dropIndex('google_sub_1').catch(() => {})
+  await database.collection('users').createIndex({ google_sub: 1 }, { unique: true, partialFilterExpression: { google_sub: { $type: 'string' } } })
   await database.collection('users').createIndex({ email: 1 }, { unique: true })
   await database.collection('sessions').createIndex({ token_hash: 1 }, { unique: true })
   await database.collection('sessions').createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 })
@@ -40,6 +43,7 @@ function sessions() {
   return database.collection('sessions')
 }
 
+/* Temporarily disabled: Google OAuth will be re-enabled after email auth is ready.
 export async function upsertGoogleUser(profile) {
   const now = new Date()
   const existing = await users().findOne({ google_sub: profile.sub })
@@ -63,6 +67,32 @@ export async function upsertGoogleUser(profile) {
     name: profile.name,
     picture: profile.picture || '',
     email_verified: Boolean(profile.emailVerified),
+    created_at: now,
+    updated_at: now,
+  }
+
+  await users().insertOne(user)
+  return user
+}
+*/
+
+export async function upsertPasswordUser(email, name = 'Shikha') {
+  const now = new Date()
+  const existing = await users().findOne({ email })
+
+  if (existing) {
+    const updated = { name, auth_provider: 'password', updated_at: now }
+    await users().updateOne({ _id: existing._id }, { $set: updated })
+    return { ...existing, ...updated }
+  }
+
+  const user = {
+    id: crypto.randomUUID(),
+    email,
+    name,
+    picture: '',
+    auth_provider: 'password',
+    email_verified: false,
     created_at: now,
     updated_at: now,
   }
@@ -118,6 +148,10 @@ export async function listExpenses(userId, deleted = false) {
 }
 
 export async function createExpense(userId, input) {
+  if (!input || typeof input !== 'object') throw new Error('Expense data is required')
+  if (!String(input.title || '').trim()) throw new Error('Expense title is required')
+  if (!Number.isFinite(Number(input.amount)) || Number(input.amount) <= 0) throw new Error('Expense amount must be greater than zero')
+  if (!input.date || !input.dueDate) throw new Error('Expense date and due date are required')
   const expense = normalizeExpense({
     ...input,
     id: input.id || crypto.randomUUID(),
@@ -132,6 +166,9 @@ export async function createExpense(userId, input) {
 
 export async function updateExpense(userId, input) {
   if (!input?.id) throw new Error('Expense id is required')
+  if (!String(input.title || '').trim()) throw new Error('Expense title is required')
+  if (!Number.isFinite(Number(input.amount)) || Number(input.amount) <= 0) throw new Error('Expense amount must be greater than zero')
+  if (!input.date || !input.dueDate) throw new Error('Expense date and due date are required')
   const updated = normalizeExpense({ ...input, user_id: userId, updatedAt: new Date().toISOString() })
   const result = await expenses().findOneAndUpdate({ user_id: userId, id: input.id }, { $set: updated }, { returnDocument: 'after' })
   if (!result) throw new Error('Expense not found')

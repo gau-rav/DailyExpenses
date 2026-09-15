@@ -28,9 +28,14 @@ function writeQueue(queue) {
 
 async function request(payload) {
   if (!isApiConfigured) throw new Error('MongoDB mode is not configured')
-  const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
-  const data = await response.json()
-  if (!data.ok) throw new Error(data.error || 'Google Sheets request failed')
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok || !data.ok) throw new Error(data.error || `MongoDB request failed (${response.status})`)
   return data.result
 }
 
@@ -65,8 +70,9 @@ export async function fetchExpenses() {
     return readExpenseCache()
   }
   try {
-    const data = await (await fetch(API_URL)).json()
-    if (!data.ok) throw new Error(data.error || 'Unable to read MongoDB expenses')
+    const response = await fetch(API_URL, { credentials: 'include' })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok || !data.ok) throw new Error(data.error || `Unable to read MongoDB expenses (${response.status})`)
     const expenses = data.expenses.map(normalizeExpense).filter(expense => !expense.deletedAt)
     writeExpenseCache(expenses)
     lastExpensesSource = 'remote'
@@ -81,8 +87,9 @@ export async function fetchExpenses() {
 export async function fetchDeletedExpenses() {
   if (!isApiConfigured) return []
   try {
-    const data = await (await fetch(`${API_URL}?includeDeleted=true`)).json()
-    if (!data.ok) throw new Error(data.error || 'Unable to read deleted expenses')
+    const response = await fetch(`${API_URL}?includeDeleted=true`, { credentials: 'include' })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok || !data.ok) throw new Error(data.error || `Unable to read deleted expenses (${response.status})`)
     return (data.deleted || data.expenses || []).map(normalizeExpense).filter(expense => expense.deletedAt)
   } catch (error) {
     console.warn('Using cached deleted expenses:', error)
