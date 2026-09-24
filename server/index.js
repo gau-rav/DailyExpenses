@@ -8,7 +8,6 @@ import express from 'express'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { parse, serialize } from 'cookie'
 import { connectDatabase, createExpense, createSession, deleteExpense, deleteSession, getUserBySession, listExpenses, pruneSessions, purgeExpense, restoreExpense, updateExpense, upsertPasswordUser } from './db.js'
 
@@ -18,8 +17,7 @@ const isProduction = process.env.NODE_ENV === 'production'
 const sessionCookie = 'penny_session'
 const dummyEmail = (process.env.AUTH_DUMMY_EMAIL || 'shikha99135@gmail.com').trim().toLowerCase()
 const dummyPassword = process.env.AUTH_DUMMY_PASSWORD || 'penny123'
-const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const distPath = path.join(projectRoot, 'dist')
+const distPath = path.join(process.cwd(), 'dist')
 
 // Accept JSON from the React client, including older cached builds that sent
 // the payload as text/plain during the Google Sheets integration.
