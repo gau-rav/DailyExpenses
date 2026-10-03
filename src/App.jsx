@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { addExpense, DATA_MODE, deleteExpense as deleteRemoteExpense, fetchDeletedExpenses, fetchExpenses, getLastExpensesSource, isApiConfigured, purgeExpense, readExpenseCache, restoreExpense as restoreRemoteExpense, syncQueuedActions, updateExpense, writeExpenseCache } from './api/expensesApi'
 
@@ -25,6 +25,17 @@ const formatDate = (value) => new Date(`${value}T12:00:00`).toLocaleDateString('
 function App() {
   const [authUser, setAuthUser] = useState(undefined)
   const [profileOpen, setProfileOpen] = useState(false)
+  useEffect(() => {
+    if (!profileOpen) return undefined
+
+    const closeOnOutsidePointerDown = (event) => {
+      const profileMenu = document.querySelector('.profile-menu')
+      if (!profileMenu?.contains(event.target)) setProfileOpen(false)
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsidePointerDown)
+    return () => document.removeEventListener('pointerdown', closeOnOutsidePointerDown)
+  }, [profileOpen])
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
       .then(response => response.ok ? response.json() : null)
@@ -123,12 +134,107 @@ function Category({ value }) { return <span className="category"><i style={{ bac
 function Metric({ label, value, note, tone, icon }) { return <div className={`metric metric-${tone}`}><div className="metric-icon">{icon}</div><div><span>{label}</span><strong>{value}</strong><small>{note}</small></div></div> }
 function ExpenseRow({ expense, compact, onEdit, onDelete }) { return <div className={`expense-row ${compact ? 'compact' : ''}`}><div className="expense-main"><div className="expense-icon" style={{ background: `${categoryMeta[expense.category]?.[0]}1c`, color: categoryMeta[expense.category]?.[0] }}>{categoryMeta[expense.category]?.[1]}</div><div><strong>{expense.title}</strong><span><Category value={expense.category} /> <b>·</b> {formatDate(expense.dueDate)}</span></div></div><div className="expense-side"><strong>{money(expense.amount)}</strong>{!compact && <Status value={expense.status} />}<button className="row-more" onClick={() => onEdit(expense)}>•••</button></div></div> }
 function Empty({ text }) { return <div className="empty"><span>✦</span><p>{text}</p></div> }
-function Dashboard({ dueToday, overdue, upcoming, todaySpend, monthSpend, budgets, money, onPage, onAdd, onEdit, onDelete }) { return <><PageTitle eyebrow="Sunday, September 13, 2026" title={`${indiaGreeting()}, Shikha`} subtitle="Here’s your money at a glance." action={<button className="primary-btn" onClick={onAdd}>＋ Add expense</button>} /><div className="metric-grid"><Metric label="Today's spending" value={money(todaySpend)} note={`${todaySpend ? 'On track' : 'No spending yet'} · ${money(budgets.daily - todaySpend)} left`} tone="blue" icon="◷" /><Metric label="This month's spending" value={money(monthSpend)} note={`${Math.round(monthSpend / budgets.monthly * 100)}% of monthly budget`} tone="violet" icon="▣" /><Metric label="Upcoming expenses" value={upcoming.length} note={`${money(upcoming.reduce((a, e) => a + e.amount, 0))} in the next 7 days`} tone="mint" icon="↗" /><Metric label="Overdue" value={overdue.length} note={overdue.length ? `${money(overdue.reduce((a, e) => a + e.amount, 0))} needs attention` : 'You’re all caught up'} tone="orange" icon="!" /></div><div className="dashboard-grid"><section className="card due-card"><div className="section-head"><div><h2>Due today <span className="pill-yellow">{dueToday.length}</span></h2><p>Expenses that need your attention</p></div><button className="text-btn" onClick={() => onPage('due')}>View all <span>→</span></button></div>{dueToday.length ? dueToday.map(e => <ExpenseRow key={e.id} expense={e} onEdit={onEdit} onDelete={onDelete} />) : <Empty text="Nothing due today. Nice work!" />}</section><section className="card budget-card"><div className="section-head"><div><h2>Budget overview</h2><p>September 2026</p></div><button className="dots">•••</button></div><div className="budget-figure"><div className="ring" style={{ '--progress': `${Math.min(monthSpend / budgets.monthly * 100, 100)}%` }}><div><strong>{Math.round(monthSpend / budgets.monthly * 100)}%</strong><small>used</small></div></div><div><strong className="big-number">{money(budgets.monthly - monthSpend)}</strong><span>remaining this month</span></div></div><div className="budget-line"><span>Monthly budget</span><strong>{money(budgets.monthly)}</strong></div><div className="progress"><i style={{ width: `${Math.min(monthSpend / budgets.monthly * 100, 100)}%` }}></i></div><button className="outline-btn full" onClick={() => onPage('budgets')}>Manage budgets</button></section><section className="card upcoming-card"><div className="section-head"><div><h2>Coming up</h2><p>Next 7 days</p></div><button className="text-btn" onClick={() => onPage('calendar')}>Calendar <span>→</span></button></div>{upcoming.length ? upcoming.map(e => <ExpenseRow key={e.id} expense={e} compact onEdit={onEdit} onDelete={onDelete} />) : <Empty text="No upcoming expenses." />}</section><section className="card chart-card"><div className="section-head"><div><h2>Spending by category</h2><p>This month</p></div><button className="dots">•••</button></div><CategoryChart expenses={[...upcoming, ...dueToday]} money={money} /><button className="outline-btn full" onClick={() => onPage('budgets')}>View full report</button></section></div></> }
+function MoreMenu({ label, items }) {
+  const [open, setOpen] = useState(false)
+  const menuRef = useRef(null)
+  const buttonRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    const closeOnOutsidePointerDown = (event) => {
+      if (!menuRef.current?.contains(event.target)) setOpen(false)
+    }
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setOpen(false)
+        buttonRef.current?.focus()
+      }
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsidePointerDown)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointerDown)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [open])
+
+  return <div className="dots-menu" ref={menuRef}>
+    <button ref={buttonRef} type="button" className="dots" aria-label={`${label} actions`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(value => !value)}>•••</button>
+    {open && <div className="dots-menu-popover" role="menu">{items.map(item => <button key={item.label} type="button" role="menuitem" onClick={() => { setOpen(false); item.onSelect() }}>{item.label}</button>)}</div>}
+  </div>
+}
+
+function Dashboard({ dueToday, overdue, upcoming, todaySpend, monthSpend, budgets, money, onPage, onAdd, onEdit, onDelete }) {
+  const budgetMenu = [
+    { label: 'Manage budgets', onSelect: () => onPage('budgets') },
+    { label: 'View expenses', onSelect: () => onPage('expenses') },
+  ]
+  const categoryMenu = [
+    { label: 'View full report', onSelect: () => onPage('budgets') },
+    { label: 'Browse expenses', onSelect: () => onPage('expenses') },
+  ]
+
+  return <>
+    <PageTitle eyebrow="Sunday, September 13, 2026" title={`${indiaGreeting()}, Shikha`} subtitle="Here’s your money at a glance." action={<button className="primary-btn" onClick={onAdd}>＋ Add expense</button>} />
+    <div className="metric-grid">
+      <Metric label="Today's spending" value={money(todaySpend)} note={`${todaySpend ? 'On track' : 'No spending yet'} · ${money(budgets.daily - todaySpend)} left`} tone="blue" icon="◷" />
+      <Metric label="This month's spending" value={money(monthSpend)} note={`${Math.round(monthSpend / budgets.monthly * 100)}% of monthly budget`} tone="violet" icon="▣" />
+      <Metric label="Upcoming expenses" value={upcoming.length} note={`${money(upcoming.reduce((a, e) => a + e.amount, 0))} in the next 7 days`} tone="mint" icon="↗" />
+      <Metric label="Overdue" value={overdue.length} note={overdue.length ? `${money(overdue.reduce((a, e) => a + e.amount, 0))} needs attention` : 'You’re all caught up'} tone="orange" icon="!" />
+    </div>
+    <div className="dashboard-grid">
+      <section className="card due-card">
+        <div className="section-head"><div><h2>Due today <span className="pill-yellow">{dueToday.length}</span></h2><p>Expenses that need your attention</p></div><button className="text-btn" onClick={() => onPage('due')}>View all <span>→</span></button></div>
+        {dueToday.length ? dueToday.map(e => <ExpenseRow key={e.id} expense={e} onEdit={onEdit} onDelete={onDelete} />) : <Empty text="Nothing due today. Nice work!" />}
+      </section>
+      <section className="card budget-card">
+        <div className="section-head"><div><h2>Budget overview</h2><p>September 2026</p></div><MoreMenu label="Budget overview" items={budgetMenu} /></div>
+        <div className="budget-figure"><div className="ring" style={{ '--progress': `${Math.min(monthSpend / budgets.monthly * 100, 100)}%` }}><div><strong>{Math.round(monthSpend / budgets.monthly * 100)}%</strong><small>used</small></div></div><div><strong className="big-number">{money(budgets.monthly - monthSpend)}</strong><span>remaining this month</span></div></div>
+        <div className="budget-line"><span>Monthly budget</span><strong>{money(budgets.monthly)}</strong></div>
+        <div className="progress"><i style={{ width: `${Math.min(monthSpend / budgets.monthly * 100, 100)}%` }}></i></div>
+        <button className="outline-btn full" onClick={() => onPage('budgets')}>Manage budgets</button>
+      </section>
+      <section className="card upcoming-card">
+        <div className="section-head"><div><h2>Coming up</h2><p>Next 7 days</p></div><button className="text-btn" onClick={() => onPage('calendar')}>Calendar <span>→</span></button></div>
+        {upcoming.length ? upcoming.map(e => <ExpenseRow key={e.id} expense={e} compact onEdit={onEdit} onDelete={onDelete} />) : <Empty text="No upcoming expenses." />}
+      </section>
+      <section className="card chart-card">
+        <div className="section-head"><div><h2>Spending by category</h2><p>This month</p></div><MoreMenu label="Spending by category" items={categoryMenu} /></div>
+        <CategoryChart expenses={[...upcoming, ...dueToday]} money={money} />
+        <button className="outline-btn full" onClick={() => onPage('budgets')}>View full report</button>
+      </section>
+    </div>
+  </>
+}
 function ExpensesPage({ expenses, query, setQuery, categoryFilter, setCategoryFilter, statusFilter, setStatusFilter, sort, setSort, selected, setSelected, onBulkDelete, onAdd, onEdit, onDelete, exportCsv }) { const allSelected = expenses.length > 0 && expenses.every(e => selected.includes(e.id)); return <><PageTitle eyebrow="Workspace / Expenses" title="All expenses" subtitle="Every transaction, all in one place." action={<button className="primary-btn" onClick={onAdd}>＋ Add expense</button>} /><section className="card table-card"><div className="toolbar"><div className="search"><span>⌕</span><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search expenses..." /></div><select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}><option>All categories</option>{categories.map(c => <option key={c}>{c}</option>)}</select><select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{['Paid', 'Due Today', 'Upcoming', 'Overdue', 'Pending'].map(s => <option key={s}>{s}</option>)}</select><select value={sort} onChange={e => setSort(e.target.value)}><option value="date">Newest first</option><option value="amount">Highest amount</option><option value="category">Category</option></select><button className="outline-btn export" onClick={exportCsv}>↥ Export</button></div>{selected.length > 0 && <div className="bulk-bar"><span>{selected.length} selected</span><button onClick={onBulkDelete}>Delete selected</button></div>}<div className="table-wrap"><table><thead><tr><th><input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? [] : expenses.map(e => e.id))} /></th><th>Expense</th><th>Category</th><th>Date</th><th>Payment</th><th>Status</th><th className="align-right">Amount</th><th></th></tr></thead><tbody>{expenses.map(e => <tr key={e.id}><td><input type="checkbox" checked={selected.includes(e.id)} onChange={() => setSelected(s => s.includes(e.id) ? s.filter(id => id !== e.id) : [...s, e.id])} /></td><td><div className="table-expense"><span className="expense-icon" style={{ background: `${categoryMeta[e.category]?.[0]}1c` }}>{categoryMeta[e.category]?.[1]}</span><strong>{e.title}</strong></div></td><td><Category value={e.category} /></td><td>{formatDate(e.date)}</td><td>{e.payment}</td><td><Status value={e.status} /></td><td className="align-right amount-cell">{money(e.amount)}</td><td><button className="table-action" onClick={() => onEdit(e)}>Edit</button><button className="table-delete" onClick={() => onDelete(e)}>×</button></td></tr>)}</tbody></table>{!expenses.length && <Empty text="No expenses match your filters." />}</div></section></> }
 function DuePage({ expenses, selected, setSelected, onBulkDelete, onEdit, onDelete }) { return <><PageTitle eyebrow="Workspace / Due today" title="Due today" subtitle="Stay ahead of every payment." action={expenses.length > 0 && <button className="danger-btn" onClick={onBulkDelete}>Delete selected</button>} /><div className="due-banner"><div className="calendar-small">13<span>SEP</span></div><div><strong>{expenses.length ? `${expenses.length} expenses need attention` : 'You’re all caught up'}</strong><p>{expenses.length ? 'Review them below and mark as paid when you’re done.' : 'No payments are due today.'}</p></div><strong className="due-total">{money(expenses.reduce((a, e) => a + e.amount, 0))}</strong></div><section className="card due-list"><div className="list-head"><label><input type="checkbox" checked={expenses.length > 0 && expenses.every(e => selected.includes(e.id))} onChange={() => setSelected(expenses.every(e => selected.includes(e.id)) ? [] : expenses.map(e => e.id))} /> Select all</label><span>{expenses.length} items</span></div>{expenses.map(e => <div className="due-item" key={e.id}><input type="checkbox" checked={selected.includes(e.id)} onChange={() => setSelected(s => s.includes(e.id) ? s.filter(id => id !== e.id) : [...s, e.id])} /><ExpenseRow expense={e} onEdit={onEdit} onDelete={onDelete} /></div>)}{!expenses.length && <Empty text="No expenses due today." />}</section></> }
 function CalendarPage({ month, setMonth, expenses, onAdd }) { const year = month.getFullYear(), m = month.getMonth(), first = new Date(year, m, 1).getDay(), days = new Date(year, m + 1, 0).getDate(), cells = Array.from({ length: first + days }, (_, i) => i < first ? null : i - first + 1); const monthKey = `${year}-${String(m + 1).padStart(2, '0')}`; return <><PageTitle eyebrow="Workspace / Calendar" title="Calendar" subtitle="See your spending and due dates at a glance." action={<button className="primary-btn" onClick={onAdd}>＋ Add expense</button>} /><section className="card calendar-card"><div className="calendar-header"><button className="circle-btn" onClick={() => setMonth(new Date(year, m - 1, 1))}>‹</button><h2>{month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2><button className="circle-btn" onClick={() => setMonth(new Date(year, m + 1, 1))}>›</button><button className="outline-btn today-btn" onClick={() => setMonth(new Date())}>Today</button></div><div className="weekdays">{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <span key={d}>{d}</span>)}</div><div className="calendar-grid">{cells.map((day, i) => { const date = day ? `${monthKey}-${String(day).padStart(2, '0')}` : ''; const items = expenses.filter(e => e.dueDate === date); return <div className={`calendar-day ${date === today ? 'is-today' : ''}`} key={i}>{day && <><span className="day-num">{day}</span>{items.slice(0, 2).map(e => <div className="cal-event" style={{ borderLeftColor: categoryMeta[e.category]?.[0] }} key={e.id}>{e.title} <b>{money(e.amount)}</b></div>)}{items.length > 2 && <small>+{items.length - 2} more</small>}</>}</div> })}</div></section></> }
 function CategoryChart({ expenses, money }) { const totals = categories.map(c => ({ name: c, value: expenses.filter(e => e.category === c).reduce((a, e) => a + e.amount, 0) })).filter(x => x.value).sort((a, b) => b.value - a.value).slice(0, 4); const max = Math.max(...totals.map(x => x.value), 1); return <div className="chart-list">{totals.length ? totals.map(x => <div className="bar-row" key={x.name}><span><i style={{ background: categoryMeta[x.name][0] }}></i>{x.name}</span><div className="bar"><i style={{ background: categoryMeta[x.name][0], width: `${x.value / max * 100}%` }}></i></div><strong>{money(x.value)}</strong></div>) : <Empty text="Add expenses to see your report." />}</div> }
-function BudgetsPage({ budgets, setBudgets, expenses, monthSpend, money, exportCsv }) { const [draft, setDraft] = useState(budgets); return <><PageTitle eyebrow="Workspace / Planning" title="Budgets & reports" subtitle="Give your money a plan." action={<button className="outline-btn export" onClick={exportCsv}>↥ Export CSV</button>} /><div className="budget-layout"><section className="card budget-settings"><div className="section-head"><div><h2>Spending limits</h2><p>Set a limit and stay in control.</p></div><span className="status status-paid"><i></i>On track</span></div>{['daily', 'weekly', 'monthly'].map(k => <label className="budget-input" key={k}><span><strong>{k[0].toUpperCase() + k.slice(1)} budget</strong><small>{k === 'daily' ? 'Resets every day' : k === 'weekly' ? 'Resets every Monday' : 'Resets on the 1st'}</small></span><div><span>₹</span><input type="number" value={draft[k]} onChange={e => setDraft({ ...draft, [k]: Number(e.target.value) })} /></div></label>)}<button className="primary-btn" onClick={() => setBudgets(draft)}>Save budget limits</button></section><section className="card report-card"><div className="section-head"><div><h2>Spending by category</h2><p>September 2026 · {money(monthSpend)} total</p></div><button className="dots">•••</button></div><CategoryChart expenses={expenses} money={money} /><div className="report-note"><span>✦</span><p>Your biggest category is <strong>{expenses[0]?.category || 'Food'}</strong>. Keep going — small choices add up.</p></div></section></div></> }
+function BudgetsPage({ budgets, setBudgets, expenses, monthSpend, money, exportCsv }) {
+  const [draft, setDraft] = useState(budgets)
+  const reportMenu = [
+    { label: 'Export expenses CSV', onSelect: exportCsv },
+    { label: 'Print this page', onSelect: () => window.print() },
+  ]
+
+  return <>
+    <PageTitle eyebrow="Workspace / Planning" title="Budgets & reports" subtitle="Give your money a plan." action={<button className="outline-btn export" onClick={exportCsv}>↥ Export CSV</button>} />
+    <div className="budget-layout">
+      <section className="card budget-settings">
+        <div className="section-head"><div><h2>Spending limits</h2><p>Set a limit and stay in control.</p></div><span className="status status-paid"><i></i>On track</span></div>
+        {['daily', 'weekly', 'monthly'].map(k => <label className="budget-input" key={k}><span><strong>{k[0].toUpperCase() + k.slice(1)} budget</strong><small>{k === 'daily' ? 'Resets every day' : k === 'weekly' ? 'Resets every Monday' : 'Resets on the 1st'}</small></span><div><span>₹</span><input type="number" value={draft[k]} onChange={e => setDraft({ ...draft, [k]: Number(e.target.value) })} /></div></label>)}
+        <button className="primary-btn" onClick={() => setBudgets(draft)}>Save budget limits</button>
+      </section>
+      <section className="card report-card">
+        <div className="section-head"><div><h2>Spending by category</h2><p>September 2026 · {money(monthSpend)} total</p></div><MoreMenu label="Spending by category" items={reportMenu} /></div>
+        <CategoryChart expenses={expenses} money={money} />
+        <div className="report-note"><span>✦</span><p>Your biggest category is <strong>{expenses[0]?.category || 'Food'}</strong>. Keep going — small choices add up.</p></div>
+      </section>
+    </div>
+  </>
+}
 function TrashPage({ deleted, setDeleted, setExpenses, notify, money, onRestore, onPurge }) { const restore = async e => { setExpenses(x => [e, ...x]); setDeleted(x => x.filter(i => i.id !== e.id)); await onRestore(e); notify('Expense restored') }; const clear = () => { if (confirm('Permanently delete all trashed expenses?')) onPurge(deleted) }; return <><PageTitle eyebrow="Workspace / Trash" title="Trash" subtitle="Restore something you deleted by mistake." action={deleted.length > 0 && <button className="outline-btn" onClick={clear}>Empty trash</button>} /><section className="card table-card trash-card">{deleted.length ? deleted.map(e => <div className="trash-row" key={e.id}><div><strong>{e.title}</strong><span>{formatDate(e.date)} · {money(e.amount)}</span></div><button className="outline-btn" onClick={() => restore(e)}>Restore</button></div>) : <Empty text="Trash is empty." />}</section></> }
 function SettingsPage({ notify }) { const [notifications, setNotifications] = useState(true); return <><PageTitle eyebrow="Workspace / Settings" title="Settings" subtitle="Make Penny feel like yours." /><section className="card settings-card"><div className="setting-row"><div><strong>Notifications</strong><p>Get reminders for upcoming and overdue expenses.</p></div><button className={`toggle ${notifications ? 'on' : ''}`} onClick={() => setNotifications(!notifications)}><i></i></button></div><div className="setting-row"><div><strong>Currency</strong><p>Used across all budgets and reports.</p></div><select defaultValue="INR"><option>INR — Indian Rupee</option><option>USD — US Dollar</option><option>EUR — Euro</option><option>GBP — Pound Sterling</option></select></div><div className="setting-row"><div><strong>Test reminder</strong><p>Preview how a Penny reminder looks.</p></div><button className="outline-btn" onClick={() => notify('Reminder: electricity bill is due today')}>Send test</button></div></section></> }
 function ExpenseModal({ expense, onClose, onSave }) { const [data, setData] = useState(expense || { title: '', amount: '', category: 'Food', payment: 'Card', date: today, dueDate: today, notes: '', recurring: false, status: 'Paid' }); const [errors, setErrors] = useState({}); const update = (k, v) => setData({ ...data, [k]: v }); const submit = e => { e.preventDefault(); const next = {}; if (!data.title.trim()) next.title = 'Enter a title'; if (!data.amount || Number(data.amount) <= 0) next.amount = 'Enter an amount greater than zero'; if (!data.dueDate) next.dueDate = 'Choose a due date'; if (Object.keys(next).length) return setErrors(next); onSave({ ...data, amount: Number(data.amount), status: data.status || 'Paid' }) }; return <div className="modal-backdrop"><form className="modal" onSubmit={submit}><div className="modal-head"><div><div className="eyebrow">{expense ? 'Update transaction' : 'New transaction'}</div><h2>{expense ? 'Edit expense' : 'Add expense'}</h2></div><button type="button" className="close" onClick={onClose}>×</button></div><div className="form-grid"><label className="full-field">Title<input autoFocus value={data.title} onChange={e => update('title', e.target.value)} placeholder="e.g. Weekly groceries" />{errors.title && <em>{errors.title}</em>}</label><label>Amount<div className="input-prefix"><span>₹</span><input type="number" step="0.01" value={data.amount} onChange={e => update('amount', e.target.value)} placeholder="0.00" /></div>{errors.amount && <em>{errors.amount}</em>}</label><label>Category<select value={data.category} onChange={e => update('category', e.target.value)}>{categories.map(c => <option key={c}>{c}</option>)}</select></label><label>Payment method<select value={data.payment} onChange={e => update('payment', e.target.value)}><option>Card</option><option>Cash</option><option>Bank transfer</option><option>UPI</option></select></label><label>Status<select value={data.status} onChange={e => update('status', e.target.value)}>{['Pending', 'Paid', 'Due Today', 'Upcoming', 'Overdue'].map(s => <option key={s}>{s}</option>)}</select></label><label>Date<input type="date" value={data.date} onChange={e => update('date', e.target.value)} /></label><label>Due date<input type="date" value={data.dueDate} onChange={e => update('dueDate', e.target.value)} />{errors.dueDate && <em>{errors.dueDate}</em>}</label><label className="full-field">Notes<textarea value={data.notes} onChange={e => update('notes', e.target.value)} placeholder="Add a note (optional)" /></label><label className="check-label full-field"><input type="checkbox" checked={data.recurring} onChange={e => update('recurring', e.target.checked)} /> This is a recurring expense</label></div><div className="modal-actions"><button type="button" className="outline-btn" onClick={onClose}>Cancel</button><button className="primary-btn">{expense ? 'Save changes' : 'Add expense'}</button></div></form></div> }

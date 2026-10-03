@@ -7,6 +7,8 @@
 .connection-status{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#8793a7}.connection-status i{width:6px;height:6px;border-radius:50%;background:currentColor}.connection-status.connected{color:#2ebc86}.connection-status.connecting{color:#e0a12a}.connection-status.offline{color:#e0646d}.profile-menu{position:relative}.profile-menu .avatar-top{cursor:pointer}.profile-dropdown{position:absolute;right:0;top:38px;z-index:4;width:220px;padding:14px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px rgba(36,57,91,.14)}.profile-dropdown strong,.profile-dropdown span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.profile-dropdown strong{font-size:12px;color:#35445e}.profile-dropdown span{margin-top:4px;color:#8793a7;font-size:10px}.profile-logout{width:100%;margin-top:13px;padding:9px 0;border:0;border-top:1px solid var(--line);background:transparent;color:#df606b;text-align:left;font-size:11px;font-weight:600;cursor:pointer}.profile-logout:hover{color:#c94855}
 iframe{display: none !important;}
 @media(max-width:720px){
+	.modal:not(.delete-modal) .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px}
+	.modal:not(.delete-modal) .form-grid .full-field{grid-column:1/-1}
 	.modal-backdrop:has(.form-grid){padding:0;place-items:stretch}
 	.modal:not(.delete-modal){width:100%;height:100%;max-height:100dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;border-radius:0;padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom))}
 	.modal:not(.delete-modal) .eyebrow{font-size:12px}
@@ -17,3 +19,9 @@ iframe{display: none !important;}
 	.modal:not(.delete-modal) .input-prefix>span{top:12px}
 	.modal:not(.delete-modal) .modal-actions button{font-size:14px;padding:12px 16px}
 }
+.dots-menu{position:relative;flex:none}
+.dots-menu>.dots{display:grid;place-items:center;width:30px;height:28px;padding:0;border-radius:6px;font-size:17px;line-height:1;cursor:pointer}
+.dots-menu>.dots:hover,.dots-menu>.dots[aria-expanded="true"]{background:#f1f5fb;color:#60708a}
+.dots-menu-popover{position:absolute;top:calc(100% + 5px);right:0;z-index:20;min-width:172px;padding:5px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 28px rgba(36,57,91,.16)}
+.dots-menu-popover button{display:block;width:100%;padding:9px 10px;border:0;border-radius:5px;background:transparent;color:#53627a;text-align:left;font-size:12px;white-space:nowrap}
+.dots-menu-popover button:hover,.dots-menu-popover button:focus-visible{background:#f1f5fb;color:#3868eb;outline:0}
