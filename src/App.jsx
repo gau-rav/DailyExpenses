@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { CalendarDays, ChartNoAxesCombined, Clock3, Home, MoreHorizontal, ReceiptText, Settings, Trash2 } from 'lucide-react'
 import './App.css'
 import { addExpense, DATA_MODE, deleteExpense as deleteRemoteExpense, fetchDeletedExpenses, fetchExpenses, getLastExpensesSource, isApiConfigured, purgeExpense, readExpenseCache, restoreExpense as restoreRemoteExpense, syncQueuedActions, updateExpense, writeExpenseCache } from './api/expensesApi'
 
 const categories = ['Food', 'Transport', 'Bills', 'Shopping', 'Entertainment', 'Health', 'Rent', 'Education', 'Other']
 const categoryMeta = { Food: ['#ffb020', '🍜'], Transport: ['#4f7cff', '🚕'], Bills: ['#9d72ff', '🧾'], Shopping: ['#fa78a7', '🛍️'], Entertainment: ['#31c48d', '🎧'], Health: ['#f05d5e', '💊'], Rent: ['#7950f2', '🏠'], Education: ['#1fa7a1', '📚'], Other: ['#94a3b8', '✦'] }
 const nav = [['dashboard', 'Overview', '⌂'], ['expenses', 'All expenses', '▤'], ['due', 'Due today', '◷'], ['calendar', 'Calendar', '□'], ['budgets', 'Budgets & reports', '◒'], ['trash', 'Trash', '⌫']]
+const mobileMorePages = [
+  { id: 'due', label: 'Due today', Icon: Clock3 },
+  { id: 'calendar', label: 'Calendar', Icon: CalendarDays },
+  { id: 'budgets', label: 'Budgets & reports', Icon: ChartNoAxesCombined },
+  { id: 'trash', label: 'Trash', Icon: Trash2 },
+  { id: 'settings', label: 'Settings', Icon: Settings },
+]
 const indiaDate = (date) => { const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date); const values = Object.fromEntries(parts.filter(part => part.type !== 'literal').map(part => [part.type, part.value])); return `${values.year}-${values.month}-${values.day}` }
 const today = indiaDate(new Date())
 const indiaGreeting = () => { const hour = Number(new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', hour12: false }).format(new Date())); return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night' }
@@ -47,6 +55,14 @@ function App() {
   const [budgets, setBudgets] = useState(() => JSON.parse(localStorage.getItem('penny-budgets') || 'null') || { daily: 1500, weekly: 6500, monthly: 24000 })
   const [page, setPage] = useState('dashboard'), [formOpen, setFormOpen] = useState(false), [editing, setEditing] = useState(null), [deleteTarget, setDeleteTarget] = useState(null), [toast, setToast] = useState(''), [apiStatus, setApiStatus] = useState(isApiConfigured ? 'connecting' : 'offline')
   const [query, setQuery] = useState(''), [categoryFilter, setCategoryFilter] = useState('All categories'), [statusFilter, setStatusFilter] = useState('All statuses'), [sort, setSort] = useState('date'), [selected, setSelected] = useState([]), [month, setMonth] = useState(new Date())
+  useEffect(() => {
+    const handleMobileNavigation = (event) => setPage(event.detail)
+    window.addEventListener('penny:navigate', handleMobileNavigation)
+    return () => window.removeEventListener('penny:navigate', handleMobileNavigation)
+  }, [])
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('penny:pagechange', { detail: page }))
+  }, [page])
   useEffect(() => { localStorage.setItem('penny-expenses', JSON.stringify(expenses)); writeExpenseCache(expenses) }, [expenses]); useEffect(() => localStorage.setItem('penny-trash', JSON.stringify(deleted)), [deleted]); useEffect(() => localStorage.setItem('penny-budgets', JSON.stringify(budgets)), [budgets])
   useEffect(() => {
     if (!isApiConfigured) return undefined
@@ -128,10 +144,57 @@ function AuthScreen({ loading = false }) {
   return <main className="auth-screen"><section className="auth-card"><div className="brand-mark auth-mark">✦</div><h1>Welcome to penny</h1>{loading ? <p>Checking your session…</p> : <form onSubmit={submit}><p>Sign in with your email and password.</p>{error && <div className="auth-error">{error}</div>}<label className="auth-field">Email<input type="email" value={email} onChange={event => setEmail(event.target.value)} autoComplete="email" required /></label><label className="auth-field">Password<input type="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" required /></label><button className="primary-btn auth-button" disabled={submitting}>{submitting ? 'Signing in…' : 'Sign in'}</button><small className="auth-hint">Temporary demo login: shikha99135@gmail.com / penny123</small></form>}</section></main>
 }
 
-function PageTitle({ eyebrow, title, subtitle, action }) { return <div className="page-title"><div><div className="eyebrow">{eyebrow}</div><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>{action}</div> }
+function PageTitle({ eyebrow, title, subtitle, action }) { return <><div className="page-title"><div><div className="eyebrow">{eyebrow}</div><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>{action}</div><MobileBottomNav /></> }
 function Status({ value }) { return <span className={`status status-${value.toLowerCase().replace(' ', '-')}`}><i></i>{value}</span> }
 function Category({ value }) { return <span className="category"><i style={{ background: categoryMeta[value]?.[0] }}></i>{value}</span> }
 function Metric({ label, value, note, tone, icon }) { return <div className={`metric metric-${tone}`}><div className="metric-icon">{icon}</div><div><span>{label}</span><strong>{value}</strong><small>{note}</small></div></div> }
+function MobileBottomNav() {
+  const [activePage, setActivePage] = useState('dashboard')
+  const [moreOpen, setMoreOpen] = useState(false)
+  const navRef = useRef(null)
+  const moreButtonRef = useRef(null)
+  const moreActive = mobileMorePages.some(item => item.id === activePage)
+
+  useEffect(() => {
+    const syncActivePage = (event) => setActivePage(event.detail)
+    window.addEventListener('penny:pagechange', syncActivePage)
+    return () => window.removeEventListener('penny:pagechange', syncActivePage)
+  }, [])
+
+  useEffect(() => {
+    if (!moreOpen) return undefined
+
+    const closeOnOutsidePointerDown = (event) => {
+      if (!navRef.current?.contains(event.target)) setMoreOpen(false)
+    }
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setMoreOpen(false)
+        moreButtonRef.current?.focus()
+      }
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsidePointerDown)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointerDown)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [moreOpen])
+
+  const navigate = (nextPage) => {
+    setActivePage(nextPage)
+    setMoreOpen(false)
+    window.dispatchEvent(new CustomEvent('penny:navigate', { detail: nextPage }))
+  }
+
+  return <nav className="mobile-bottom-nav" aria-label="Mobile navigation" ref={navRef}>
+    {moreOpen && <div className="mobile-more-menu" role="menu">{mobileMorePages.map(({ id, label, Icon }) => <button key={id} type="button" role="menuitem" onClick={() => navigate(id)}><Icon size={20} strokeWidth={1.9} aria-hidden="true" /><span>{label}</span>{id === 'due' && activePage === 'due' && <b>•</b>}</button>)}</div>}
+    <button type="button" className={activePage === 'dashboard' ? 'active' : ''} aria-current={activePage === 'dashboard' ? 'page' : undefined} onClick={() => navigate('dashboard')}><Home size={22} strokeWidth={1.9} aria-hidden="true" /><span>Home</span></button>
+    <button type="button" className={activePage === 'expenses' ? 'active' : ''} aria-current={activePage === 'expenses' ? 'page' : undefined} onClick={() => navigate('expenses')}><ReceiptText size={22} strokeWidth={1.9} aria-hidden="true" /><span>Expenses</span></button>
+    <button ref={moreButtonRef} type="button" className={moreActive || moreOpen ? 'active' : ''} aria-haspopup="menu" aria-expanded={moreOpen} onClick={() => setMoreOpen(open => !open)}><MoreHorizontal size={22} strokeWidth={1.9} aria-hidden="true" /><span>More</span></button>
+  </nav>
+}
 function ExpenseRow({ expense, compact, onEdit, onDelete }) { return <div className={`expense-row ${compact ? 'compact' : ''}`}><div className="expense-main"><div className="expense-icon" style={{ background: `${categoryMeta[expense.category]?.[0]}1c`, color: categoryMeta[expense.category]?.[0] }}>{categoryMeta[expense.category]?.[1]}</div><div><strong>{expense.title}</strong><span><Category value={expense.category} /> <b>·</b> {formatDate(expense.dueDate)}</span></div></div><div className="expense-side"><strong>{money(expense.amount)}</strong>{!compact && <Status value={expense.status} />}<button className="row-more" onClick={() => onEdit(expense)}>•••</button></div></div> }
 function Empty({ text }) { return <div className="empty"><span>✦</span><p>{text}</p></div> }
 function MoreMenu({ label, items }) {
