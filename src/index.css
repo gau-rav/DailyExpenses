@@ -1,2 +1,68 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
-:root{font-family:'DM Sans',sans-serif;color:#23324a;background:#f7f9fc;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}*{box-sizing:border-box}body{margin:0;min-width:320px}button,input,select,textarea{font:inherit}button{cursor:pointer}
+
+:root {
+  color-scheme: light;
+  font-family: 'DM Sans', sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+
+  --primary: #0d7377;
+  --primary-dark: #0a5c5f;
+  --accent: #f4a261;
+  --accent-light: #fef3e2;
+  --background: #fdf8f0;
+  --surface: #fff;
+  --surface-hover: #f8f4ec;
+  --text-primary: #173f42;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --border: #e8e2d8;
+  --shadow: 0 8px 28px rgb(54 46 32 / 7%);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --primary: #2dd4bf;
+  --primary-dark: #14b8a6;
+  --accent: #f4a261;
+  --accent-light: #4b382a;
+  --background: #0f172a;
+  --surface: #1e293b;
+  --surface-hover: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border: #334155;
+  --shadow: 0 8px 28px rgb(0 0 0 / 20%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background: var(--background);
+  color: var(--text-primary);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 38%, transparent);
+  outline-offset: 2px;
+}
