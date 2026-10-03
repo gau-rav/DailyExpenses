@@ -22,6 +22,20 @@ const distPath = path.join(process.cwd(), 'dist')
 // Accept JSON from the React client, including older cached builds that sent
 // the payload as text/plain during the Google Sheets integration.
 app.use(express.json({ limit: '32kb', type: ['application/json', 'text/plain'] }))
+app.use((req, _res, next) => {
+  if (req.body && !Buffer.isBuffer(req.body) && Object.keys(req.body).length > 0) return next()
+
+  const eventBody = req.netlifyBody || req.apiGateway?.event?.body || req.body
+  if (!eventBody) return next()
+
+  try {
+    const bodyText = Buffer.isBuffer(eventBody) ? eventBody.toString('utf8') : eventBody
+    req.body = typeof bodyText === 'string' ? JSON.parse(bodyText) : bodyText
+  } catch {
+    req.body = {}
+  }
+  next()
+})
 
 function cookieOptions(maxAge) {
   return {

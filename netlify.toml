@@ -9,6 +9,11 @@
   status = 200
 
 [[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/api/health"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
