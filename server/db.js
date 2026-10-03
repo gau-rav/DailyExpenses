@@ -29,6 +29,7 @@ export async function connectDatabase() {
   await database.collection('sessions').createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 })
   await database.collection('expenses').createIndex({ user_id: 1, id: 1 }, { unique: true })
   await database.collection('expenses').createIndex({ user_id: 1, deletedAt: 1 })
+  await database.collection('budgets').createIndex({ user_id: 1 }, { unique: true })
 
   console.log(`Connected to MongoDB database: ${databaseName}`)
 }
@@ -41,6 +42,11 @@ function users() {
 function sessions() {
   if (!database) throw new Error('MongoDB is not connected')
   return database.collection('sessions')
+}
+
+function budgets() {
+  if (!database) throw new Error('MongoDB is not connected')
+  return database.collection('budgets')
 }
 
 /* Temporarily disabled: Google OAuth will be re-enabled after email auth is ready.
@@ -76,29 +82,36 @@ export async function upsertGoogleUser(profile) {
 }
 */
 
-export async function upsertPasswordUser(email, name = 'Shikha') {
+export async function getUserByEmail(email) {
+  return users().findOne({ email })
+}
+
+export async function createPasswordUser(email, passwordHash, firstName = email.split('@')[0], lastName = '') {
   const now = new Date()
-  const existing = await users().findOne({ email })
-
-  if (existing) {
-    const updated = { name, auth_provider: 'password', updated_at: now }
-    await users().updateOne({ _id: existing._id }, { $set: updated })
-    return { ...existing, ...updated }
-  }
-
+  const name = [firstName, lastName].filter(Boolean).join(' ')
   const user = {
     id: crypto.randomUUID(),
     email,
     name,
+    first_name: firstName,
+    last_name: lastName,
     picture: '',
     auth_provider: 'password',
     email_verified: false,
+    password_hash: passwordHash,
     created_at: now,
     updated_at: now,
   }
 
   await users().insertOne(user)
   return user
+}
+
+export async function setPasswordHash(userId, passwordHash) {
+  await users().updateOne(
+    { id: userId },
+    { $set: { password_hash: passwordHash, auth_provider: 'password', updated_at: new Date() } },
+  )
 }
 
 export async function createSession(userId, ttlSeconds = 60 * 60 * 24 * 7) {
@@ -133,8 +146,32 @@ export async function deleteSession(rawToken) {
   if (rawToken) await sessions().deleteOne({ token_hash: hashToken(rawToken) })
 }
 
+export async function deleteUserSessions(userId) {
+  await sessions().deleteMany({ user_id: userId })
+}
+
 export async function pruneSessions() {
   await sessions().deleteMany({ expires_at: { $lte: new Date() } })
+}
+
+export async function getBudgetLimits(userId) {
+  const saved = await budgets().findOne({ user_id: userId })
+  return {
+    budgets: saved ? { daily: saved.daily, weekly: saved.weekly, monthly: saved.monthly } : { daily: 1500, weekly: 6500, monthly: 24000 },
+    hasSaved: Boolean(saved),
+  }
+}
+
+export async function saveBudgetLimits(userId, limits) {
+  const saved = {
+    user_id: userId,
+    daily: limits.daily,
+    weekly: limits.weekly,
+    monthly: limits.monthly,
+    updated_at: new Date(),
+  }
+  await budgets().updateOne({ user_id: userId }, { $set: saved }, { upsert: true })
+  return { daily: saved.daily, weekly: saved.weekly, monthly: saved.monthly }
 }
 
 function expenses() {

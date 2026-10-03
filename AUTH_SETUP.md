@@ -1,17 +1,10 @@
 # Authentication setup
 
-> Temporary mode: Google OAuth is disabled in the application. Use the dummy email/password login below until real email credentials are implemented.
+Email and password authentication is enabled. Registration collects first name, last name, email, password, and password confirmation. Names are saved on the user record and used in the dashboard greeting and profile avatar. Users can reset their password by confirming their current password; recovery by email or OTP is not available until email delivery is configured.
 
-## Temporary local login
+Passwords are stored as salted scrypt hashes. Sessions are sent in HTTP-only cookies. Registration creates a session automatically. Resetting a password invalidates other sessions and signs in the current browser again. Daily, weekly, and monthly budget limits are stored in MongoDB per user account and loaded after sign-in. Existing browser-wide budget limits are migrated to the first signed-in account that has no saved limits.
 
-Set these server-side environment variables (or use the defaults):
-
-```env
-AUTH_DUMMY_EMAIL=shikha99135@gmail.com
-AUTH_DUMMY_PASSWORD=penny123
-```
-
-Open the app and sign in with `shikha99135@gmail.com` and `penny123`. A MongoDB-backed user and HTTP-only session are created automatically. The Google OAuth instructions below are retained only for the later re-enable step.
+For existing deployments only, the server can migrate the previous demo user to hashed-password authentication when `AUTH_DUMMY_EMAIL` and `AUTH_DUMMY_PASSWORD` are explicitly configured. These settings have no built-in defaults and should be removed after migration.
 
 This project uses a Node/Express backend for Google OAuth. Google tokens are handled only on the server. The browser receives an HTTP-only session cookie; access and refresh tokens are never stored in localStorage.
 
@@ -41,7 +34,7 @@ MONGODB_URI=mongodb+srv://USERNAME:PASSWORD@cluster.mongodb.net/?retryWrites=tru
 MONGODB_DB_NAME=penny_expenses
 ```
 
-Use a separate database name for local and production. The `users` and `sessions` collections are created automatically after the first successful connection.
+Use a separate database name for local and production. The `users`, `sessions`, `expenses`, and `budgets` collections and their indexes are created automatically after the first successful connection.
 
 In Atlas, add your local IP address under **Network Access**. For Render, allow Render's outbound connection according to your Atlas network policy. A temporary `0.0.0.0/0` rule is convenient for testing but should be restricted for production where possible.
 
