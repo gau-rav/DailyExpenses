@@ -473,7 +473,56 @@ function Dashboard({ firstName, dueToday, overdue, upcoming, todaySpend, monthSp
     </div>
   </>
 }
-function ExpensesPage({ expenses, query, setQuery, categoryFilter, setCategoryFilter, statusFilter, setStatusFilter, sort, setSort, selected, setSelected, onBulkDelete, onAdd, onEdit, onDelete, exportCsv }) { const allSelected = expenses.length > 0 && expenses.every(e => selected.includes(e.id)); return <><PageTitle eyebrow="Workspace / Expenses" title="All expenses" subtitle="Every transaction, all in one place." action={<button className="primary-btn page-add-button" onClick={onAdd}>＋ Add expense</button>} /><section className="card table-card"><div className="toolbar"><div className="search"><span>⌕</span><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search expenses..." /></div><select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}><option>All categories</option>{categories.map(c => <option key={c}>{c}</option>)}</select><select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All statuses</option>{['Paid', 'Due Today', 'Upcoming', 'Overdue', 'Pending'].map(s => <option key={s}>{s}</option>)}</select><select value={sort} onChange={e => setSort(e.target.value)}><option value="date">Newest first</option><option value="amount">Highest amount</option><option value="category">Category</option></select><button className="outline-btn export" onClick={exportCsv}>↥ Export</button></div>{selected.length > 0 && <div className="bulk-bar"><span>{selected.length} selected</span><button onClick={onBulkDelete}>Delete selected</button></div>}<div className="table-wrap"><table><thead><tr><th><input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? [] : expenses.map(e => e.id))} /></th><th>Expense</th><th>Category</th><th>Date</th><th>Payment</th><th>Status</th><th className="align-right">Amount</th><th></th></tr></thead><tbody>{expenses.map(e => <tr key={e.id}><td data-label="Select"><input aria-label={`Select ${e.title}`} type="checkbox" checked={selected.includes(e.id)} onChange={() => setSelected(s => s.includes(e.id) ? s.filter(id => id !== e.id) : [...s, e.id])} /></td><td data-label="Expense"><div className="table-expense"><span className="expense-icon" style={{ background: `${categoryMeta[e.category]?.[0]}1c` }}>{categoryMeta[e.category]?.[1]}</span><strong>{e.title}</strong></div></td><td data-label="Category"><Category value={e.category} /></td><td data-label="Date">{formatDate(e.date)}</td><td data-label="Payment">{e.payment}</td><td data-label="Status"><Status value={e.status} /></td><td data-label="Amount" className="align-right amount-cell">{money(e.amount)}</td><td data-label="Actions"><button className="table-action" onClick={() => onEdit(e)}>Edit</button><button className="table-delete" onClick={() => onDelete(e)}>×</button></td></tr>)}</tbody></table>{!expenses.length && <Empty text="No expenses match your filters." />}</div></section></> }
+function ExpensesPage({ expenses, query, setQuery, categoryFilter, setCategoryFilter, statusFilter, setStatusFilter, sort, setSort, selected, setSelected, onBulkDelete, onAdd, onEdit, onDelete, exportCsv }) {
+  const allSelected = expenses.length > 0 && expenses.every(expense => selected.includes(expense.id))
+
+  return <>
+    <PageTitle eyebrow="Workspace / Expenses" title="All expenses" subtitle="Every transaction, all in one place." action={<button className="primary-btn page-add-button" onClick={onAdd}>＋ Add expense</button>} />
+    <section className="card table-card">
+      <div className="toolbar">
+        <div className="search"><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search expenses..." /></div>
+        <div className="expense-filters">
+          <select aria-label="Filter by category" value={categoryFilter} onChange={event => setCategoryFilter(event.target.value)}>
+            <option>All categories</option>
+            {categories.map(category => <option key={category}>{category}</option>)}
+          </select>
+          <select aria-label="Filter by status" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>
+            <option>All statuses</option>
+            {['Paid', 'Due Today', 'Upcoming', 'Overdue', 'Pending'].map(status => <option key={status}>{status}</option>)}
+          </select>
+          <select aria-label="Sort expenses" value={sort} onChange={event => setSort(event.target.value)}>
+            <option value="date">Newest first</option>
+            <option value="amount">Highest amount</option>
+            <option value="category">Category</option>
+          </select>
+          <button className="outline-btn export" onClick={exportCsv}>↥ Export</button>
+        </div>
+      </div>
+      {selected.length > 0 && <div className="bulk-bar"><span>{selected.length} selected</span><button onClick={onBulkDelete}>Delete selected</button></div>}
+      <div className="table-wrap">
+        <table>
+          <thead><tr><th><input aria-label="Select all expenses" type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? [] : expenses.map(expense => expense.id))} /></th><th>Expense</th><th>Category</th><th>Date</th><th>Payment</th><th>Status</th><th className="align-right">Amount</th><th>Actions</th></tr></thead>
+          <tbody>{expenses.map(expense => <tr key={expense.id}>
+            <td data-label="Select"><input aria-label={`Select ${expense.title}`} type="checkbox" checked={selected.includes(expense.id)} onChange={() => setSelected(current => current.includes(expense.id) ? current.filter(id => id !== expense.id) : [...current, expense.id])} /></td>
+            <td data-label="Expense">
+              <div className="table-expense">
+                <span className="expense-icon" style={{ background: `${categoryMeta[expense.category]?.[0]}1c` }}>{categoryMeta[expense.category]?.[1]}</span>
+                <span className="expense-info"><strong>{expense.title}</strong><small className="expense-mobile-meta"><Category value={expense.category} /><span>·</span>{formatDate(expense.date)}<span>·</span><Status value={expense.status} /></small></span>
+              </div>
+            </td>
+            <td data-label="Category"><Category value={expense.category} /></td>
+            <td data-label="Date">{formatDate(expense.date)}</td>
+            <td data-label="Payment">{expense.payment}</td>
+            <td data-label="Status"><Status value={expense.status} /></td>
+            <td data-label="Amount" className="align-right amount-cell">{money(expense.amount)}</td>
+            <td data-label="Actions"><button className="table-action" aria-label={`Edit ${expense.title}`} onClick={() => onEdit(expense)}>Edit</button><button className="table-delete" aria-label={`Delete ${expense.title}`} onClick={() => onDelete(expense)}>×</button></td>
+          </tr>)}</tbody>
+        </table>
+        {!expenses.length && <Empty text="No expenses match your filters." />}
+      </div>
+    </section>
+  </>
+}
 function DuePage({ expenses, selected, setSelected, onBulkDelete, onEdit, onDelete }) { return <><PageTitle eyebrow="Workspace / Due today" title="Due today" subtitle="Stay ahead of every payment." action={expenses.length > 0 && <button className="danger-btn" onClick={onBulkDelete}>Delete selected</button>} /><div className="due-banner"><div className="calendar-small">{todayDay}<span>{todayMonth}</span></div><div><strong>{expenses.length ? `${expenses.length} expenses need attention` : 'You’re all caught up'}</strong><p>{expenses.length ? 'Review them below and mark as paid when you’re done.' : 'No payments are due today.'}</p></div><strong className="due-total">{money(expenses.reduce((a, e) => a + e.amount, 0))}</strong></div><section className="card due-list"><div className="list-head"><label><input type="checkbox" checked={expenses.length > 0 && expenses.every(e => selected.includes(e.id))} onChange={() => setSelected(expenses.every(e => selected.includes(e.id)) ? [] : expenses.map(e => e.id))} /> Select all</label><span>{expenses.length} items</span></div>{expenses.map(e => <div className="due-item" key={e.id}><input type="checkbox" checked={selected.includes(e.id)} onChange={() => setSelected(s => s.includes(e.id) ? s.filter(id => id !== e.id) : [...s, e.id])} /><ExpenseRow expense={e} onEdit={onEdit} onDelete={onDelete} /></div>)}{!expenses.length && <Empty text="No expenses due today." />}</section></> }
 function CalendarPage({ month, setMonth, expenses, onAdd }) { const year = month.getFullYear(), m = month.getMonth(), first = new Date(year, m, 1).getDay(), days = new Date(year, m + 1, 0).getDate(), cells = Array.from({ length: first + days }, (_, i) => i < first ? null : i - first + 1); const monthKey = `${year}-${String(m + 1).padStart(2, '0')}`; return <><PageTitle eyebrow="Workspace / Calendar" title="Calendar" subtitle="See your spending and due dates at a glance." action={<button className="primary-btn page-add-button" onClick={onAdd}>＋ Add expense</button>} /><section className="card calendar-card"><div className="calendar-header"><button className="circle-btn" onClick={() => setMonth(new Date(year, m - 1, 1))}>‹</button><h2>{month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2><button className="circle-btn" onClick={() => setMonth(new Date(year, m + 1, 1))}>›</button><button className="outline-btn today-btn" onClick={() => setMonth(new Date())}>Today</button></div><div className="weekdays">{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <span key={d}>{d}</span>)}</div><div className="calendar-grid">{cells.map((day, i) => { const date = day ? `${monthKey}-${String(day).padStart(2, '0')}` : ''; const items = expenses.filter(e => e.dueDate === date); return <div className={`calendar-day ${date === today ? 'is-today' : ''}`} key={i}>{day && <><span className="day-num">{day}</span>{items.slice(0, 2).map(e => <div className="cal-event" style={{ borderLeftColor: categoryMeta[e.category]?.[0] }} key={e.id}>{e.title} <b>{money(e.amount)}</b></div>)}{items.length > 2 && <small>+{items.length - 2} more</small>}</>}</div> })}</div></section></> }
 function CategoryChart({ expenses, money }) { const totals = categories.map(c => ({ name: c, value: expenses.filter(e => e.category === c).reduce((a, e) => a + e.amount, 0) })).filter(x => x.value).sort((a, b) => b.value - a.value).slice(0, 4); const max = Math.max(...totals.map(x => x.value), 1); return <div className="chart-list">{totals.length ? totals.map(x => <div className="bar-row" key={x.name}><span><i style={{ background: categoryMeta[x.name][0] }}></i>{x.name}</span><div className="bar"><i style={{ background: categoryMeta[x.name][0], width: `${x.value / max * 100}%` }}></i></div><strong>{money(x.value)}</strong></div>) : <Empty text="Add expenses to see your report." />}</div> }
