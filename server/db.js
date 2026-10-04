@@ -30,6 +30,7 @@ export async function connectDatabase() {
   await database.collection('expenses').createIndex({ user_id: 1, id: 1 }, { unique: true })
   await database.collection('expenses').createIndex({ user_id: 1, deletedAt: 1 })
   await database.collection('budgets').createIndex({ user_id: 1 }, { unique: true })
+  await database.collection('user_settings').createIndex({ user_id: 1 }, { unique: true })
 
   console.log(`Connected to MongoDB database: ${databaseName}`)
 }
@@ -47,6 +48,11 @@ function sessions() {
 function budgets() {
   if (!database) throw new Error('MongoDB is not connected')
   return database.collection('budgets')
+}
+
+function userSettings() {
+  if (!database) throw new Error('MongoDB is not connected')
+  return database.collection('user_settings')
 }
 
 /* Temporarily disabled: Google OAuth will be re-enabled after email auth is ready.
@@ -172,6 +178,37 @@ export async function saveBudgetLimits(userId, limits) {
   }
   await budgets().updateOne({ user_id: userId }, { $set: saved }, { upsert: true })
   return { daily: saved.daily, weekly: saved.weekly, monthly: saved.monthly }
+}
+
+export async function getMonthlyCycle(userId) {
+  const now = new Date()
+  await userSettings().updateOne(
+    { user_id: userId },
+    {
+      $setOnInsert: {
+        user_id: userId,
+        monthly_cycle_start: null,
+        created_at: now,
+        updated_at: now,
+      },
+    },
+    { upsert: true },
+  )
+  await userSettings().updateOne(
+    { user_id: userId, monthly_cycle_start: { $exists: false } },
+    { $set: { monthly_cycle_start: null, updated_at: now } },
+  )
+  const saved = await userSettings().findOne({ user_id: userId }, { projection: { monthly_cycle_start: 1 } })
+  return { startDate: saved?.monthly_cycle_start || null }
+}
+
+export async function saveMonthlyCycle(userId, startDate) {
+  await userSettings().updateOne(
+    { user_id: userId },
+    { $set: { monthly_cycle_start: startDate, updated_at: new Date() } },
+    { upsert: true },
+  )
+  return { startDate }
 }
 
 function expenses() {

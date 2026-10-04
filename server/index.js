@@ -10,7 +10,7 @@ import { promisify } from 'node:util'
 import fs from 'node:fs'
 import path from 'node:path'
 import { parse, serialize } from 'cookie'
-import { connectDatabase, createExpense, createPasswordUser, createSession, deleteExpense, deleteSession, deleteUserSessions, getBudgetLimits, getUserByEmail, getUserBySession, listExpenses, pruneSessions, purgeExpense, restoreExpense, saveBudgetLimits, setPasswordHash, updateExpense } from './db.js'
+import { connectDatabase, createExpense, createPasswordUser, createSession, deleteExpense, deleteSession, deleteUserSessions, getBudgetLimits, getMonthlyCycle, getUserByEmail, getUserBySession, listExpenses, pruneSessions, purgeExpense, restoreExpense, saveBudgetLimits, saveMonthlyCycle, setPasswordHash, updateExpense } from './db.js'
 
 const app = express()
 const port = Number(process.env.PORT || process.env.AUTH_PORT || 8787)
@@ -20,6 +20,11 @@ const dummyEmail = (process.env.AUTH_DUMMY_EMAIL || '').trim().toLowerCase()
 const dummyPassword = process.env.AUTH_DUMMY_PASSWORD || ''
 const distPath = path.join(process.cwd(), 'dist')
 const scrypt = promisify(crypto.scrypt)
+
+app.use((req, _res, next) => {
+  req.url = req.url.replace(/^\/\.netlify\/functions\/api(?=\/|\?)/, '/api')
+  next()
+})
 
 // Accept JSON from the React client, including older cached builds that sent
 // the payload as text/plain during the Google Sheets integration.
@@ -211,6 +216,47 @@ app.put('/api/budgets', async (req, res) => {
   }
 })
 
+app.get([
+  '/api/current-monthly-cycle',
+  '/current-monthly-cycle',
+  '/api/settings/current-monthly-cycle',
+  '/settings/current-monthly-cycle',
+  '/api/settings/monthly-cycle',
+  '/settings/monthly-cycle',
+], async (req, res) => {
+  res.set('Cache-Control', 'private, no-store')
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+    res.json({ ok: true, monthlyCycle: await getMonthlyCycle(user.id) })
+  } catch (error) {
+    console.error('Monthly cycle read failed', error)
+    res.status(500).json({ ok: false, error: 'Unable to load monthly cycle settings' })
+  }
+})
+
+app.post([
+  '/api/current-monthly-cycle',
+  '/current-monthly-cycle',
+  '/api/settings/current-monthly-cycle',
+  '/settings/current-monthly-cycle',
+  '/api/settings/monthly-cycle',
+  '/settings/monthly-cycle',
+], async (req, res) => {
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+    const startDate = req.body?.startDate
+    if (startDate !== null && !isValidCycleStartDate(startDate)) {
+      return res.status(400).json({ ok: false, error: 'Choose a cycle start date from the first of last month onward' })
+    }
+    res.json({ ok: true, monthlyCycle: await saveMonthlyCycle(user.id, startDate) })
+  } catch (error) {
+    console.error('Monthly cycle save failed', error)
+    res.status(500).json({ ok: false, error: 'Unable to save monthly cycle settings' })
+  }
+})
+
 app.get('/api/expenses', async (req, res) => {
   try {
     const user = await getUserBySession(getCookie(req, sessionCookie))
@@ -242,10 +288,14 @@ app.post('/api/expenses', async (req, res) => {
   }
 })
 
+app.use('/api', (req, res) => {
+  res.status(404).json({ ok: false, error: `API route not found: ${req.method} ${req.originalUrl}` })
+})
+
 if (fs.existsSync(path.join(distPath, 'index.html'))) {
   app.use(express.static(distPath))
   app.use((req, res, next) => {
-    if (req.method === 'GET' && !req.path.startsWith('/auth') && req.path !== '/health') {
+    if (req.method === 'GET' && req.path !== '/api' && !req.path.startsWith('/api/') && !req.path.startsWith('/auth') && req.path !== '/health') {
       return res.sendFile(path.join(distPath, 'index.html'))
     }
     next()
@@ -295,6 +345,22 @@ function validateBudgetLimits(value) {
   const limits = Object.fromEntries(keys.map(key => [key, Number(value[key])]))
   if (keys.some(key => !Number.isFinite(limits[key]) || limits[key] < 0 || limits[key] > 1_000_000_000)) return null
   return limits
+}
+
+function isValidCycleStartDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const parsed = new Date(`${value}T00:00:00.000Z`)
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) return false
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+  const currentDate = `${parts.find(part => part.type === 'year').value}-${parts.find(part => part.type === 'month').value}-${parts.find(part => part.type === 'day').value}`
+  const [year, month] = currentDate.slice(0, 7).split('-').map(Number)
+  const minimumDate = new Date(Date.UTC(year, month - 2, 1)).toISOString().slice(0, 10)
+  return value >= minimumDate
 }
 
 async function hashPassword(password) {
