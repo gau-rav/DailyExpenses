@@ -514,6 +514,44 @@ function BudgetsPage({ budgets, budgetsLoaded, onSaveBudgets, expenses, monthSpe
 function TrashPage({ deleted, setDeleted, setExpenses, notify, money, onRestore, onPurge }) { const restore = async e => { setExpenses(x => [e, ...x]); setDeleted(x => x.filter(i => i.id !== e.id)); await onRestore(e); notify('Expense restored') }; const clear = () => { if (confirm('Permanently delete all trashed expenses?')) onPurge(deleted) }; return <><PageTitle eyebrow="Workspace / Trash" title="Trash" subtitle="Restore something you deleted by mistake." action={deleted.length > 0 && <button className="outline-btn" onClick={clear}>Empty trash</button>} /><section className="card table-card trash-card">{deleted.length ? deleted.map(e => <div className="trash-row" key={e.id}><div><strong>{e.title}</strong><span>{formatDate(e.date)} · {money(e.amount)}</span></div><button className="outline-btn" onClick={() => restore(e)}>Restore</button></div>) : <Empty text="Trash is empty." />}</section></> }
 function SettingsPage({ notify, theme, setTheme }) {
   const [notifications, setNotifications] = useState(true)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [verifyPassword, setVerifyPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSaving, setPasswordSaving] = useState(false)
+
+  const updatePassword = async (event) => {
+    event.preventDefault()
+    setPasswordError('')
+    if (newPassword !== verifyPassword) {
+      setPasswordError('New passwords do not match')
+      return
+    }
+    if (currentPassword === newPassword) {
+      setPasswordError('Choose a new password different from your current password')
+      return
+    }
+
+    setPasswordSaving(true)
+    try {
+      const response = await fetch('/api/auth/password/change', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ currentPassword, newPassword, verifyPassword }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data.ok) throw new Error(data.error || 'Unable to update password')
+      setCurrentPassword('')
+      setNewPassword('')
+      setVerifyPassword('')
+      notify('Password updated successfully')
+    } catch (error) {
+      setPasswordError(error.message || 'Unable to update password')
+    } finally {
+      setPasswordSaving(false)
+    }
+  }
 
   return <>
     <PageTitle eyebrow="Workspace / Settings" title="Settings" subtitle="Make PaisaWise feel like yours." />
@@ -534,6 +572,18 @@ function SettingsPage({ notify, theme, setTheme }) {
         <div><strong>Test reminder</strong><p>Preview how a PaisaWise reminder looks.</p></div>
         <button className="outline-btn" onClick={() => notify('Reminder: electricity bill is due today')}>Send test</button>
       </div>
+    </section>
+    <section className="card password-settings">
+      <div className="section-head">
+        <div><h2>Update password</h2><p>Confirm your current password before choosing a new one.</p></div>
+      </div>
+      <form onSubmit={updatePassword}>
+        {passwordError && <div className="auth-error" role="alert">{passwordError}</div>}
+        <label className="auth-field">Current password<input type="password" value={currentPassword} onChange={event => setCurrentPassword(event.target.value)} autoComplete="current-password" required /></label>
+        <label className="auth-field">New password<input type="password" value={newPassword} onChange={event => setNewPassword(event.target.value)} autoComplete="new-password" minLength={8} maxLength={128} required /></label>
+        <label className="auth-field">Verify new password<input type="password" value={verifyPassword} onChange={event => setVerifyPassword(event.target.value)} autoComplete="new-password" minLength={8} maxLength={128} required /></label>
+        <button className="primary-btn" type="submit" disabled={passwordSaving}>{passwordSaving ? 'Updating…' : 'Update password'}</button>
+      </form>
     </section>
   </>
 }

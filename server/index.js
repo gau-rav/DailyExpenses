@@ -145,6 +145,34 @@ app.post(['/auth/password/reset', '/api/auth/password/reset'], async (req, res) 
   }
 })
 
+app.post('/api/auth/password/change', async (req, res) => {
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+
+    const currentPassword = String(req.body?.currentPassword || '')
+    const newPassword = String(req.body?.newPassword || '')
+    const validationError = validateCredentials(user.email, newPassword)
+    if (validationError) return res.status(400).json({ ok: false, error: validationError })
+    if (!currentPassword) return res.status(400).json({ ok: false, error: 'Current password is required' })
+    if (newPassword !== String(req.body?.verifyPassword || '')) {
+      return res.status(400).json({ ok: false, error: 'Passwords do not match' })
+    }
+    if (!user.password_hash || !await verifyPassword(currentPassword, user.password_hash)) {
+      return res.status(401).json({ ok: false, error: 'Current password is incorrect' })
+    }
+
+    await setPasswordHash(user.id, await hashPassword(newPassword))
+    await deleteUserSessions(user.id)
+    const session = await createSession(user.id)
+    setCookie(res, sessionCookie, session.rawToken, { maxAge: 60 * 60 * 24 * 7 })
+    res.json({ ok: true })
+  } catch (error) {
+    console.error('Authenticated password change failed', error)
+    res.status(500).json({ ok: false, error: 'Unable to update password' })
+  }
+})
+
 app.get(['/auth/me', '/api/auth/me'], async (req, res) => {
   const user = await getUserBySession(getCookie(req, sessionCookie))
   if (!user) return res.status(401).json({ authenticated: false })

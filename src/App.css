@@ -161,6 +161,11 @@ iframe{display: none !important;}
 .dots-menu-popover{position:absolute;top:calc(100% + 5px);right:0;z-index:20;min-width:172px;padding:5px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 28px rgba(36,57,91,.16)}
 .dots-menu-popover button{display:block;width:100%;padding:9px 10px;border:0;border-radius:5px;background:transparent;color:#53627a;text-align:left;font-size:12px;white-space:nowrap}
 .dots-menu-popover button:hover,.dots-menu-popover button:focus-visible{background:#f1f5fb;color:#3868eb;outline:0}
+.password-settings{max-width:720px;margin-top:18px;padding:22px}
+.password-settings .section-head{margin-bottom:16px}
+.password-settings form{max-width:420px}
+.password-settings .auth-error{line-height:1.45}
+.password-settings .auth-field input{background:var(--surface);border-color:var(--border);color:var(--text-primary)}
 .mobile-bottom-nav{display:none}
 @media(max-width:720px){
 	.content{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
