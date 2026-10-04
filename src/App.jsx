@@ -37,6 +37,42 @@ function App() {
   const [authUser, setAuthUser] = useState(undefined)
   const [profileOpen, setProfileOpen] = useState(false)
   const [theme, setTheme] = useState(() => localStorage.getItem('penny-theme') === 'dark' ? 'dark' : 'light')
+  const [installPrompt, setInstallPrompt] = useState(null)
+  const [appInstalled, setAppInstalled] = useState(() => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true)
+  useEffect(() => {
+    const captureInstallPrompt = event => {
+      event.preventDefault()
+      setInstallPrompt(event)
+    }
+    const markInstalled = () => {
+      setAppInstalled(true)
+      setInstallPrompt(null)
+    }
+
+    window.addEventListener('beforeinstallprompt', captureInstallPrompt)
+    window.addEventListener('appinstalled', markInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', captureInstallPrompt)
+      window.removeEventListener('appinstalled', markInstalled)
+    }
+  }, [])
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+    navigator.serviceWorker.register('/sw.js').catch(error => {
+      console.error('Unable to register the PaisaWise service worker:', error)
+    })
+  }, [])
+  useEffect(() => {
+    if (!authUser) return undefined
+    const mobileViewport = window.matchMedia('(max-width: 720px)')
+    const confirmMobileExit = event => {
+      if (!mobileViewport.matches) return
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', confirmMobileExit)
+    return () => window.removeEventListener('beforeunload', confirmMobileExit)
+  }, [authUser])
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     localStorage.setItem('penny-theme', theme)
@@ -254,12 +290,12 @@ function App() {
         <Suspense fallback={<div className="settings-loading" role="status">Loading page…</div>}>
           <Routes>
             <Route path="/" element={<DashboardPage firstName={greetingName} dueToday={dueToday} overdue={overdue} upcoming={upcoming} todaySpend={todaySpend} monthSpend={monthSpend} monthExpenses={monthExpenses} cycleRange={cycleRange} cycleLabel={cycleLabel} budgets={budgets} money={money} onPage={setPage} {...common} />} />
-            <Route path="/expenses" element={<ExpensesPage expenses={filtered} query={query} setQuery={setQuery} categoryFilter={categoryFilter} setCategoryFilter={setCategoryFilter} statusFilter={statusFilter} setStatusFilter={setStatusFilter} sort={sort} setSort={setSort} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} exportCsv={exportCsv} {...common} />} />
+            <Route path="/expenses" element={<ExpensesPage key={`${query}|${categoryFilter}|${statusFilter}|${sort}`} expenses={filtered} query={query} setQuery={setQuery} categoryFilter={categoryFilter} setCategoryFilter={setCategoryFilter} statusFilter={statusFilter} setStatusFilter={setStatusFilter} sort={sort} setSort={setSort} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} exportCsv={exportCsv} {...common} />} />
             <Route path="/due" element={<DuePage expenses={dueToday} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} {...common} />} />
             <Route path="/calendar" element={<CalendarPage month={month} setMonth={setMonth} expenses={expenses} onAdd={openAdd} />} />
             <Route path="/budgets" element={<BudgetsPage budgets={budgets} budgetsLoaded={budgetsLoaded} onSaveBudgets={saveBudgets} expenses={expenses} monthSpend={monthSpend} cycleLabel={cycleLabel} money={money} exportCsv={exportCsv} />} />
             <Route path="/trash" element={<TrashPage deleted={deleted} setDeleted={setDeleted} setExpenses={setExpenses} notify={notify} onRestore={async item => { try { await restoreRemoteExpense(item.id); setApiStatus('connected') } catch { setApiStatus('offline') } }} onPurge={emptyTrash} />} />
-            <Route path="/settings" element={monthlyCycleLoaded ? <SettingsPage notify={notify} theme={theme} setTheme={setTheme} monthlyCycleStartDate={monthlyCycleStartDate} onSaveMonthlyCycle={saveMonthlyCycle} /> : <div className="settings-loading" role="status">Loading your settings…</div>} />
+            <Route path="/settings" element={monthlyCycleLoaded ? <SettingsPage notify={notify} theme={theme} setTheme={setTheme} monthlyCycleStartDate={monthlyCycleStartDate} onSaveMonthlyCycle={saveMonthlyCycle} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} appInstalled={appInstalled} setAppInstalled={setAppInstalled} /> : <div className="settings-loading" role="status">Loading your settings…</div>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

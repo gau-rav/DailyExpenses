@@ -1,8 +1,29 @@
+import { useEffect, useRef, useState } from 'react'
 import { PageTitle, Category, Status, Empty } from '../components/PageComponents'
 import { categories, categoryMeta, formatDate, money } from '../utils/appData'
 
+const PAGE_SIZE = 20
+
 export default function ExpensesPage({ expenses, query, setQuery, categoryFilter, setCategoryFilter, statusFilter, setStatusFilter, sort, setSort, selected, setSelected, onBulkDelete, onAdd, onEdit, onDelete, exportCsv }) {
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const loadMoreRef = useRef(null)
+  const hasMore = visibleCount < expenses.length
   const allSelected = expenses.length > 0 && expenses.every(expense => selected.includes(expense.id))
+
+  useEffect(() => {
+    if (!hasMore || !loadMoreRef.current) return undefined
+
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        setVisibleCount(current => Math.min(current + PAGE_SIZE, expenses.length))
+      }
+    }, { rootMargin: '200px' })
+
+    observer.observe(loadMoreRef.current)
+    return () => observer.disconnect()
+  }, [expenses, hasMore])
+
+  const visibleExpenses = expenses.slice(0, visibleCount)
 
   return <>
     <PageTitle eyebrow="Workspace / Expenses" title="All expenses" subtitle="Every transaction, all in one place." action={<button className="primary-btn page-add-button" onClick={onAdd}>＋ Add expense</button>} />
@@ -30,7 +51,7 @@ export default function ExpensesPage({ expenses, query, setQuery, categoryFilter
       <div className="table-wrap">
         <table>
           <thead><tr><th><input type="checkbox" aria-label="Select all expenses" checked={allSelected} onChange={() => setSelected(allSelected ? [] : expenses.map(expense => expense.id))} /></th><th>Expense</th><th>Category</th><th>Date</th><th>Payment</th><th>Status</th><th className="align-right">Amount</th><th>Actions</th></tr></thead>
-          <tbody>{expenses.map(expense => <tr key={expense.id}>
+          <tbody>{visibleExpenses.map(expense => <tr key={expense.id}>
             <td data-label="Select"><input aria-label={`Select ${expense.title}`} type="checkbox" checked={selected.includes(expense.id)} onChange={() => setSelected(current => current.includes(expense.id) ? current.filter(id => id !== expense.id) : [...current, expense.id])} /></td>
             <td data-label="Expense">
               <div className="table-expense">
@@ -47,6 +68,8 @@ export default function ExpensesPage({ expenses, query, setQuery, categoryFilter
           </tr>)}</tbody>
         </table>
         {!expenses.length && <Empty text="No expenses match your filters." />}
+        {hasMore && <div ref={loadMoreRef} className="expenses-load-more" role="status">Scroll to load more expenses…</div>}
+        {expenses.length > 0 && !hasMore && <p className="expenses-end-message" role="status">You’ve reached the end — all {expenses.length} expenses are shown.</p>}
       </div>
     </section>
   </>
