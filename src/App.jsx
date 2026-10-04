@@ -5,10 +5,11 @@ import './App.css'
 import './navigation.css'
 import { addExpense, DATA_MODE, deleteExpense as deleteRemoteExpense, fetchDeletedExpenses, fetchExpenses, getLastExpensesSource, isApiConfigured, purgeExpense, readExpenseCache, restoreExpense as restoreRemoteExpense, syncQueuedActions, updateExpense, writeExpenseCache } from './api/expensesApi'
 import { categories, seedExpenses, defaultBudgets, today, dateOffset, getMonthlyCycleRange, cycleRangeLabel, money } from './utils/appData'
-import AuthPage from './pages/AuthPage'
+import PwaInstallButton from './components/PwaInstallButton'
 import MobileBottomNav from './components/MobileBottomNav'
 import { pageByPath, pagePaths, primaryNavigation, routeLabels } from './routes'
 
+const AuthPage = lazy(() => import('./pages/AuthPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const ExpensesPage = lazy(() => import('./pages/ExpensesPage'))
 const DuePage = lazy(() => import('./pages/DuePage'))
@@ -16,6 +17,12 @@ const CalendarPage = lazy(() => import('./pages/CalendarPage'))
 const BudgetsPage = lazy(() => import('./pages/BudgetsPage'))
 const TrashPage = lazy(() => import('./pages/TrashPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const PageLoading = ({ label = 'Loading page…', fullScreen = false }) => (
+  <div className={`page-loading${fullScreen ? ' page-loading-screen' : ''}`} role="status" aria-live="polite">
+    <span className="page-loading-spinner" aria-hidden="true" />
+    <span>{label}</span>
+  </div>
+)
 const readBudgetCache = (userId) => {
   try { return JSON.parse(localStorage.getItem(`penny-budgets:${userId}`) || 'null') } catch { return null }
 }
@@ -251,8 +258,8 @@ function App() {
   const markPaid = async (items) => { setExpenses(current => current.map(x => items.some(item => item.id === x.id) ? { ...x, status: 'Paid' } : x)); for (const item of items) { try { await updateExpense({ ...item, status: 'Paid' }) } catch { setApiStatus('offline') } } setDeleteTarget(null); notify('Marked as paid') }
   const exportCsv = () => { const rows = [['Title', 'Amount', 'Category', 'Payment', 'Date', 'Due date', 'Status'], ...expenses.map(e => [e.title, e.amount, e.category, e.payment, e.date, e.dueDate, e.status])]; const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'penny-expenses.csv'; a.click(); notify('CSV exported') }
   const common = { onAdd: openAdd, onEdit: openEdit, onDelete: deleteExpense }
-  if (authUser === undefined) return <AuthPage loading />
-  if (!authUser) return <AuthPage />
+  if (authUser === undefined) return <Suspense fallback={<PageLoading label="Loading PaisaWise…" fullScreen />}><AuthPage loading /></Suspense>
+  if (!authUser) return <Suspense fallback={<PageLoading label="Loading sign in…" fullScreen />}><AuthPage /></Suspense>
   const profileName = authUser.name || authUser.email.split('@')[0]
   const profileInitials = [authUser.firstName, authUser.lastName]
     .map(name => name?.trim().charAt(0))
@@ -286,8 +293,12 @@ function App() {
           </div>
         </div>
       </header>
+      {page === 'dashboard' && !appInstalled && <section className="card pwa-install-banner">
+        <strong>Install PaisaWise</strong>
+        <PwaInstallButton installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} installed={appInstalled} setInstalled={setAppInstalled} />
+      </section>}
       <div className="content">
-        <Suspense fallback={<div className="settings-loading" role="status">Loading page…</div>}>
+        <Suspense fallback={<PageLoading />}>
           <Routes>
             <Route path="/" element={<DashboardPage firstName={greetingName} dueToday={dueToday} overdue={overdue} upcoming={upcoming} todaySpend={todaySpend} monthSpend={monthSpend} monthExpenses={monthExpenses} cycleRange={cycleRange} cycleLabel={cycleLabel} budgets={budgets} money={money} onPage={setPage} {...common} />} />
             <Route path="/expenses" element={<ExpensesPage key={`${query}|${categoryFilter}|${statusFilter}|${sort}`} expenses={filtered} query={query} setQuery={setQuery} categoryFilter={categoryFilter} setCategoryFilter={setCategoryFilter} statusFilter={statusFilter} setStatusFilter={setStatusFilter} sort={sort} setSort={setSort} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} exportCsv={exportCsv} {...common} />} />
@@ -295,7 +306,7 @@ function App() {
             <Route path="/calendar" element={<CalendarPage month={month} setMonth={setMonth} expenses={expenses} onAdd={openAdd} />} />
             <Route path="/budgets" element={<BudgetsPage budgets={budgets} budgetsLoaded={budgetsLoaded} onSaveBudgets={saveBudgets} expenses={expenses} monthSpend={monthSpend} cycleLabel={cycleLabel} money={money} exportCsv={exportCsv} />} />
             <Route path="/trash" element={<TrashPage deleted={deleted} setDeleted={setDeleted} setExpenses={setExpenses} notify={notify} onRestore={async item => { try { await restoreRemoteExpense(item.id); setApiStatus('connected') } catch { setApiStatus('offline') } }} onPurge={emptyTrash} />} />
-            <Route path="/settings" element={monthlyCycleLoaded ? <SettingsPage notify={notify} theme={theme} setTheme={setTheme} monthlyCycleStartDate={monthlyCycleStartDate} onSaveMonthlyCycle={saveMonthlyCycle} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} appInstalled={appInstalled} setAppInstalled={setAppInstalled} /> : <div className="settings-loading" role="status">Loading your settings…</div>} />
+            <Route path="/settings" element={monthlyCycleLoaded ? <SettingsPage notify={notify} theme={theme} setTheme={setTheme} monthlyCycleStartDate={monthlyCycleStartDate} onSaveMonthlyCycle={saveMonthlyCycle} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} appInstalled={appInstalled} setAppInstalled={setAppInstalled} /> : <PageLoading label="Loading your settings…" />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

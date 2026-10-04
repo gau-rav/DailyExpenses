@@ -169,7 +169,8 @@ iframe{display: none !important;}
 .password-settings .auth-error{line-height:1.45}
 .password-settings .auth-field input{background:var(--surface);border-color:var(--border);color:var(--text-primary)}
 .mobile-bottom-nav{display:none}
-.pwa-install-setting{display:flex;width:100%;max-width:720px;min-width:0;box-sizing:border-box;align-items:center;justify-content:space-between;gap:16px;margin:0 0 18px;padding:18px 22px}
+.pwa-install-banner{display:none}
+.pwa-install-setting{display:none;width:100%;max-width:720px;min-width:0;box-sizing:border-box;align-items:center;justify-content:space-between;gap:16px;margin:0 0 18px;padding:18px 22px}
 .pwa-install-setting>div{min-width:0}
 .pwa-install-setting strong{font-size:13px;color:var(--text-primary)}
 .pwa-install-setting p{margin:5px 0 0;color:var(--text-secondary);font-size:11px;line-height:1.5}
@@ -185,8 +186,11 @@ iframe{display: none !important;}
 .expenses-load-more{min-height:48px}
 .expenses-end-message{border-top:1px solid var(--border)}
 @media(max-width:720px){
-	.pwa-install-setting{align-items:center;padding:16px;border-radius:16px}
-	.pwa-install-button{min-height:38px;padding:0 11px;font-size:11px}
+	.pwa-install-banner{display:flex;min-height:0;align-items:center;justify-content:space-between;gap:8px;margin:0;padding:3px 14px;border:0;border-bottom:1px solid var(--border);border-radius:0 !important;background:var(--surface);box-shadow:none}
+	.pwa-install-banner strong{font-size:10px;color:var(--text-primary)}
+	.pwa-install-setting{display:flex;align-items:center;padding:16px;border-radius:16px}
+	.pwa-install-banner .pwa-install-button{min-height:20px;gap:5px;padding:0 7px;border-radius:5px;font-size:9px;line-height:1}
+	.pwa-install-banner .pwa-install-button svg{width:14px;height:14px}
 	.content{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
 	.mobile-bottom-nav{position:fixed;z-index:8;right:0;bottom:0;left:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;min-height:64px;padding:6px 12px calc(6px + env(safe-area-inset-bottom));border-top:1px solid #e9edf4;background:rgba(255,255,255,.97);box-shadow:0 -8px 24px rgba(36,57,91,.08);backdrop-filter:blur(14px)}
 	.mobile-bottom-nav>button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:48px;padding:4px;border:0;border-radius:8px;background:transparent;color:#8995a8;font-size:10px;font-weight:600}
@@ -364,7 +368,10 @@ iframe{display: none !important;}
 .cycle-help{margin:10px 0 0;color:var(--text-secondary);font-size:11px;line-height:1.5}
 .cycle-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
 .cycle-actions button{min-height:40px}
-.settings-loading{max-width:720px;padding:22px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text-secondary);font-size:13px}
+.page-loading{display:flex;min-height:clamp(240px,55vh,640px);align-items:center;justify-content:center;gap:12px;color:var(--text-secondary);font-size:13px}
+.page-loading-screen{min-height:100vh}
+.page-loading-spinner{width:26px;height:26px;border:3px solid color-mix(in srgb,var(--primary) 20%,transparent);border-top-color:var(--primary);border-radius:50%;animation:page-loading-spin .75s linear infinite}
+@keyframes page-loading-spin{to{transform:rotate(360deg)}}
 @media(max-width:720px){
 	.cycle-settings{margin-bottom:14px;padding:16px;border-radius:17px;background:linear-gradient(145deg,color-mix(in srgb,var(--surface) 92%,var(--primary) 8%),var(--surface) 85%)}
 	.cycle-settings>.section-head{margin-bottom:14px}

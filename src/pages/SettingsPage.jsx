@@ -58,10 +58,10 @@ export default function SettingsPage({ notify, theme, setTheme, monthlyCycleStar
 
   return <>
     <PageTitle eyebrow="Workspace / Settings" title="Settings" subtitle="Make PaisaWise feel like yours." />
-    <section className="card pwa-install-setting">
+    {!appInstalled && <section className="card pwa-install-setting">
       <div><strong>Install PaisaWise</strong><p>Add the app to your home screen for quick access.</p></div>
       <PwaInstallButton installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} installed={appInstalled} setInstalled={setAppInstalled} />
-    </section>
+    </section>}
     <section className="card cycle-settings">
       <div className="section-head">
         <div><h2>Monthly spending cycle</h2><p>Current cycle: {cycleRangeLabel(getMonthlyCycleRange(monthlyCycleStartDate))}</p></div>
