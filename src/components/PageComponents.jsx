@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { categories, categoryMeta, formatDate, money } from '../utils/appData'
 
 export function PageTitle({ eyebrow, cycleLabel, title, subtitle, action }) {
@@ -20,8 +21,11 @@ export function Category({ value }) {
   return <span className="category"><i style={{ background: categoryMeta[value]?.[0] }}></i>{value}</span>
 }
 
-export function Metric({ label, value, note, tone, icon }) {
-  return <div className={`metric metric-${tone}`}><div className="metric-icon">{icon}</div><div><span>{label}</span><strong>{value}</strong><small>{note}</small></div></div>
+export function Metric({ label, value, note, tone, icon, to }) {
+  return <Link to={to} className={`metric metric-${tone}`}>
+    <div className="metric-icon">{icon}</div>
+    <div className="metric-content"><span>{label}</span><strong>{value}</strong><small>{note}</small></div>
+  </Link>
 }
 
 export function ExpenseRow({ expense, compact, onEdit }) {

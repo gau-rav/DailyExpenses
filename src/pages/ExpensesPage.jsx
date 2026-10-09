@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Filter, X } from 'lucide-react'
 import { PageTitle, Category, Status, Empty } from '../components/PageComponents'
 import { categories, categoryMeta, formatDate, money } from '../utils/appData'
 
@@ -6,6 +7,7 @@ const PAGE_SIZE = 20
 
 export default function ExpensesPage({ expenses, query, setQuery, categoryFilter, setCategoryFilter, statusFilter, setStatusFilter, sort, setSort, selected, setSelected, onBulkDelete, onAdd, onEdit, onDelete, exportCsv }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const loadMoreRef = useRef(null)
   const hasMore = visibleCount < expenses.length
   const allSelected = expenses.length > 0 && expenses.every(expense => selected.includes(expense.id))
@@ -23,15 +25,40 @@ export default function ExpensesPage({ expenses, query, setQuery, categoryFilter
     return () => observer.disconnect()
   }, [expenses, hasMore])
 
+  useEffect(() => {
+    if (!filtersOpen) return undefined
+    const closeOnEscape = event => {
+      if (event.key === 'Escape') setFiltersOpen(false)
+    }
+    document.addEventListener('keydown', closeOnEscape)
+    return () => document.removeEventListener('keydown', closeOnEscape)
+  }, [filtersOpen])
+
   const visibleExpenses = expenses.slice(0, visibleCount)
 
   return <>
     <PageTitle eyebrow="Workspace / Expenses" title="All expenses" subtitle="Every transaction, all in one place." action={<button className="primary-btn page-add-button" onClick={onAdd}>＋ Add expense</button>} />
     <section className="card table-card">
-      <div className="toolbar">
+    <div className={`toolbar${filtersOpen ? ' filters-open' : ''}`}>
+      <div className="expense-search-row">
         <div className="search"><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search expenses..." /></div>
-        <div className="expense-filters">
-          <select aria-label="Filter by category" value={categoryFilter} onChange={event => setCategoryFilter(event.target.value)}>
+        <button className="mobile-filter-toggle" type="button" aria-label="Open expense filters" aria-expanded={filtersOpen} aria-controls="expense-filters" onClick={() => setFiltersOpen(open => !open)}>
+          <Filter size={18} aria-hidden="true" />
+          <span>Filter</span>
+        </button>
+      </div>
+      <label className="mobile-select-all">
+        <input type="checkbox" aria-label="Select all expenses" checked={allSelected} onChange={() => setSelected(allSelected ? [] : expenses.map(expense => expense.id))} />
+        <span>Select all expenses</span>
+        <small>{expenses.length}</small>
+      </label>
+      {filtersOpen && <button className="expense-filter-backdrop" type="button" aria-label="Close expense filters" onClick={() => setFiltersOpen(false)} />}
+      <div className="expense-filters" id="expense-filters" role={filtersOpen ? 'dialog' : undefined} aria-modal={filtersOpen || undefined} aria-label="Expense filters">
+        <div className="mobile-filter-heading">
+          <strong>Filters</strong>
+          <button type="button" aria-label="Close expense filters" onClick={() => setFiltersOpen(false)}><X size={20} aria-hidden="true" /></button>
+        </div>
+        <select aria-label="Filter by category" value={categoryFilter} onChange={event => setCategoryFilter(event.target.value)}>
             <option>All categories</option>
             {categories.map(category => <option key={category}>{category}</option>)}
           </select>
@@ -44,7 +71,7 @@ export default function ExpensesPage({ expenses, query, setQuery, categoryFilter
             <option value="amount">Highest amount</option>
             <option value="category">Category</option>
           </select>
-          <button className="outline-btn export" onClick={exportCsv}>↥ Export</button>
+          <button className="outline-btn export" onClick={() => { exportCsv(); setFiltersOpen(false) }}>↥ Export</button>
         </div>
       </div>
       {selected.length > 0 && <div className="bulk-bar"><span>{selected.length} selected</span><button onClick={onBulkDelete}>Delete selected</button></div>}

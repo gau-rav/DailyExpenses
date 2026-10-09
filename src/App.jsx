@@ -72,13 +72,42 @@ function App() {
   useEffect(() => {
     if (!authUser) return undefined
     const mobileViewport = window.matchMedia('(max-width: 720px)')
-    const confirmMobileExit = event => {
+    const guardKey = '__paisaWiseExitGuard'
+    let guardIndex = null
+    let exitConfirmed = false
+    const ensureExitGuard = () => {
       if (!mobileViewport.matches) return
-      event.preventDefault()
-      event.returnValue = ''
+      const currentState = window.history.state || {}
+      if (currentState[guardKey]) {
+        guardIndex = currentState.idx
+        return
+      }
+      const currentIndex = Number.isInteger(currentState.idx) ? currentState.idx : 0
+      guardIndex = currentIndex + 1
+      window.history.pushState(
+        { ...currentState, idx: guardIndex, [guardKey]: true },
+        '',
+        window.location.href,
+      )
     }
-    window.addEventListener('beforeunload', confirmMobileExit)
-    return () => window.removeEventListener('beforeunload', confirmMobileExit)
+    const confirmMobileExit = event => {
+      if (exitConfirmed || !mobileViewport.matches || guardIndex === null) return
+      const targetIndex = event.state?.idx
+      if (!Number.isInteger(targetIndex) || targetIndex >= guardIndex) return
+      if (window.confirm('Are you sure you want to exit PaisaWise?')) {
+        exitConfirmed = true
+        window.history.back()
+      } else {
+        window.history.forward()
+      }
+    }
+    ensureExitGuard()
+    window.addEventListener('popstate', confirmMobileExit)
+    mobileViewport.addEventListener('change', ensureExitGuard)
+    return () => {
+      window.removeEventListener('popstate', confirmMobileExit)
+      mobileViewport.removeEventListener('change', ensureExitGuard)
+    }
   }, [authUser])
   useEffect(() => {
     document.documentElement.dataset.theme = theme
