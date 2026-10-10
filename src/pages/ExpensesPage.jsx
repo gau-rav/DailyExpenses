@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Filter, X } from 'lucide-react'
+import { Filter, Pencil, X } from 'lucide-react'
 import { PageTitle, Category, Status, Empty } from '../components/PageComponents'
 import { categories, categoryMeta, formatDate, money } from '../utils/appData'
 
@@ -91,7 +91,7 @@ export default function ExpensesPage({ expenses, query, setQuery, categoryFilter
             <td data-label="Payment">{expense.payment}</td>
             <td data-label="Status"><Status value={expense.status} /></td>
             <td data-label="Amount" className="align-right amount-cell">{money(expense.amount)}</td>
-            <td data-label="Actions"><button className="table-action" aria-label={`Edit ${expense.title}`} onClick={() => onEdit(expense)}>Edit</button><button className="table-delete" aria-label={`Delete ${expense.title}`} onClick={() => onDelete(expense)}>×</button></td>
+            <td data-label="Actions"><button className="table-action" aria-label={`Edit ${expense.title}`} title="Edit expense" onClick={() => onEdit(expense)}><Pencil size={16} strokeWidth={2} aria-hidden="true" /><span>Edit</span></button><button className="table-delete" aria-label={`Delete ${expense.title}`} onClick={() => onDelete(expense)}>×</button></td>
           </tr>)}</tbody>
         </table>
         {!expenses.length && <Empty text="No expenses match your filters." />}

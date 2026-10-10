@@ -14,6 +14,7 @@ dist-ssr
 *.local
 .env
 data/
+graphify*
 
 # Editor directories and files
 .vscode/*
