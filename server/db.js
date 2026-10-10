@@ -7,32 +7,51 @@ dotenv.config({
 })
 dotenv.config()
 
-const mongoUri = process.env.MONGODB_URI
-const databaseName = process.env.MONGODB_DB_NAME || 'penny_expenses'
-
-let client
 let database
+let connectionPromise
 
 export async function connectDatabase() {
+  if (database) return
+  if (connectionPromise) return connectionPromise
+
+  const mongoUri = process.env.MONGODB_URI?.trim()
   if (!mongoUri) throw new Error('MONGODB_URI is not configured')
 
-  client = new MongoClient(mongoUri, { serverSelectionTimeoutMS: 10000 })
-  await client.connect()
-  database = client.db(databaseName)
+  const databaseName = process.env.MONGODB_DB_NAME?.trim() || 'penny_expenses'
+  connectionPromise = initializeDatabase(mongoUri, databaseName)
+  try {
+    await connectionPromise
+  } catch (error) {
+    connectionPromise = undefined
+    throw error
+  }
+}
 
-  // Google OAuth is temporarily disabled. Keep this partial index so password-only
-  // users can coexist with any legacy Google users already in the database.
-  await database.collection('users').dropIndex('google_sub_1').catch(() => {})
-  await database.collection('users').createIndex({ google_sub: 1 }, { unique: true, partialFilterExpression: { google_sub: { $type: 'string' } } })
-  await database.collection('users').createIndex({ email: 1 }, { unique: true })
-  await database.collection('sessions').createIndex({ token_hash: 1 }, { unique: true })
-  await database.collection('sessions').createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 })
-  await database.collection('expenses').createIndex({ user_id: 1, id: 1 }, { unique: true })
-  await database.collection('expenses').createIndex({ user_id: 1, deletedAt: 1 })
-  await database.collection('budgets').createIndex({ user_id: 1 }, { unique: true })
-  await database.collection('user_settings').createIndex({ user_id: 1 }, { unique: true })
+async function initializeDatabase(mongoUri, databaseName) {
+  const nextClient = new MongoClient(mongoUri, { serverSelectionTimeoutMS: 10000 })
+  try {
+    await nextClient.connect()
+    const nextDatabase = nextClient.db(databaseName)
+    // Google OAuth is temporarily disabled. Keep this partial index so password-only
+    // users can coexist with any legacy Google users already in the database.
+    await nextDatabase.collection('users').dropIndex('google_sub_1').catch(() => {})
+    await nextDatabase.collection('users').createIndex({ google_sub: 1 }, { unique: true, partialFilterExpression: { google_sub: { $type: 'string' } } })
+    await nextDatabase.collection('users').createIndex({ email: 1 }, { unique: true })
+    await nextDatabase.collection('sessions').createIndex({ token_hash: 1 }, { unique: true })
+    await nextDatabase.collection('sessions').createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 })
+    await nextDatabase.collection('expenses').createIndex({ user_id: 1, id: 1 }, { unique: true })
+    await nextDatabase.collection('expenses').createIndex({ user_id: 1, deletedAt: 1 })
+    await nextDatabase.collection('budgets').createIndex({ user_id: 1 }, { unique: true })
+    await nextDatabase.collection('user_settings').createIndex({ user_id: 1 }, { unique: true })
 
-  console.log(`Connected to MongoDB database: ${databaseName}`)
+    database = nextDatabase
+    console.log(`Connected to MongoDB database: ${databaseName}`)
+  } catch (error) {
+    await nextClient.close().catch(closeError => {
+      console.error('Unable to close the failed MongoDB connection:', closeError)
+    })
+    throw error
+  }
 }
 
 function users() {
