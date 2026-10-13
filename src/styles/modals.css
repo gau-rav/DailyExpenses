@@ -1,0 +1,360 @@
+/* Modal Components */
+.modal-backdrop {
+  background: rgb(13 45 47 / 54%);
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 10;
+}
+
+.modal {
+  width: min(540px, 100%);
+  background: #fff;
+  border-radius: 13px;
+  padding: 24px;
+  box-shadow: 0 24px 70px #182b4b3d;
+}
+
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.modal:not(.delete-modal) .modal-head,
+.modal:not(.delete-modal) .modal-actions {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.modal h2 {
+  font: 700 20px 'Plus Jakarta Sans';
+  color: #2c3c59;
+  margin: 0;
+}
+
+.close {
+  border: 0;
+  background: #f5f7fa;
+  color: #8a97a9;
+  border-radius: 50%;
+  width: 27px;
+  height: 27px;
+  font-size: 18px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-grid label {
+  font-size: 10px;
+  color: #718099;
+  font-weight: 600;
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  border: 1px solid #e2e7ef;
+  border-radius: 7px;
+  padding: 10px;
+  color: #42536e;
+  outline: 0;
+  font-size: 11px;
+  background: #fff;
+}
+
+.form-grid input:focus,
+.form-grid select:focus,
+.form-grid textarea:focus,
+.auth-field input:focus {
+  border-color: #7d9cf4;
+  box-shadow: 0 0 0 3px #4f7cff13;
+}
+
+.full-field {
+  grid-column: 1/-1;
+}
+
+.form-grid textarea {
+  height: 64px;
+  resize: vertical;
+}
+
+.form-grid em {
+  display: block;
+  color: #e2606a;
+  font-style: normal;
+  font-size: 9px;
+  margin-top: 4px;
+}
+
+.input-prefix {
+  position: relative;
+}
+
+.input-prefix > span {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  color: #9aa6b7;
+}
+
+.input-prefix input {
+  padding-left: 22px;
+}
+
+.check-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #66758b !important;
+}
+
+.check-label input {
+  width: auto;
+  margin: 0;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 22px;
+}
+
+/* Payment Options */
+.paid-option > span {
+  background: #e9faf3;
+  color: #27a979;
+}
+
+.delete-option > span {
+  background: #fff0f1;
+  color: #e15d68;
+}
+
+.postpone-option > span {
+  background: #edf3ff;
+  color: var(--primary);
+}
+
+/* Delete Modal */
+.delete-modal {
+  text-align: center;
+  width: min(430px, 100%);
+  padding: 30px;
+}
+
+.delete-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #fff2de;
+  color: #e79b23;
+  font-weight: 700;
+  font-size: 20px;
+  margin: 0 auto 16px;
+}
+
+.delete-modal h2 {
+  font-size: 18px;
+}
+
+.delete-modal > p {
+  color: #8d99aa;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 9px auto 20px;
+  max-width: 300px;
+}
+
+.delete-options {
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+
+.delete-options button {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 11px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: #fff;
+}
+
+.delete-options button > span {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+}
+
+.delete-options strong,
+.delete-options small {
+  display: block;
+}
+
+.delete-options strong {
+  font-size: 11px;
+  color: #42516b;
+}
+
+.delete-options small {
+  font-size: 9px;
+  color: #99a6b6;
+  margin-top: 2px;
+}
+
+.center-btn {
+  margin: 17px auto 0;
+}
+
+/* Dots Menu */
+.dots-menu {
+  position: relative;
+  flex: none;
+}
+
+.dots-menu > .dots {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 28px;
+  padding: 0;
+  border-radius: 6px;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dots-menu > .dots:hover,
+.dots-menu > .dots[aria-expanded="true"] {
+  background: #f1f5fb;
+  color: #60708a;
+}
+
+.dots-menu-popover {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  z-index: 20;
+  min-width: 172px;
+  padding: 5px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(36, 57, 91, 0.16);
+}
+
+.dots-menu-popover button {
+  display: block;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #53627a;
+  text-align: left;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.dots-menu-popover button:hover,
+.dots-menu-popover button:focus-visible {
+  background: #f1f5fb;
+  color: #3868eb;
+  outline: 0;
+}
+
+/* Profile Dropdown */
+.profile-menu {
+  position: relative;
+}
+
+.profile-menu .avatar-top {
+  cursor: pointer;
+}
+
+.profile-dropdown {
+  position: absolute;
+  right: 0;
+  top: 38px;
+  z-index: 4;
+  width: 220px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(36, 57, 91, 0.14);
+}
+
+.profile-dropdown strong,
+.profile-dropdown span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-dropdown strong {
+  font-size: 12px;
+  color: #35445e;
+}
+
+.profile-dropdown span {
+  margin-top: 4px;
+  color: #8793a7;
+  font-size: 10px;
+}
+
+.profile-logout {
+  width: 100%;
+  margin-top: 13px;
+  padding: 9px 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: #df606b;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-logout:hover {
+  color: #c94855;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  right: 25px;
+  bottom: 25px;
+  background: #243552;
+  color: #fff;
+  padding: 13px 17px;
+  border-radius: 8px;
+  font-size: 12px;
+  box-shadow: 0 8px 20px #172a4b33;
+  z-index: 5;
+}
+
+.toast {
+  background: var(--primary-dark);
+  box-shadow: 0 8px 20px rgb(10 92 95 / 22%);
+}

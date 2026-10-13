@@ -1,0 +1,58 @@
+/* Navigation */
+.sidebar{width:256px;flex:none;background:#fff;border-right:1px solid var(--line);padding:28px 16px 20px;display:flex;flex-direction:column}
+.sidebar{border-color:var(--line)}
+.sidebar nav{display:grid;gap:4px}
+.sidebar button{border:0;background:none;color:#8290a6;text-align:left;border-radius:9px;padding:11px 13px;display:flex;align-items:center;gap:13px;font-size:13px}
+.sidebar nav button.active,.sidebar nav button:hover,.sidebar-bottom>button:hover{background:#edf3ff;color:#3868eb;font-weight:600}
+.sidebar-bottom{margin-top:auto}
+.sidebar-bottom>button{width:100%}
+.nav-icon{font-size:18px;line-height:1;width:19px;text-align:center}
+.nav-count{font-size:10px;background:#ffecbd;color:#b57e14;padding:2px 6px;border-radius:5px;margin-left:auto}
+
+/* Topbar */
+.topbar{height:70px;padding:0 46px;border-bottom:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:space-between}
+
+/* App shell */
+.app-shell{background:#f8fafc}
+.app-shell{background:var(--background);color:var(--text-primary)}
+
+/* Breadcrumb */
+.breadcrumb{font-size:12px;display:flex;gap:10px;color:#a0aabd}
+.breadcrumb strong{color:#53617a}
+
+/* Main content */
+.main{flex:1;min-width:0}
+
+/* Top actions */
+.top-actions{display:flex;gap:14px;align-items:center}
+
+/* Icon button */
+.icon-btn{border:0;background:none;color:#7c8ba0;font-size:19px;position:relative}
+.icon-btn i{position:absolute;width:5px;height:5px;border-radius:50%;background:#fa6d7a;top:1px;right:1px}
+
+/* Mobile bottom nav */
+.mobile-bottom-nav{display:none}
+
+/* Page title actions */
+.page-title .primary-btn{white-space:nowrap;padding:10px 11px}
+
+/* Profile menu */
+.profile-menu{position:relative}
+.profile-menu .avatar-top{cursor:pointer}
+
+/* PWA install banner */
+.pwa-install-banner{display:none}
+.pwa-install-banner{display:flex;min-height:0;align-items:center;justify-content:space-between;gap:8px;margin:0;padding:3px 14px;border:0;border-bottom:1px solid var(--border);border-radius:0 !important;background:var(--surface);box-shadow:none}
+.pwa-install-banner strong{font-size:10px;color:var(--text-primary)}
+
+/* Password settings */
+.password-settings{max-width:720px;margin-top:18px;padding:22px}
+.password-settings .section-head{margin-bottom:16px}
+.password-settings form{max-width:420px}
+.password-settings .auth-error{line-height:1.45}
+.password-settings .auth-field input{background:var(--surface);border-color:var(--line);color:var(--text-primary)}
+
+/* Password visibility */
+.password-input-wrap{position:relative;display:block}
+.password-input-wrap input{padding-right:44px}
+.password-visibility{position:absolute;top:7px;right:7px;display:grid;width:34px;height:34px;place-items:center;border:0;border-radius:6px;background:transparent;color:#aeb看起来我在继续创建CSS模块时遇到了重复和截断的问题。让我重新调整策略,一次性完整地创建所有剩余的CSS模块,确保文件路径正确并且内容不中断。我将从一个新的起点开始。 */

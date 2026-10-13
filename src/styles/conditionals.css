@@ -1,0 +1,50 @@
+/* Dark Mode and Conditional Styling */
+
+html[data-theme='dark'] .mobile-bottom-nav {
+  background: rgb(30 41 59 / 96%);
+}
+
+html[data-theme='dark'] .circle-btn,
+html[data-theme='dark'] .auth-field input,
+html[data-theme='dark'] .profile-dropdown,
+html[data-theme='dark'] .dots-menu-popover,
+html[data-theme='dark'] .mobile-more-menu {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+html[data-theme='dark'] .status-paid {
+  background: #123d35;
+  color: #6ee7b7;
+}
+
+html[data-theme='dark'] .status-due-today {
+  background: #4b382a;
+  color: #fdba74;
+}
+
+html[data-theme='dark'] .status-upcoming {
+  background: #123d3c;
+  color: #5eead4;
+}
+
+html[data-theme='dark'] .status-overdue {
+  background: #4c2528;
+  color: #fda4af;
+}
+
+html[data-theme='dark'] .danger-btn {
+  background: #4c2528;
+  color: #fda4af;
+}
+
+html[data-theme='dark'] .auth-mode-switch button.active {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+/* Transparent mods */
+iframe {
+  display: none !important;
+}

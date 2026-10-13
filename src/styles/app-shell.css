@@ -1,0 +1,39 @@
+/* App Shell */
+:root{--ink:var(--text-primary);--muted:var(--text-muted);--line:var(--border);--blue:var(--primary)}
+.app-shell{display:flex;min-height:100vh;background:#f8fafc}
+.app-shell{background:var(--background);color:var(--text-primary)}
+
+/* Auth screen */
+.auth-screen{min-height:100vh;display:grid;place-items:center;background:#f8fafc;padding:24px}
+.auth-screen{background:radial-gradient(ellipse at top left,rgb(244 162 97 / 13%),transparent 38%),var(--background)}
+
+/* Brand */
+.brand{display:flex;align-items:center;gap:10px;padding:0 12px 32px}
+
+/* Workspace */
+.workspace{display:flex;align-items:center;gap:9px;padding:11px 10px;margin:0 0 23px;background:#f8faff;border:1px solid #eef2fb;border-radius:10px;color:#63718a;font-size:12px}
+
+/* Brand mark */
+.brand-mark{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:var(--blue);color:#fff;font-size:17px;box-shadow:0 5px 12px #4f7cff44}
+
+/* Sidebar */
+.sidebar{background:#fff;border-right:1px solid var(--line);padding:28px 16px 20px;display:flex;flex-direction:column}
+
+/* Main */
+.main{flex:1;min-width:0}
+
+/* Top actions */
+.topbar{height:70px;padding:0 46px;border-bottom:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:space-between}
+
+/* Content */
+.content{max-width:1240px;margin:auto;padding:40px 48px 70px}
+
+/* Page title */
+.page-title{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:30px}
+
+/* Connection status */
+.connection-status{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#8793a7}
+.connection-status i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.connection-status.connected{color:#2ebc86}
+.connection-status.connecting{color:#e0a12a}
+.connection-status.offline{color:#e0646d}

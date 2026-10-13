@@ -1,0 +1,151 @@
+/* Typography and Auth Card Styles */
+.auth-card {
+  width: min(420px, 100%);
+  padding: 42px 34px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+.brand-mark {
+  background-color: var(--primary);
+  background-image: url('/PaisaWise.jpg');
+  background-size: 300% auto;
+  background-position: center 27%;
+  color: transparent;
+  box-shadow: 0 5px 12px rgb(13 115 119 / 22%);
+  border-radius: 50%;
+}
+
+.brand strong,
+.mobile-brand,
+.page-title h1,
+.metric strong,
+.section-head h2,
+.expense-main strong,
+.expense-side > strong,
+.ring strong,
+.big-number,
+.budget-line strong,
+.calendar-header h2,
+.due-banner strong,
+.modal h2 {
+  color: var(--text-primary);
+}
+
+.brand span:not(.brand-mark),
+.metric span,
+.metric small,
+.page-title p,
+.section-head p,
+.expense-main span,
+.category,
+.calendar-day .day-num,
+.bar-row > span,
+.empty,
+.settings-card p,
+.setting-row p {
+  color: var(--text-secondary);
+}
+
+.auth-card h1 {
+  font: 700 24px 'Plus Jakarta Sans';
+  color: #243552;
+  margin: 0 0 10px;
+}
+
+.auth-card p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #8b98aa;
+  margin: 0 0 24px;
+}
+
+.mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #243552;
+}
+
+.mobile-brand .brand-mark {
+  width: 25px;
+  height: 25px;
+  font-size: 13px;
+}
+
+.mobile-brand strong {
+  font: 800 17px 'Plus Jakarta Sans';
+}
+
+.page-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 30px;
+}
+
+.page-title .eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.page-title h1 {
+  font: 700 28px 'Plus Jakarta Sans';
+  color: #243552;
+  margin: 0 0 7px;
+  letter-spacing: -0.8px;
+}
+
+.page-title p {
+  margin: 0;
+  color: #909db0;
+  font-size: 13px;
+}
+
+.eyebrow {
+  color: var(--primary);
+  letter-spacing: 1.4px;
+}
+
+.metric span,
+.metric small {
+  display: block;
+  color: #8491a5;
+  font-size: 11px;
+}
+
+.metric strong {
+  display: block;
+  font: 700 21px 'Plus Jakarta Sans';
+  color: #243552;
+  margin: 4px 0;
+}
+
+.metric small {
+  color: #9aa6b6;
+  font-size: 10px;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.section-head h2 {
+  font: 700 14px 'Plus Jakarta Sans';
+  color: #2d3e5c;
+  margin: 0 0 5px;
+}
+
+.section-head p {
+  font-size: 11px;
+  color: #9ba6b5;
+  margin: 0;
+}

@@ -1,0 +1,32 @@
+/* Budget */
+.budget-layout{display:grid;grid-template-columns:1fr 1.25fr;gap:16px}
+.budget-layout>.card,.settings-card,.password-settings,.due-list,.calendar-card,.report-card,.trash-card{border-radius:18px}
+.budget-layout>.budget-settings{background:linear-gradient(145deg,color-mix(in srgb,var(--surface) 91%,#36a788 9%),var(--surface) 82%)}
+.budget-layout>.report-card{background:linear-gradient(145deg,color-mix(in srgb,var(--surface) 91%,#d88950 9%),var(--surface) 82%)}
+.budget-layout{gap:16px}
+
+/* Budget cards */
+.budget-figure{display:flex;align-items:center;gap:16px;padding:4px 2px 20px}
+
+/* Budget line */
+.budget-line{display:flex;justify-content:space-between;color:#8b99ac;font-size:11px}
+.budget-line strong{color:#42526e}
+
+/* Budget input */
+.budget-input{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-top:1px solid #f0f2f6}
+.budget-input strong,.budget-input small{display:block}
+.budget-input strong{font-size:12px;color:#475772}
+.budget-input small{font-size:10px;color:#a0aabc;margin-top:4px}
+.budget-input>div{display:flex;align-items:center;border:1px solid var(--line);border-radius:7px;padding:0 8px;color:#9da8b8}
+.budget-input input{border:0;outline:0;width:75px;padding:8px 4px;color:#42526d;font-weight:600}
+
+/* Budget settings */
+.budget-settings{max-width:720px;margin-top:18px;padding:22px}
+.budget-settings>.section-head{align-items:center}
+.budget-settings>.section-head>svg{flex:none;color:var(--primary)}
+
+/* Cycle settings */
+.cycle-settings{max-width:720px;margin-bottom:18px;padding:22px}
+.cycle-settings>.section-head{align-items:center}
+.cycle-settings>.section-head>svg{flex:none;color:var(--primary)}
+.cycle-date-field{display:grid;gap:8px;color:#aeb事实上,我意识到在上一次工具调用中我已经成功创建了这个文件,但文件路径被截断了。让我重新检查并继续创建剩余的CSS模块。我应该按照计划逐步创建所有CSS模块。

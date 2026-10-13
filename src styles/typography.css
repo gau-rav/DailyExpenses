@@ -1,0 +1,61 @@
+/* Typography and Brand Markings */
+.auth-screen{min-height:100vh;display:grid;place-items:center;background:#f8fafc;padding:24px}
+.auth-card{width:min(420px,100%);padding:42px 34px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.auth-mark{width:92px;height:92px;border-radius:50%;box-shadow:0 8px 22px rgb(13 115 119 / 16%)}
+
+/* Brand marks */
+.brand-mark{background-color:var(--primary);background-image:url('/PaisaWise.jpg');background-size:300% auto;background-position:center 27%;color:transparent;box-shadow:0 5px 12px rgb(13 115 119 / 22%);border-radius:50%}
+.brand strong{color:var(--text-primary)}
+.mobile-brand strong{color:var(--text-primary)}
+
+/* Page titles */
+.page-title{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:30px}
+.page-title .eyebrow{color:var(--primary);letter-spacing:1.4px}
+.page-title .eyebrow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px}
+.current-cycle-label{color:var(--text-secondary);font-size:inherit;font-weight:600;letter-spacing:normal;text-transform:none}
+
+/* Section headings */
+.section-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.section-head h2{font:700 14px 'Plus Jakarta Sans';color:#2d3e5c;margin:0 0 5px}
+.section-head p{font-size:11px;color:#9ba6b5;margin:0}
+
+/* Brand typography */
+.brand strong{display:block;font:800 20px 'Plus Jakarta Sans';color:#213151}
+.brand span:not(.brand-mark){display:block;color:#a1aabc;font-size:10px}
+
+/* Page title typography */
+.page-title h1{font:700 28px 'Plus Jakarta Sans';color:#243552;margin:0 0 7px;letter-spacing:-.8px}
+.page-title p{margin:0;color:#909db0;font-size:13px}
+.page-title .eyebrow{font-size:10px;font-weight:700;margin-bottom:8px;color:#7792d9;text-transform:uppercase;letter-spacing:1.3px}
+
+/* Metric typography */
+.metric span,.metric small{display:block;color:#8491a5;font-size:11px}
+.metric strong{display:block;font:700 21px 'Plus Jakarta Sans';color:#243552;margin:4px 0}
+
+/* Expense typography */
+.expense-main strong{display:block;font-size:12px;color:#35445e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.expense-main span{display:flex;align-items:center;gap:5px;color:#a1acba;font-size:10px;margin-top:4px}
+.expense-main b{font-weight:400;color:#ced5df}
+
+/* Ring typography */
+.ring strong{font:700 17px 'Plus Jakarta Sans';color:#304364}
+.ring small{font-size:9px;color:#99a6b8}
+
+/* Budget typography */
+.big-number{display:block;font:700 18px 'Plus Jakarta Sans';color:#304364}
+.budget-line strong{color:#42526e}
+.budget-line{display:flex;justify-content:space-between;color:#8b99ac;font-size:11px}
+
+/* Calendar typography */
+.calendar-header h2{font:700 16px 'Plus Jakarta Sans';color:#33435f;margin:0 0 7px;letter-spacing:-.4px}
+.due-banner strong{font-size:12px;color:#3a5077}
+.calendar-day .day-num{font-size:11px;color:#8794a8}
+
+/* Status typography */
+.status{font-size:9px;font-weight:600;white-space:nowrap}
+.status i{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* Empty state typography */
+.empty{padding:25px 10px;text-align:center;color:#a0acbb;font-size:11px}
+.empty p{margin:8px 0}
+.empty span{font-size:22px;color:#a9bce9}

@@ -1,12 +1,24 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Plus } from 'lucide-react'
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import './App.css'
-import './navigation.css'
+import './styles/variables.css'
+import './styles/reset.css'
+import './styles/typography.css'
+import './styles/ui-kit.css'
+import './styles/dashboard.css'
+import './styles/calendar.css'
+import './styles/expenses.css'
+import './styles/budget.css'
+import './styles/modals.css'
+import './styles/navigation.css'
+import './styles/responsive.css'
+import './styles/app-shell.css'
+import './styles/page-loading.css'
 import { addExpense, DATA_MODE, deleteExpense as deleteRemoteExpense, fetchDeletedExpenses, fetchExpenses, getLastExpensesSource, isApiConfigured, purgeExpense, readExpenseCache, restoreExpense as restoreRemoteExpense, syncQueuedActions, updateExpense, writeExpenseCache } from './api/expensesApi'
 import { categories, seedExpenses, defaultBudgets, today, dateOffset, getMonthlyCycleRange, cycleRangeLabel, money } from './utils/appData'
 import PwaInstallButton from './components/PwaInstallButton'
 import MobileBottomNav from './components/MobileBottomNav'
+import { ExpenseModal, DeleteModal } from './components/Modal'
 import { pageByPath, pagePaths, primaryNavigation, routeLabels } from './routes'
 
 const AuthPage = lazy(() => import('./pages/AuthPage'))
@@ -350,6 +362,4 @@ function App() {
     {toast && <div className="toast">✓ &nbsp;{toast}</div>}
   </div>
 }
-function ExpenseModal({ expense, onClose, onSave }) { const [data, setData] = useState(expense || { title: '', amount: '', category: 'Grocery', payment: 'Card', date: today, dueDate: today, notes: '', recurring: false, status: 'Paid' }); const [errors, setErrors] = useState({}); const update = (k, v) => setData({ ...data, [k]: v }); const submit = e => { e.preventDefault(); const next = {}; if (!data.title.trim()) next.title = 'Enter a title'; if (!data.amount || Number(data.amount) <= 0) next.amount = 'Enter an amount greater than zero'; if (!data.dueDate) next.dueDate = 'Choose a due date'; if (Object.keys(next).length) return setErrors(next); onSave({ ...data, amount: Number(data.amount), status: data.status || 'Paid' }) }; return <div className="modal-backdrop"><form className="modal" onSubmit={submit}><div className="modal-head"><div><div className="eyebrow">{expense ? 'Update transaction' : 'New transaction'}</div><h2>{expense ? 'Edit expense' : 'Add expense'}</h2></div><button type="button" className="close" onClick={onClose}>×</button></div><div className="form-grid"><label className="full-field">Title<input autoFocus value={data.title} onChange={e => update('title', e.target.value)} placeholder="e.g. Weekly groceries" />{errors.title && <em>{errors.title}</em>}</label><label>Amount<div className="input-prefix"><span>₹</span><input type="number" step="0.01" value={data.amount} onChange={e => update('amount', e.target.value)} placeholder="0.00" /></div>{errors.amount && <em>{errors.amount}</em>}</label><label>Category<select value={data.category} onChange={e => update('category', e.target.value)}>{categories.map(c => <option key={c}>{c}</option>)}</select></label><label>Payment method<select value={data.payment} onChange={e => update('payment', e.target.value)}><option>Card</option><option>Cash</option><option>Bank transfer</option><option>UPI</option></select></label><label>Status<select value={data.status} onChange={e => update('status', e.target.value)}>{['Pending', 'Paid', 'Due Today', 'Upcoming', 'Overdue'].map(s => <option key={s}>{s}</option>)}</select></label><label>Date<input type="date" value={data.date} onChange={e => update('date', e.target.value)} /></label><label>Due date<input type="date" value={data.dueDate} onChange={e => update('dueDate', e.target.value)} />{errors.dueDate && <em>{errors.dueDate}</em>}</label><label className="full-field">Notes<textarea value={data.notes} onChange={e => update('notes', e.target.value)} placeholder="Add a note (optional)" /></label><label className="check-label full-field"><input type="checkbox" checked={data.recurring} onChange={e => update('recurring', e.target.checked)} /> This is a recurring expense</label></div><div className="modal-actions"><button type="button" className="outline-btn" onClick={onClose}>Cancel</button><button className="primary-btn">{expense ? 'Save changes' : 'Add expense'}</button></div></form></div> }
-function DeleteModal({ target, onClose, onPaid, onDelete, onPostpone }) { return <div className="modal-backdrop"><div className="modal delete-modal"><div className="delete-icon">!</div><h2>{target.type === 'bulk' ? `What should we do with ${target.items.length} expenses?` : 'This expense is due today'}</h2><p>Choose what happens next. You can mark it as paid, remove it, or move it to tomorrow.</p><div className="delete-options"><button className="paid-option" onClick={onPaid}><span>✓</span><div><strong>Mark as Paid</strong><small>Keep it in your expense history</small></div></button><button className="delete-option" onClick={onDelete}><span>⌫</span><div><strong>Delete</strong><small>Move it to trash</small></div></button><button className="postpone-option" onClick={onPostpone}><span>◷</span><div><strong>Postpone</strong><small>Move due date to tomorrow</small></div></button></div><button className="text-btn center-btn" onClick={onClose}>Cancel</button></div></div> }
 export default App
