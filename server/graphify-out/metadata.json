@@ -1,0 +1,43 @@
+{
+  "projectName": "server",
+  "communityLabels": {
+    "0": "Community 0",
+    "1": "Community 1",
+    "2": "Community 2",
+    "3": "Community 3",
+    "4": "Community 4",
+    "5": "Community 5",
+    "6": "Community 6",
+    "7": "Community 7"
+  },
+  "communitySummaries": {
+    "0": "",
+    "1": "",
+    "2": "",
+    "3": "",
+    "4": "",
+    "5": "",
+    "6": "",
+    "7": ""
+  },
+  "communityLinks": {
+    "2": {
+      "4": 4,
+      "3": 7,
+      "5": 3,
+      "1": 11
+    },
+    "4": {
+      "3": 1
+    },
+    "3": {},
+    "5": {},
+    "1": {},
+    "0": {
+      "7": 3,
+      "6": 3
+    },
+    "7": {},
+    "6": {}
+  }
+}

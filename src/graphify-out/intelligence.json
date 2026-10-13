@@ -1,0 +1,36 @@
+{
+  "hotspots": [
+    {
+      "label": "App()",
+      "risk": 0.626,
+      "type": "FUNCTION"
+    },
+    {
+      "label": "expensesApi.js",
+      "risk": 0.203,
+      "type": "FUNCTION"
+    },
+    {
+      "label": "appData.js",
+      "risk": 0.186,
+      "type": "FUNCTION"
+    },
+    {
+      "label": "SettingsPage()",
+      "risk": 0.17,
+      "type": "FUNCTION"
+    },
+    {
+      "label": "AuthPage()",
+      "risk": 0.165,
+      "type": "FUNCTION"
+    }
+  ],
+  "blast_radius": {
+    "queue()": 8,
+    "request()": 7,
+    "getMonthlyCycleRange()": 7,
+    "SettingsPage()": 5,
+    "formatUtcDate()": 5
+  }
+}

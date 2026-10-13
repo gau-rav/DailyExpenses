@@ -1,0 +1,36 @@
+{
+  "hotspots": [
+    {
+      "label": "createExpense()",
+      "risk": 0.546,
+      "type": "FUNCTION"
+    },
+    {
+      "label": "normalizeExpense()",
+      "risk": 0.536,
+      "type": "FUNCTION"
+    },
+    {
+      "label": "isValidCycleStartDate()",
+      "risk": 0.49,
+      "type": "FUNCTION"
+    },
+    {
+      "label": "updateExpense()",
+      "risk": 0.407,
+      "type": "FUNCTION"
+    },
+    {
+      "label": "validateCredentials()",
+      "risk": 0.367,
+      "type": "FUNCTION"
+    }
+  ],
+  "blast_radius": {
+    "expenses()": 7,
+    "sessions()": 6,
+    "users()": 5,
+    "normalizeExpense()": 5,
+    "publicExpense()": 5
+  }
+}
