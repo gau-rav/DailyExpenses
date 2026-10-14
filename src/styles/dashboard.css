@@ -3,10 +3,20 @@
 .dashboard-grid{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px}
 
 /* Dashboard cards */
-.dashboard-grid>.card{min-height:250px;padding:24px;border-top:3px solid #e5f3ef;.topbar}
-.dashboard-grid>.budget-card{border-top-color:var(--accent)}
-.dashboard-grid>.upcoming-card{border-top-color:#4b9c84}
-.dashboard-grid>.chart-card{border-top-color:#d88950}
+.dashboard-grid > .card {
+  min-height: 250px;
+  padding: 24px;
+  border-top: 3px solid #e5f3ef;
+}
+.dashboard-grid > .budget-card {
+  border-top-color: var(--accent);
+}
+.dashboard-grid > .upcoming-card {
+  border-top-color: #4b9c84;
+}
+.dashboard-grid > .chart-card {
+  border-top-color: #d88950;
+}
 
 /* Dashboard empty state */
 .dashboard-empty{display:flex;min-height:165px;flex-direction:column;align-items:center;justify-content:center;padding:14px 18px;text-align:center}
