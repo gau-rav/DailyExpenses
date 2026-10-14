@@ -37,6 +37,3 @@ td strong{color:#3e4d66;font-size:11px}
 
 /* Expense row */
 .expense-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-top:1px solid #f0f2f6;gap:10px}
-
-/* Expense mobile meta */
-.expense-mobile-meta{display:flex;align-items:center;min-width:0;gap:4px;overflow:hidden;color:#aeb事实证明,我犯了一些逻辑错误;我分开的CSS模块越多,`D:\Projects\react\paisa_wise\src`路径就变得越长,并且可能超出了文件路径的长度限制。让我重新开始,这次更仔细地提取CSS模块,避免重复D:\Projects\react\paisa_wise\src路径。 :)</think>Let me restart with a more careful approach. I'll create each CSS module file:<tool_call>Bash<arg_key>command</arg_key><arg_value>cd "D:/Projects/react/paisa_wise" && cp src/App.css src/App.css.backup

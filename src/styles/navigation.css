@@ -54,5 +54,6 @@
 
 /* Password visibility */
 .password-input-wrap{position:relative;display:block}
-.password-input-wrap input{padding-right:44px}
-.password-visibility{position:absolute;top:7px;right:7px;display:grid;width:34px;height:34px;place-items:center;border:0;border-radius:6px;background:transparent;color:#aeb看起来我在继续创建CSS模块时遇到了重复和截断的问题。让我重新调整策略,一次性完整地创建所有剩余的CSS模块,确保文件路径正确并且内容不中断。我将从一个新的起点开始。 */
+.password-visibility{position:absolute;top:7px;right:7px;display:grid;width:34px;height:34px;place-items:center;border:0;border-radius:6px;background:transparent;color:var(--text-secondary)}
+.password-visibility:hover{background:var(--surface-hover);color:var(--primary)}
+.password-visibility:focus-visible{outline-offset:0}
