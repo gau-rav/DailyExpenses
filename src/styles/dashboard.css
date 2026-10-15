@@ -1,21 +1,36 @@
-/* Dashboard */
-.dashboard-grid{display:grid;grid-template-columns:minmax(0,1.4fr) 1fr;gap:16px}
-.dashboard-grid{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px}
+/* Dashboard - 5 Card Grid Layout */
+.dashboard-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;min-height:500px}
+.dashboard-grid .fin-health-panel,.dashboard-grid .favorites-card,.dashboard-grid .budget-card,.dashboard-grid .due-card,.dashboard-grid .upcoming-card,.dashboard-grid .chart-card,.dashboard-grid .influence-card{display:flex;flex-direction:column}
+.dashboard-grid > .card,.dashboard-grid > .fin-health-panel,.dashboard-grid > .favorites-card,.dashboard-grid > .influence-card{min-height:220px;padding:20px;border:1px solid var(--border);border-radius:12px;background:#fff;transition:border-color 0.15s ease,box-shadow 0.15s ease}
+.dashboard-grid > .card:hover,.dashboard-grid > .fin-health-panel:hover,.dashboard-grid > .favorites-card:hover,.dashboard-grid > .influence-card:hover{border-color:var(--primary);box-shadow:0 8px 24px rgba(13,115,119/8%)}
 
-/* Dashboard cards */
-.dashboard-grid > .card {
-  min-height: 250px;
-  padding: 24px;
-  border-top: 3px solid #e5f3ef;
+/* FinHealth Check Panel */
+.dashboard-grid > .fin-health-panel{background:linear-gradient(145deg,color-mix(in srgb,var(--surface) 92%,#e5f3ef 8%),var(--surface) 88%);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+
+/* Influence Cards */
+.dashboard-grid > .influence-card{border-left:4px solid var(--primary)}
+
+/* Favorites Card */
+.dashboard-grid > .favorites-card{border-left:4px solid var(--accent)}
+
+/* Budget Card */
+.dashboard-grid > .budget-card{
+  border-top:3px solid var(--accent)
 }
-.dashboard-grid > .budget-card {
-  border-top-color: var(--accent);
+
+/* Due Card */
+.dashboard-grid > .due-card{
+  border-top:3px solid var(--primary)
 }
-.dashboard-grid > .upcoming-card {
-  border-top-color: #4b9c84;
+
+/* Upcoming Card */
+.dashboard-grid > .upcoming-card{
+  border-top:3px solid #4b9c84
 }
-.dashboard-grid > .chart-card {
-  border-top-color: #d88950;
+
+/* Chart Card */
+.dashboard-grid > .chart-card{
+  border-top:3px solid #d88950
 }
 
 /* Dashboard empty state */
