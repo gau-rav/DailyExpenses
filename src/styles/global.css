@@ -1,0 +1,113 @@
+
+
+/* Keep the install action consistent with the app's other controls. */
+.pwa-install-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.pwa-install-button:disabled {
+  cursor: default;
+  opacity: .7;
+}
+
+.pwa-install-button:not(:disabled):hover {
+  background: var(--accent-light);
+}
+
+.pwa-install-button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.pwa-install-modal {
+  width: min(420px, calc(100vw - 32px));
+}
+
+.pwa-install-copy {
+  margin: 0 0 20px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.pwa-install-copy strong {
+  color: var(--text-primary);
+}
+
+@media (max-width: 720px) {
+}
+
+/* Brand and workspace */
+.brand strong{display:block;font:800 20px 'Plus Jakarta Sans';color:#213151}
+.brand span:not(.brand-mark){display:block;color:#a1aabc;font-size:10px}
+.workspace{display:flex;align-items:center;gap:9px;padding:11px 10px;margin:0 0 23px;background:#f8faff;border:1px solid #eef2fb;border-radius:10px;color:#63718a;font-size:12px}
+.chevron{margin-left:auto;color:#9aa6ba}
+
+/* Buttons */
+.full{width:100%;margin-top:18px}
+.export{margin-left:auto;padding:8px 12px}
+.circle-btn{border:1px solid var(--line);background:#fff;width:27px;height:27px;border-radius:50%;color:#7d8ba1}
+.today-btn{margin-left:10px;padding:7px 12px}
+
+/* Empty states */
+.empty{padding:25px 10px;text-align:center;color:#a0acbb;font-size:11px}
+.empty{color:var(--text-secondary)}
+.empty span{font-size:22px;color:#a9bce9}
+.empty p{margin:8px 0}
+.current-cycle-label{color:var(--text-secondary);font-size:inherit;font-weight:600;letter-spacing:normal;text-transform:none}
+.budget-layout>.card,.settings-card,.password-settings,.due-list,.calendar-card,.report-card,.trash-card{border-radius:18px}
+
+.workspace,
+.toolbar,
+.card,
+.metric,
+.settings-card,
+.cycle-settings {
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+
+.card,
+.settings-card,
+.cycle-settings {
+  border-radius: 18px;
+}
+
+.metric:hover {
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--border));
+  box-shadow: 0 12px 28px rgb(46 57 72 / 9%);
+}
+
+.circle-btn,
+.outline-btn,
+.danger-btn,
+.table-action,
+.table-delete {
+  transition: color .16s ease, background .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.circle-btn:hover {
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
+  background: var(--surface-hover);
+  color: var(--primary);
+}
+
+.calendar-day-button:focus-visible,
+.auth-mode-switch button:focus-visible,
+.password-visibility:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 38%, transparent);
+  outline-offset: 2px;
+}

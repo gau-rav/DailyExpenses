@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
+import { ArrowRight, MoreHorizontal, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { categories, categoryMeta, formatDate, money } from '../utils/appData'
 
@@ -34,12 +35,12 @@ export function ExpenseRow({ expense, compact, onEdit }) {
       <div className="expense-icon" style={{ background: `${categoryMeta[expense.category]?.[0]}1c`, color: categoryMeta[expense.category]?.[0] }}>{categoryMeta[expense.category]?.[1]}</div>
       <div><strong>{expense.title}</strong><span><Category value={expense.category} /> <b>·</b> {formatDate(expense.dueDate)}</span></div>
     </div>
-    <div className="expense-side"><strong>{money(expense.amount)}</strong>{!compact && <Status value={expense.status} />}<button className="row-more" onClick={() => onEdit(expense)}>•••</button></div>
+    <div className="expense-side"><strong>{money(expense.amount)}</strong>{!compact && <Status value={expense.status} />}<button className="row-more" aria-label={`Edit ${expense.title}`} onClick={() => onEdit(expense)}><MoreHorizontal size={18} aria-hidden="true" /></button></div>
   </div>
 }
 
 export function Empty({ text }) {
-  return <div className="empty"><span>✦</span><p>{text}</p></div>
+  return <div className="empty"><span><Sparkles size={22} aria-hidden="true" /></span><p>{text}</p></div>
 }
 
 export function DashboardEmpty({ Icon, title, detail, action, onClick }) {
@@ -47,7 +48,7 @@ export function DashboardEmpty({ Icon, title, detail, action, onClick }) {
     <span className="dashboard-empty-icon"><Icon size={23} strokeWidth={1.8} aria-hidden="true" /></span>
     <strong>{title}</strong>
     <p>{detail}</p>
-    {action && <button className="text-btn" onClick={onClick}>{action} <span aria-hidden="true">→</span></button>}
+    {action && <button className="text-btn" onClick={onClick}>{action} <ArrowRight size={14} aria-hidden="true" /></button>}
   </div>
 }
 
@@ -76,7 +77,7 @@ export function MoreMenu({ label, items }) {
   }, [open])
 
   return <div className="dots-menu" ref={menuRef}>
-    <button ref={buttonRef} type="button" className="dots" aria-label={`${label} actions`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(value => !value)}>•••</button>
+    <button ref={buttonRef} type="button" className="dots" aria-label={`${label} actions`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(value => !value)}><MoreHorizontal size={18} aria-hidden="true" /></button>
     {open && <div className="dots-menu-popover" role="menu">{items.map(item => <button key={item.label} type="button" role="menuitem" onClick={() => { setOpen(false); item.onSelect() }}>{item.label}</button>)}</div>}
   </div>
 }

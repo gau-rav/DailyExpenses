@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import { categories, today } from '../../utils/appData'
+
 export default function ExpenseModal({ expense, onClose, onSave }) {
   const [data, setData] = useState(expense || {
     title: '',

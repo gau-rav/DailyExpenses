@@ -13,6 +13,7 @@ dist
 dist-ssr
 *.local
 .env
+.codex*
 data/
 .claude*
 # Editor directories and files

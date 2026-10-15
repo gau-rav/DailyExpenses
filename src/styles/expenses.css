@@ -37,3 +37,50 @@ td strong{color:#3e4d66;font-size:11px}
 
 /* Expense row */
 .expense-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-top:1px solid #f0f2f6;gap:10px}
+
+/* Keep the desktop toolbar controls in one clean row when space allows. */
+.table-card>.toolbar{display:flex;position:static;z-index:auto;align-items:center;gap:9px;padding:17px;border:0;border-bottom:1px solid var(--border);border-radius:0;background:var(--surface)}
+.table-card>.toolbar .search{flex:1 1 235px;width:auto;min-width:180px}
+.table-card>.toolbar .expense-filters{display:flex;flex:1 1 520px;min-width:0;flex-wrap:wrap;align-items:center;gap:8px}
+.table-card>.toolbar .expense-filters select{flex:1 1 120px;min-width:110px}
+.table-card>.toolbar .expense-filters .export{flex:0 0 auto;margin-left:0}
+.expense-search-row{display:contents}
+.mobile-filter-toggle,.mobile-filter-heading,.expense-filter-backdrop,.mobile-select-all{display:none}
+.expenses-load-more,.expenses-end-message{margin:0;padding:16px 12px;color:var(--text-secondary);font-size:12px;text-align:center}
+.expenses-load-more{min-height:48px}
+.expenses-end-message{border-top:1px solid var(--border)}
+
+/* Expenses table */
+.table-card{overflow:visible}
+.table-card,.table-wrap,.settings-card{background:var(--surface)}
+.bulk-bar{padding:10px 18px;background:#f1f5ff;display:flex;justify-content:space-between;align-items:center;color:#5a74c9;font-size:11px}
+.bulk-bar{background:var(--surface-hover);color:var(--primary-dark)}
+.bulk-bar button{border:0;background:none;color:#e35f6b;font-weight:600;font-size:11px}
+.table-wrap{overflow:auto}
+table{border-collapse:collapse;width:100%;font-size:11px;min-width:820px}
+th{text-align:left;background:#fbfcfe;color:#9ca8b8;text-transform:uppercase;letter-spacing:.6px;font-size:9px;padding:12px 16px}
+th{background:var(--surface-hover);color:var(--text-secondary)}
+td{padding:13px 16px;border-top:1px solid #f0f2f6;color:#7e8a9c}
+td{border-color:var(--border);color:var(--text-secondary)}
+td strong{color:#3e4d66;font-size:11px}
+td strong,.amount-cell{color:var(--text-primary)}
+.table-expense{gap:9px}
+.table-expense .expense-icon{width:27px;height:27px;font-size:12px}
+.align-right{text-align:right}
+.amount-cell{font-weight:600;color:#3e4d66}
+.table-action,.table-delete{border:0;background:none;color:#7290dd;font-size:10px}
+.table-delete{color:#c0c8d4;font-size:18px}
+.table-wrap tbody tr:has(.status-due-today){border-left:3px solid #e49a3b}
+.table-card .table-wrap tbody tr:has(.status-due-today){border-left-color:#e49a3b}
+
+/* Theme overrides */
+.current-cycle-label{color:var(--text-secondary);font-size:inherit;font-weight:600;letter-spacing:normal;text-transform:none}
+.expense-main b{color:var(--text-muted)}
+.status-paid{background:#e8f7f0;color:#087a57}
+.status-due-today{background:var(--accent-light);color:#9b5a1c}
+.status-upcoming{background:#e5f3f1;color:var(--primary-dark)}
+.status-overdue{background:#fff0ef;color:#c23d35}
+
+.table-wrap tbody tr:hover td {
+  background: color-mix(in srgb, var(--surface-hover) 60%, transparent);
+}

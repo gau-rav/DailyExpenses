@@ -21,7 +21,8 @@
 .budget-input input{border:0;outline:0;width:75px;padding:8px 4px;color:#42526d;font-weight:600}
 
 /* Budget settings */
-.budget-settings{max-width:720px;margin-top:18px;padding:22px}
+.budget-settings{max-width:720px;margin-top:0;padding:22px}
+.budget-layout>.report-card{padding:22px}
 .budget-settings>.section-head{align-items:center}
 .budget-settings>.section-head>svg{flex:none;color:var(--primary)}
 
@@ -29,3 +30,7 @@
 .cycle-settings{max-width:720px;margin-bottom:18px;padding:22px}
 .cycle-settings>.section-head{align-items:center}
 .cycle-settings>.section-head>svg{flex:none;color:var(--primary)}
+
+/* Budget settings */
+.budget-layout>.budget-settings{background:linear-gradient(145deg,color-mix(in srgb,var(--surface) 91%,#36a788 9%),var(--surface) 82%)}
+.budget-layout>.report-card{background:linear-gradient(145deg,color-mix(in srgb,var(--surface) 91%,#d88950 9%),var(--surface) 82%)}

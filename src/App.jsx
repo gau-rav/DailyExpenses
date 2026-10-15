@@ -1,19 +1,6 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { CalendarDays, Plus } from 'lucide-react'
+﻿import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { Bell, CalendarDays, ChartNoAxesCombined, Clock3, House, Plus, ReceiptText, Settings, Sparkles, Trash2 } from 'lucide-react'
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import './styles/variables.css'
-import './styles/reset.css'
-import './styles/typography.css'
-import './styles/ui-kit.css'
-import './styles/dashboard.css'
-import './styles/calendar.css'
-import './styles/expenses.css'
-import './styles/budget.css'
-import './styles/modals.css'
-import './styles/navigation.css'
-import './styles/responsive.css'
-import './styles/app-shell.css'
-import './styles/page-loading.css'
 import { addExpense, DATA_MODE, deleteExpense as deleteRemoteExpense, fetchDeletedExpenses, fetchExpenses, getLastExpensesSource, isApiConfigured, purgeExpense, readExpenseCache, restoreExpense as restoreRemoteExpense, syncQueuedActions, updateExpense, writeExpenseCache } from './api/expensesApi'
 import { categories, seedExpenses, defaultBudgets, today, dateOffset, getMonthlyCycleRange, cycleRangeLabel, money } from './utils/appData'
 import PwaInstallButton from './components/PwaInstallButton'
@@ -315,10 +302,13 @@ function App() {
         <img className="brand-mark" src="/logo.jpg" alt="" />
         <div><strong>PaisaWise</strong><span>Track every paisa wisely.</span></div>
       </div>
-      <nav>{primaryNavigation.map(({ id, label, icon, path }) => <NavLink key={id} to={path} end={id === 'dashboard'} className={({ isActive }) => isActive ? 'active' : ''}><span className="nav-icon">{id === 'calendar' ? <CalendarDays size={18} strokeWidth={1.8} aria-hidden="true" /> : icon}</span>{label}{id === 'due' && dueToday.length > 0 && <b className="nav-count">{dueToday.length}</b>}</NavLink>)}</nav>
+      <nav>{primaryNavigation.map(({ id, label, path }) => {
+        const Icon = { dashboard: House, expenses: ReceiptText, due: Clock3, calendar: CalendarDays, budgets: ChartNoAxesCombined, trash: Trash2 }[id]
+        return <NavLink key={id} to={path} end={id === 'dashboard'} className={({ isActive }) => isActive ? 'active' : ''}><span className="nav-icon"><Icon size={18} strokeWidth={1.8} aria-hidden="true" /></span>{label}{id === 'due' && dueToday.length > 0 && <b className="nav-count">{dueToday.length}</b>}</NavLink>
+      })}</nav>
       <div className="sidebar-bottom">
-        <NavLink to={pagePaths.settings} className={({ isActive }) => isActive ? 'active' : ''}><span className="nav-icon">⚙</span>Settings</NavLink>
-        <div className="upgrade"><span className="spark">✦</span><div><strong>Make every rupee count</strong><small>You're doing great this month.</small></div></div>
+        <NavLink to={pagePaths.settings} className={({ isActive }) => isActive ? 'active' : ''}><span className="nav-icon"><Settings size={18} strokeWidth={1.8} aria-hidden="true" /></span>Settings</NavLink>
+        <div className="upgrade"><span className="spark"><Sparkles size={20} aria-hidden="true" /></span><div><strong>Make every rupee count</strong><small>You're doing great this month.</small></div></div>
       </div>
     </aside>
     <main className="main">
@@ -327,7 +317,7 @@ function App() {
         <div className="breadcrumb"><span>Workspace</span><b>/</b><strong>{routeLabels[page] || 'Overview'}</strong></div>
         <div className="top-actions">
           <span className={`connection-status ${apiStatus}`}><i></i>{DATA_MODE === 'local' ? 'Local file' : apiStatus === 'connected' ? 'Synced' : apiStatus === 'connecting' ? 'Connecting' : 'Offline cache'}</span>
-          <button className="icon-btn" aria-label="Notifications" onClick={() => notify(dueToday.length ? `${dueToday.length} expense(s) due today` : 'You are all caught up')}>♧<i></i></button>
+          <button className="icon-btn" aria-label="Notifications" onClick={() => notify(dueToday.length ? `${dueToday.length} expense(s) due today` : 'You are all caught up')}><Bell size={19} aria-hidden="true" /><i></i></button>
           <div className="profile-menu">
             <button className="avatar avatar-top" aria-label={`Account: ${profileName}`} aria-expanded={profileOpen} aria-haspopup="menu" onClick={() => setProfileOpen(open => !open)}>{profileInitials}</button>
             {profileOpen && <div className="profile-dropdown" role="menu"><strong>{profileName}</strong><span>{authUser.email}</span><button className="profile-logout" role="menuitem" onClick={logout}>Log out</button></div>}
