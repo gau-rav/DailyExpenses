@@ -329,11 +329,6 @@
 .split-summary.success strong {
   color: #22c55e;
 }
-  color: #42536e;
-  outline: 0;
-  font-size: 11px;
-  background: #fff;
-}
 
 .split-payment-row:focus-within {
   border-color: var(--primary);

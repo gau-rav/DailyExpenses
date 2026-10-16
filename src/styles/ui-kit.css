@@ -115,7 +115,7 @@
 .expense-icon{width:33px;height:33px;border-radius:9px;display:grid;place-items:center;flex:none;font-size:15px}
 
 /* Status badges */
-.status{x
+.status {
   display:inline-flex;
   align-items:center;
   gap:5px;

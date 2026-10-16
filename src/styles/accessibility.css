@@ -36,10 +36,14 @@
 
 /* ===== Reduced Motion ===== */
 @media (prefers-reduced-motion: reduce) {
-  .status-swag,
-  @keyframes status-swag {
+  .status-swag {
     animation: none;
   }
+}
+
+@keyframes status-swag {
+  0%, 100% { transform: translateY(-50%) scale(1); opacity: 0.6; }
+  50% { transform: translateY(-50%) scale(1.3); opacity: 1; }
 }
 
 /* ===== Focus Management ===== */
@@ -97,7 +101,7 @@ button.table-delete {
 .role-dialog { role: dialog; }
 .role-modal { role: modal; }
 .role-search { role: search; }
-.role="search" input {
+input[role="search"] {
   padding-left: 32px;
 }
 
