@@ -316,7 +316,20 @@ function App() {
         <div className="mobile-brand"><img className="brand-mark" src="/logo.jpg" alt="" /><strong>PaisaWise</strong></div>
         <div className="breadcrumb"><span>Workspace</span><b>/</b><strong>{routeLabels[page] || 'Overview'}</strong></div>
         <div className="top-actions">
-          <span className={`connection-status ${apiStatus}`}><i></i>{DATA_MODE === 'local' ? 'Local file' : apiStatus === 'connected' ? 'Synced' : apiStatus === 'connecting' ? 'Connecting' : 'Offline cache'}</span>
+          <button className={`connection-status ${apiStatus} sync-indicator`} title="Sync status" onClick={() => {
+            if (apiStatus === 'offline' || apiStatus === 'connecting') {
+              syncQueuedActions().then(() => {
+                syncExpenses()
+                notify('Forced sync completed')
+              })
+            }
+          }}>
+            <i></i>
+            {DATA_MODE === 'local' ? 'Local file' : apiStatus === 'connected' ? 'Synced' : apiStatus === 'connecting' ? 'Connecting…' : 'Offline'}
+            {apiStatus === 'offline' && (
+              <span className="sync-retry" aria-label="Try again">⟳</span>
+            )}
+          </button>
           <button className="icon-btn" aria-label="Notifications" onClick={() => notify(dueToday.length ? `${dueToday.length} expense(s) due today` : 'You are all caught up')}><Bell size={19} aria-hidden="true" /><i></i></button>
           <div className="profile-menu">
             <button className="avatar avatar-top" aria-label={`Account: ${profileName}`} aria-expanded={profileOpen} aria-haspopup="menu" onClick={() => setProfileOpen(open => !open)}>{profileInitials}</button>
