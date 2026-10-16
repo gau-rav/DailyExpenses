@@ -75,9 +75,7 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible,
-button.table-action,
-button.table-delete {
+textarea:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }

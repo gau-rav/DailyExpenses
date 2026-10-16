@@ -7,9 +7,25 @@
 .toolbar .expense-filters .export{flex:0 0 auto;margin-left:0}
 .toolbar{border-color:var(--line)}
 
-/* Search */
-.search input,.toolbar select{border:0;outline:0;color:#647289;font-size:11px;background:#fff;min-width:0}
-.search input{width:100%;padding:10px 0}
+/* Search and Filters */
+.search input {border:0;outline:0;color:var(--text-primary);font-size:11px;background:transparent;width:100%;padding:10px 0}
+.toolbar select, .expense-filters select {
+  flex: 1 1 120px;
+  min-width: 110px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 11px;
+  outline: 0;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.toolbar select:focus, .expense-filters select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
+}
 
 /* Toolbar export */
 .export{margin-left:auto;padding:8px 12px}
@@ -68,8 +84,26 @@ td strong,.amount-cell{color:var(--text-primary)}
 .table-expense .expense-icon{width:27px;height:27px;font-size:12px}
 .align-right{text-align:right}
 .amount-cell{font-weight:600;color:#3e4d66}
-.table-action,.table-delete{border:0;background:none;color:#7290dd;font-size:10px}
-.table-delete{color:#c0c8d4;font-size:18px}
+.table-action, .table-delete {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #7290dd;
+  font-size: 10px;
+  cursor: pointer;
+}
+.table-delete {
+  color: #c0c8d4;
+  font-size: 18px;
+}
+.table-action:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+.table-delete:hover {
+  color: #ef4444;
+}
 .table-wrap tbody tr:has(.status-due-today){border-left:3px solid #e49a3b}
 .table-card .table-wrap tbody tr:has(.status-due-today){border-left-color:#e49a3b}
 

@@ -1,5 +1,5 @@
 ﻿import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { Bell, CalendarDays, ChartNoAxesCombined, Clock3, House, Plus, ReceiptText, Settings, Sparkles, Trash2 } from 'lucide-react'
+import { CalendarDays, ChartNoAxesCombined, Clock3, House, Plus, ReceiptText, Settings, Sparkles, Trash2 } from 'lucide-react'
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { addExpense, DATA_MODE, deleteExpense as deleteRemoteExpense, fetchDeletedExpenses, fetchExpenses, getLastExpensesSource, isApiConfigured, purgeExpense, readExpenseCache, restoreExpense as restoreRemoteExpense, syncQueuedActions, updateExpense, writeExpenseCache } from './api/expensesApi'
 import { categories, seedExpenses, defaultBudgets, today, dateOffset, getMonthlyCycleRange, cycleRangeLabel, money } from './utils/appData'
@@ -330,7 +330,13 @@ function App() {
               <span className="sync-retry" aria-label="Try again">⟳</span>
             )}
           </button>
-          <button className="icon-btn" aria-label="Notifications" onClick={() => notify(dueToday.length ? `${dueToday.length} expense(s) due today` : 'You are all caught up')}><Bell size={19} aria-hidden="true" /><i></i></button>
+          <button className="icon-btn" aria-label="Notifications" onClick={() => notify(dueToday.length ? `${dueToday.length} expense(s) due today` : 'You are all caught up')}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <i></i>
+          </button>
           <div className="profile-menu">
             <button className="avatar avatar-top" aria-label={`Account: ${profileName}`} aria-expanded={profileOpen} aria-haspopup="menu" onClick={() => setProfileOpen(open => !open)}>{profileInitials}</button>
             {profileOpen && <div className="profile-dropdown" role="menu"><strong>{profileName}</strong><span>{authUser.email}</span><button className="profile-logout" role="menuitem" onClick={logout}>Log out</button></div>}
