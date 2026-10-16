@@ -1,21 +1,35 @@
 import { useEffect, useState } from 'react'
 import { categories, today, money } from '../../utils/appData'
 
-const getInitialData = (item) => ({
-  id: item?.id,
-  title: item?.title || '',
-  amount: item?.amount !== undefined && item?.amount !== null ? item.amount : '',
-  category: item?.category || 'Grocery',
-  payment: item?.payment || 'Card',
-  date: item?.date ? String(item.date).slice(0, 10) : today,
-  dueDate: (item?.dueDate || item?.date || today).slice(0, 10),
-  notes: item?.notes || '',
-  recurring: Boolean(item?.recurring),
-  status: item?.status || 'Paid',
-  splitExpense: item?.splitExpense && typeof item.splitExpense === 'object'
-    ? { enabled: Boolean(item.splitExpense.enabled), payments: Array.isArray(item.splitExpense.payments) ? item.splitExpense.payments : [] }
-    : { enabled: false, payments: [] }
-})
+const getInitialData = (item) => {
+  const rawPayments = Array.isArray(item?.splitPayments)
+    ? item.splitPayments
+    : (Array.isArray(item?.splitExpense?.payments) ? item.splitExpense.payments : [])
+
+  const payments = rawPayments.map(p => ({
+    name: p?.name || '',
+    amount: p?.amount !== undefined && p?.amount !== null ? p.amount : ''
+  }))
+
+  const isEnabled = Boolean(item?.splitExpense?.enabled ?? (payments.length > 0))
+
+  return {
+    id: item?.id,
+    title: item?.title || '',
+    amount: item?.amount !== undefined && item?.amount !== null ? item.amount : '',
+    category: item?.category || 'Grocery',
+    payment: item?.payment || 'Card',
+    date: item?.date ? String(item.date).slice(0, 10) : today,
+    dueDate: (item?.dueDate || item?.date || today).slice(0, 10),
+    notes: item?.notes || '',
+    recurring: Boolean(item?.recurring),
+    status: item?.status || 'Paid',
+    splitExpense: {
+      enabled: isEnabled,
+      payments: payments.length > 0 ? payments : (isEnabled ? [{ name: '', amount: '' }] : [])
+    }
+  }
+}
 
 export default function ExpenseModal({ expense, onClose, onSave }) {
   const [data, setData] = useState(() => getInitialData(expense))
@@ -36,16 +50,25 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
     if (!data.dueDate) next.dueDate = 'Choose a due date'
     if (Object.keys(next).length) return setErrors(next)
 
+    const isSplit = Boolean(data.splitExpense?.enabled)
+    const validPayments = isSplit
+      ? (data.splitExpense.payments || []).map(p => ({
+          name: String(p.name || '').trim(),
+          amount: Number(p.amount || 0)
+        })).filter(p => p.name || p.amount > 0)
+      : []
+
     const submitData = {
       ...data,
       title: String(data.title).trim(),
       amount: Number(data.amount),
       status: data.status || 'Paid',
-      dueDate: data.dueDate || data.date || today
-    }
-
-    if (data.splitExpense?.enabled) {
-      submitData.splitPayments = data.splitExpense.payments
+      dueDate: data.dueDate || data.date || today,
+      splitExpense: {
+        enabled: isSplit,
+        payments: validPayments
+      },
+      splitPayments: validPayments
     }
 
     onSave(submitData)
@@ -163,7 +186,12 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
               <input
                 type="checkbox"
                 checked={Boolean(data.splitExpense?.enabled)}
-                onChange={e => update('splitExpense', { ...(data.splitExpense || { payments: [] }), enabled: e.target.checked })}
+                onChange={e => {
+                  const enabled = e.target.checked
+                  const currentPayments = data.splitExpense?.payments || []
+                  const payments = enabled && currentPayments.length === 0 ? [{ name: '', amount: '' }] : currentPayments
+                  update('splitExpense', { enabled, payments })
+                }}
               />
               Split this expense among multiple payers
             </label>
@@ -224,16 +252,17 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
                 {/* Split payment summary */}
                 {(() => {
                   const paid = parseFloat((data.splitExpense.payments || []).reduce((sum, p) => sum + parseFloat(p.amount || 0), 0))
-                  const remaining = Number(data.amount || 0) - paid
+                  const total = parseFloat(data.amount || 0)
+                  const remaining = total - paid
                   return (
                     <div className="split-summary">
                       <div className="split-row">
                         <span>Total split amount</span>
                         <strong>{money(paid)}</strong>
                       </div>
-                      <div className={`split-row ${remaining > 0 ? '' : 'success'}`}>
-                        <span>{remaining > 0 ? 'Remaining' : 'Fully paid'}</span>
-                        <strong>{remaining > 0 ? money(remaining) : money(0)}</strong>
+                      <div className={`split-row ${remaining <= 0 ? 'success' : ''}`}>
+                        <span>{remaining <= 0 ? 'Fully allocated' : 'Remaining'}</span>
+                        <strong>{money(remaining > 0 ? remaining : 0)}</strong>
                       </div>
                     </div>
                   )
