@@ -55,12 +55,34 @@ function dateOnly(value) {
 }
 
 function normalizeExpense(expense) {
+  const rawPayments = Array.isArray(expense.splitPayments)
+    ? expense.splitPayments
+    : (Array.isArray(expense.splitExpense?.payments) ? expense.splitExpense.payments : [])
+
+  const splitPayments = rawPayments.map(p => ({
+    name: String(p?.name || '').trim(),
+    amount: Number(p?.amount || 0),
+  })).filter(p => p.name || p.amount > 0)
+
+  const isSplitEnabled = Boolean(
+    expense.splitExpense?.enabled !== undefined
+      ? expense.splitExpense.enabled
+      : (splitPayments.length > 0)
+  )
+
+  const splitExpense = {
+    enabled: isSplitEnabled,
+    payments: splitPayments,
+  }
+
   return {
     ...expense,
     date: dateOnly(expense.date),
     dueDate: dateOnly(expense.dueDate),
     amount: Number(expense.amount || 0),
     recurring: expense.recurring === true || String(expense.recurring).toLowerCase() === 'true',
+    splitExpense,
+    splitPayments,
   }
 }
 

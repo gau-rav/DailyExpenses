@@ -316,7 +316,8 @@ function normalizeExpense(expense) {
 }
 
 function publicExpense(expense) {
-  const { _id, user_id, ...publicValue } = expense
+  const normalized = normalizeExpense(expense)
+  const { _id, user_id, ...publicValue } = normalized
   return publicValue
 }
 
