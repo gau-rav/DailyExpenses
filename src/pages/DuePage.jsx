@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { PageTitle, ExpenseRow, Empty } from '../components/PageComponents'
 import { todayDay, todayMonth, money, dateOffset } from '../utils/appData'
+import { generateDuePageFilters } from '../utils/filterUtils'
 
 export default function DuePage({ expenses, selected, setSelected, onBulkDelete, onEdit, onMarkAsPaid, budgets, monthlyBudgetUsed, monthSpend }) {
   const allSelected = expenses.length > 0 && expenses.every(expense => selected.includes(expense.id))
   const [isProcessingBatch, setIsProcessingBatch] = useState(false)
+  const [activeFilter, setActiveFilter] = useState('all')
+
+  // Generate filters based on expenses
+  const filters = generateDuePageFilters(expenses)
 
   // Calculate totals
   const totalDueAmount = expenses.reduce((total, expense) => total + expense.amount, 0)
@@ -90,6 +95,29 @@ export default function DuePage({ expenses, selected, setSelected, onBulkDelete,
         </div>
       )}
     />
+
+    {/* Smart filter bar */}
+    {expenses.length > 0 && (
+      <div className="smart-filter-bar">
+        <button
+          className={`smart-filter-chip ${activeFilter === 'all' ? 'active' : ''}`}
+          onClick={() => setActiveFilter('all')}
+        >
+          <span className="filter-emoji">📋</span>
+          All due ({expenses.length})
+        </button>
+        {filters.map(filter => (
+          <button
+            key={filter.id}
+            className={`smart-filter-chip ${activeFilter === filter.id ? 'active' : ''}`}
+            onClick={() => setActiveFilter(filter.id)}
+          >
+            <span className="filter-emoji">{filter.icon}</span>
+            {filter.label}
+          </button>
+        ))}
+      </div>
+    )}
 
     <div className="due-banner">
       <div className="calendar-small">{todayDay}<span>{todayMonth}</span></div>

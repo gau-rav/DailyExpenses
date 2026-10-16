@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, MoreHorizontal, Sparkles, Clock3, TrendingUp, Star, CalendarDays, AlertTriangle, Filter } from 'lucide-react'
+import { ArrowRight, MoreHorizontal, Sparkles, Clock3, TrendingUp, Star, CalendarDays, AlertTriangle, Filter, RefreshCw, Wifi, WifiOff, Cloud, Check, X } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { categories, categoryMeta, formatDate, money } from '../utils/appData'
+import { getSyncMessage, getSyncStatus } from '../utils/syncUtils'
 
 // Quick Filter Bar Component
 export function QuickFilterBar({ filters, activeFilter, onFilterChange }) {
@@ -16,6 +17,24 @@ export function QuickFilterBar({ filters, activeFilter, onFilterChange }) {
       </button>
     ))}
   </div>
+}
+
+// Page Actions Bar (with filters on right side)
+export function PageActionsBar({ title, subtitle, action, filters, activeFilter, onFilterChange }) {
+  return (
+    <div className="page-actions">
+      <div className="page-actions-content">
+        <div className="page-actions-info">
+          <h2>{title}</h2>
+          {subtitle && <p>{subtitle}</p>}
+        </div>
+        {action && <div className="page-actions-action">{action}</div>}
+      </div>
+      {filters && filters.length > 0 && (
+        <QuickFilterBar filters={filters} activeFilter={activeFilter} onFilterChange={onFilterChange} />
+      )}
+    </div>
+  )
 }
 
 // PageTitle - Simple header component

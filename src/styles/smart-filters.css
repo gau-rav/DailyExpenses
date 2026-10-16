@@ -1,0 +1,304 @@
+/* Smart Filter Bars for Pages */
+
+/* Page Actions Bar (top of page with filters) */
+.page-actions {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-actions-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.page-actions-info h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.page-actions-info p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.page-actions-action {
+  margin-top: 4px;
+}
+
+/* Smart filter bar variations */
+.smart-filter-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  background: var(--surface-hover);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.smart-filter-bar.compact {
+  padding: 4px 8px;
+}
+
+.smart-filter-bar.inline {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+/* Smart filter chips */
+.smart-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.smart-filter-chip:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.smart-filter-chip.active {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.smart-filter-chip .filter-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.smart-filter-chip .filter-badge {
+  margin-left: 4px;
+  padding: 2px 6px;
+  background: var(--primary);
+  color: white;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 20px;
+  text-align: center;
+}
+
+.smart-filter-chip .filter-emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Budget filter specific */
+.smart-filter-chip.budget-warning {
+  background: linear-gradient(135deg, #fff0dc, #fee2e2);
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.smart-filter-chip.budget-warning:hover {
+  background: #fff0dc;
+  border-color: #f4a261;
+}
+
+/* Danger filter */
+.smart-filter-chip.danger {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.smart-filter-chip.danger:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+/* Success filter */
+.smart-filter-chip.success {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.smart-filter-chip.success:hover {
+  background: #dcfce7;
+  border-color: #10b981;
+}
+
+/* Category filter colors */
+.smart-filter-chip.category-food {
+  background: color-mix(in srgb, #f4a261, transparent 70%);
+  border-color: #f4a261;
+  color: #bf6a1b;
+}
+
+.smart-filter-chip.category-transport {
+  background: color-mix(in srgb, #0d7377, transparent 70%);
+  border-color: #0d7377;
+  color: #0d7377;
+}
+
+.smart-filter-chip.category-grocery {
+  background: color-mix(in srgb, #42a879, transparent 70%);
+  border-color: #42a879;
+  color: #42a879;
+}
+
+.smart-filter-chip.category-bills {
+  background: color-mix(in srgb, #c67837, transparent 70%);
+  border-color: #c67837;
+  color: #c67837;
+}
+
+.smart-filter-chip.category-shopping {
+  background: color-mix(in srgb, #d88950, transparent 70%);
+  border-color: #d88950;
+  color: #d88950;
+}
+
+/* Smart filter bar animations */
+@keyframes filterChipPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.smart-filter-chip.pulse {
+  animation: filterChipPulse 0.3s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 720px) {
+  .page-actions {
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+
+  .page-actions-content {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .page-actions-info h2 {
+    font-size: 18px;
+  }
+
+  .smart-filter-bar {
+    overflow-x: auto;
+    padding: 6px 10px;
+  }
+
+  .smart-filter-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .smart-filter-chip {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .smart-filter-chip .filter-badge {
+    font-size: 9px;
+    padding: 1px 4px;
+    min-width: 16px;
+  }
+}
+
+/* Filter toggle for mobile */
+.filter-toggle-mobile {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .filter-toggle-mobile {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    margin-bottom: 8px;
+  }
+
+  .filter-toggle-mobile .filter-icon {
+    font-size: 14px;
+  }
+
+  .filter-dropdown-mobile {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    z-index: 10;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .filter-dropdown-mobile.open {
+    display: block;
+  }
+
+  .smart-filter-bar {
+    display: none;
+  }
+}
+
+/* Budget guidance integrated with filters */
+.filter-budget-guidance {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.filter-budget-guidance .budget-icon {
+  font-size: 14px;
+}
+
+.filter-budget-guidance.success {
+  background: var(--success-light);
+  border-color: var(--success);
+  color: var(--success-dark);
+}
+
+.filter-budget-guidance.warning {
+  background: var(--warning-light);
+  border-color: var(--warning);
+  color: var(--warning-dark);
+}
+
+.filter-budget-guidance.danger {
+  background: var(--danger-light);
+  border-color: var(--danger);
+  color: var(--danger-dark);
+}
