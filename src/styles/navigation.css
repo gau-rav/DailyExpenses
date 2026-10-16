@@ -46,8 +46,33 @@
 .top-actions{display:flex;gap:14px;align-items:center}
 
 /* Icon button */
-.icon-btn{border:0;background:none;color:#7c8ba0;font-size:19px;position:relative}
-.icon-btn i{position:absolute;width:5px;height:5px;border-radius:50%;background:#fa6d7a;top:1px;right:1px}
+.icon-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.icon-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.icon-btn i {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fa6d7a;
+  top: 6px;
+  right: 6px;
+}
 
 /* Mobile bottom nav */
 .mobile-bottom-nav{display:none}
