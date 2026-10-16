@@ -238,32 +238,38 @@ export async function createExpense(userId, input) {
   return publicExpense(expense)
 }
 
+function idQuery(userId, id) {
+  const ids = [id, String(id)]
+  if (Number.isInteger(Number(id))) ids.push(Number(id))
+  return { user_id: userId, id: { $in: ids } }
+}
+
 export async function updateExpense(userId, input) {
   if (!input?.id) throw new Error('Expense id is required')
   if (!String(input.title || '').trim()) throw new Error('Expense title is required')
   if (!Number.isFinite(Number(input.amount)) || Number(input.amount) <= 0) throw new Error('Expense amount must be greater than zero')
   if (!input.date || !input.dueDate) throw new Error('Expense date and due date are required')
   const updated = normalizeExpense({ ...input, user_id: userId, updatedAt: new Date().toISOString() })
-  const result = await expenses().findOneAndUpdate({ user_id: userId, id: input.id }, { $set: updated }, { returnDocument: 'after' })
+  const result = await expenses().findOneAndUpdate(idQuery(userId, input.id), { $set: updated }, { returnDocument: 'after' })
   if (!result) throw new Error('Expense not found')
   return publicExpense(result)
 }
 
 export async function deleteExpense(userId, id) {
   const now = new Date().toISOString()
-  const result = await expenses().findOneAndUpdate({ user_id: userId, id }, { $set: { deletedAt: now, updatedAt: now } }, { returnDocument: 'after' })
+  const result = await expenses().findOneAndUpdate(idQuery(userId, id), { $set: { deletedAt: now, updatedAt: now } }, { returnDocument: 'after' })
   if (!result) throw new Error('Expense not found')
   return publicExpense(result)
 }
 
 export async function restoreExpense(userId, id) {
-  const result = await expenses().findOneAndUpdate({ user_id: userId, id }, { $set: { deletedAt: '', updatedAt: new Date().toISOString() } }, { returnDocument: 'after' })
+  const result = await expenses().findOneAndUpdate(idQuery(userId, id), { $set: { deletedAt: '', updatedAt: new Date().toISOString() } }, { returnDocument: 'after' })
   if (!result) throw new Error('Expense not found')
   return publicExpense(result)
 }
 
 export async function purgeExpense(userId, id) {
-  const result = await expenses().deleteOne({ user_id: userId, id })
+  const result = await expenses().deleteOne(idQuery(userId, id))
   if (!result.deletedCount) throw new Error('Expense not found')
   return { id, deleted: true, permanent: true }
 }

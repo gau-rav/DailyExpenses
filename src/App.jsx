@@ -256,11 +256,17 @@ function App() {
   }
   const openAdd = () => { setEditing(null); setFormOpen(true) }; const openEdit = (e) => { setEditing(e); setFormOpen(true) }
   const saveExpense = async (data) => {
-    const payload = { ...data, amount: Number(data.amount), id: editing?.id || crypto.randomUUID() }
+    const payload = { ...data, amount: Number(data.amount), id: editing?.id || data.id || crypto.randomUUID() }
     const wasEditing = Boolean(editing)
-    setExpenses(current => wasEditing ? current.map(e => e.id === payload.id ? payload : e) : [payload, ...current])
+    setExpenses(current => wasEditing ? current.map(e => String(e.id) === String(payload.id) ? { ...e, ...payload } : e) : [payload, ...current])
     setFormOpen(false); setEditing(null)
-    try { const saved = wasEditing ? await updateExpense(payload) : await addExpense(payload); setExpenses(current => wasEditing ? current.map(e => e.id === saved.id ? saved : e) : current.map(e => e.id === payload.id ? saved : e)); setApiStatus('connected'); notify(wasEditing ? 'Expense updated' : 'Expense added') }
+    try {
+      const saved = wasEditing ? await updateExpense(payload) : await addExpense(payload)
+      if (saved) {
+        setExpenses(current => current.map(e => String(e.id) === String(payload.id) || String(e.id) === String(saved.id) ? { ...payload, ...saved } : e))
+      }
+      setApiStatus('connected'); notify(wasEditing ? 'Expense updated' : 'Expense added')
+    }
     catch { setApiStatus('offline'); notify('Saved locally. It will sync when you reconnect.') }
   }
   const moveToTrash = async (items) => {
@@ -367,7 +373,7 @@ function App() {
       <span className="fab-label">Add expense</span>
       <Plus size={24} strokeWidth={2} aria-hidden="true" />
     </button>
-    {formOpen && <ExpenseModal expense={editing} onClose={() => { setFormOpen(false); setEditing(null) }} onSave={saveExpense} />}
+    {formOpen && <ExpenseModal key={editing?.id || 'new'} expense={editing} onClose={() => { setFormOpen(false); setEditing(null) }} onSave={saveExpense} />}
     {deleteTarget && <DeleteModal target={deleteTarget} onClose={() => setDeleteTarget(null)} onPaid={() => markPaid(deleteTarget.items)} onDelete={() => moveToTrash(deleteTarget.items)} onPostpone={() => { setExpenses(e => e.map(x => deleteTarget.items.some(i => i.id === x.id) ? { ...x, status: 'Upcoming', dueDate: dateOffset(1) } : x)); setDeleteTarget(null); notify('Expense postponed until tomorrow') }} />}
     {toast && <div className="toast">✓ &nbsp;{toast}</div>}
   </div>

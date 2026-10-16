@@ -1,34 +1,50 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { categories, today, money } from '../../utils/appData'
 
+const getInitialData = (item) => ({
+  id: item?.id,
+  title: item?.title || '',
+  amount: item?.amount !== undefined && item?.amount !== null ? item.amount : '',
+  category: item?.category || 'Grocery',
+  payment: item?.payment || 'Card',
+  date: item?.date ? String(item.date).slice(0, 10) : today,
+  dueDate: (item?.dueDate || item?.date || today).slice(0, 10),
+  notes: item?.notes || '',
+  recurring: Boolean(item?.recurring),
+  status: item?.status || 'Paid',
+  splitExpense: item?.splitExpense && typeof item.splitExpense === 'object'
+    ? { enabled: Boolean(item.splitExpense.enabled), payments: Array.isArray(item.splitExpense.payments) ? item.splitExpense.payments : [] }
+    : { enabled: false, payments: [] }
+})
+
 export default function ExpenseModal({ expense, onClose, onSave }) {
-  const [data, setData] = useState(expense || {
-    title: '',
-    amount: '',
-    category: 'Grocery',
-    payment: 'Card',
-    date: today,
-    dueDate: today,
-    notes: '',
-    recurring: false,
-    status: 'Paid',
-    splitExpense: { enabled: false, payments: [] }
-  })
+  const [data, setData] = useState(() => getInitialData(expense))
   const [errors, setErrors] = useState({})
 
-  const update = (k, v) => setData({ ...data, [k]: v })
+  useEffect(() => {
+    setData(getInitialData(expense))
+    setErrors({})
+  }, [expense])
+
+  const update = (k, v) => setData(prev => ({ ...prev, [k]: v }))
 
   const submit = e => {
     e.preventDefault()
     const next = {}
-    if (!data.title.trim()) next.title = 'Enter a title'
+    if (!String(data.title || '').trim()) next.title = 'Enter a title'
     if (!data.amount || Number(data.amount) <= 0) next.amount = 'Enter an amount greater than zero'
     if (!data.dueDate) next.dueDate = 'Choose a due date'
     if (Object.keys(next).length) return setErrors(next)
 
-    const submitData = { ...data, amount: Number(data.amount), status: data.status || 'Paid' }
+    const submitData = {
+      ...data,
+      title: String(data.title).trim(),
+      amount: Number(data.amount),
+      status: data.status || 'Paid',
+      dueDate: data.dueDate || data.date || today
+    }
 
-    if (data.splitExpense.enabled) {
+    if (data.splitExpense?.enabled) {
       submitData.splitPayments = data.splitExpense.payments
     }
 
@@ -146,16 +162,16 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
             <label className="check-label">
               <input
                 type="checkbox"
-                checked={data.splitExpense.enabled}
-                onChange={e => update('splitExpense', { ...data.splitExpense, enabled: e.target.checked })}
+                checked={Boolean(data.splitExpense?.enabled)}
+                onChange={e => update('splitExpense', { ...(data.splitExpense || { payments: [] }), enabled: e.target.checked })}
               />
               Split this expense among multiple payers
             </label>
 
-            {data.splitExpense.enabled && (
+            {data.splitExpense?.enabled && (
               <div className="split-payments" style={{ marginTop: '12px' }}>
                 <small>Add each payer's share</small>
-                {data.splitExpense.payments.map((payment, idx) => (
+                {(data.splitExpense.payments || []).map((payment, idx) => (
                   <div key={idx} className="split-payment-row">
                     <input
                       type="text"
@@ -200,14 +216,14 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
                   className="add-split-btn"
                   onClick={() => update('splitExpense', {
                     ...data.splitExpense,
-                    payments: [...data.splitExpense.payments, { name: '', amount: '' }]
+                    payments: [...(data.splitExpense.payments || []), { name: '', amount: '' }]
                   })}
                 >
                   + Add payer
                 </button>
                 {/* Split payment summary */}
                 {(() => {
-                  const paid = parseFloat(data.splitExpense.payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0))
+                  const paid = parseFloat((data.splitExpense.payments || []).reduce((sum, p) => sum + parseFloat(p.amount || 0), 0))
                   const remaining = Number(data.amount || 0) - paid
                   return (
                     <div className="split-summary">

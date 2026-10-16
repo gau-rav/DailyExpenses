@@ -108,7 +108,7 @@ export default function ExpensesPage({ expenses, query, setQuery, categoryFilter
               <td data-label="Payment">{expense.payment}</td>
               <td data-label="Status"><Status value={expense.status} /></td>
               <td data-label="Amount" className="align-right amount-cell">{money(expense.amount)}</td>
-              <td data-label="Actions"><button className="table-action" aria-label={`Edit ${expense.title}`} onClick={() => onEdit(expense)}>Edit</button><button className="table-delete" aria-label={`Delete ${expense.title}`} onClick={() => onDelete(expense)}>×</button></td>
+              <td data-label="Actions"><button type="button" className="table-action" aria-label={`Edit ${expense.title}`} onClick={() => onEdit(expense)}>Edit</button><button type="button" className="table-delete" aria-label={`Delete ${expense.title}`} onClick={() => onDelete(expense)}>×</button></td>
             </tr>
           })}</tbody>
         </table>
