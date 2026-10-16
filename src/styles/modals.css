@@ -297,6 +297,38 @@
   border: 1px solid #e2e7ef;
   border-radius: 7px;
   padding: 8px;
+}
+
+/* Split payment summary */
+.split-summary {
+  margin-top: 12px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+  border-radius: 8px;
+  border: 1px solid var(--primary);
+}
+
+.split-summary .split-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  margin-bottom: 8px;
+}
+
+.split-summary .split-row:last-child {
+  margin-bottom: 0;
+  color: var(--primary);
+}
+
+.split-summary strong {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.split-summary.success strong {
+  color: #22c55e;
+}
   color: #42536e;
   outline: 0;
   font-size: 11px;

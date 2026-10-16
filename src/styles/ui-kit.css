@@ -115,13 +115,76 @@
 .expense-icon{width:33px;height:33px;border-radius:9px;display:grid;place-items:center;flex:none;font-size:15px}
 
 /* Status badges */
-.status{display:inline-flex;align-items:center;gap:5px;border-radius:5px;padding:4px 7px;font-size:9px;font-weight:600;white-space:nowrap}
+.status{x
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  border-radius:100px;
+  padding:4px 10px;
+  font-size:9px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  white-space:nowrap;
+  box-shadow:0 1px 2px rgba(0,0,0,0.08);
+}
 .status i{width:5px;height:5px;border-radius:50%;background:currentColor}
-.status-paid{background:#e9faf3;color:#27a979}
-.status-due-today{background:#fff4d8;color:#d89b1e}
-.status-upcoming{background:#edf3ff;color:#4f7cff}
-.status-overdue{background:#ffedef;color:#df606b}
-.status-pending{background:#f1f3f7;color:#8995a6}
+
+/* ===== Enhanced Status Badges with Visual Emphasis ===== */
+.status-paid{
+  background:linear-gradient(135deg,#dcfce7 0%,#bbf7d0 100%);
+  color:#15803d;
+  border:1px solid #86efac;
+}
+.status-paid i{background:#22c55e}
+
+.status-due-today{
+  background:linear-gradient(135deg,#ffedd5 0%,#fed7aa 100%);
+  color:#ea580c;
+  border:1px solid #fb923c;
+  box-shadow:0 2px 4px rgba(234,88,12,0.15);
+}
+.status-due-today i{background:#f97316}
+
+.status-upcoming{
+  background:linear-gradient(135deg,#e0f2fe 0%,#bae6fd 100%);
+  color:#0284c7;
+  border:1px solid #7dd3fc;
+  box-shadow:0 1px 2px rgba(2,132,199,0.1);
+}
+.status-upcoming i{background:#38bdf8}
+
+.status-overdue{
+  background:linear-gradient(135deg,#fee2e2 0%,#fecaca 100%);
+  color:#dc2626;
+  border:1px solid #fca5a5;
+  box-shadow:0 2px 4px rgba(220,38,38,0.15);
+}
+.status-overdue::before{
+  content:'';
+  position:absolute;
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+  border-radius:50%;
+  width:6px;height:6px;
+  left:-1px;
+  top:50%;
+  transform:translateY(-50%);
+  animation:status-swag 2s ease-in-out infinite;
+}
+.status-overdue i{background:#ef4444}
+
+@keyframes status-swag{
+  0%,100%{transform:translateY(-50%) scale(1);opacity:0.6}
+  50%{transform:translateY(-50%) scale(1.3);opacity:1}
+}
+
+.status-pending{
+  background:linear-gradient(135deg:#fef3c7 0%,#fde68a 100%);
+  color:#d97706;
+  border:1px solid #fcd34d;
+  box-shadow:0 2px 4px rgba(217,119,6,0.1);
+}
+.status-pending i{background:#f59e0b}
 
 /* Pills */
 .pill-yellow{font:600 10px 'DM Sans';background:#fff3d3;color:#d4931d;border-radius:4px;padding:4px 6px;vertical-align:2px;margin-left:4px}

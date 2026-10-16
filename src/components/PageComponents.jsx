@@ -157,9 +157,11 @@ export function FavoritesCard({ myExpenses }) {
   </div>
 }
 
-// Status - Badge for expense status
+// Status - Enhanced badge with strong visual differentiation
 export function Status({ value }) {
-  return <span className={`status status-${value.toLowerCase().replace(' ', '-')}`}><i></i>{value}</span>
+  const status = value.toLowerCase().replace(' ', '-')
+
+  return <span className={`status status-${status}`}><i></i>{value}</span>
 }
 
 // Category - Category badge

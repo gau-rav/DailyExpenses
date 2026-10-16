@@ -116,14 +116,17 @@ export default function DashboardPage({ firstName, dueToday, overdue, upcoming, 
         />
       </div>
 
-      {/* Today's spending - High urgency */}
+      {/* Today's spending - 50/50 balance */}
       <Metric label="Today's spending" value={money(todaySpend)} note={`${todaySpend ? 'On track' : 'No spending yet'} · ${budgets.daily > 0 ? `${money(budgets.daily - todaySpend)} left` : 'No daily limit'}`} tone="blue" icon={<Clock3 size={20} strokeWidth={2} />} to="/expenses" />
 
-      {/* This month - Medium urgency */}
+      {/* Due today payments - Mirrors today's spending card */}
+      <Metric label="Due today" value={money(dueToday.reduce((total, expense) => total + expense.amount, 0))} note={`${dueToday.length} payment${dueToday.length === 1 ? '' : 's'}`} tone="amber" icon={<AlertTriangle size={20} strokeWidth={2} />} to="/due" />
+
+      {/* This month - 50/50 balance */}
       <Metric label="This month" value={money(monthSpend)} note={`${cycleLabel} · ${budgets.monthly > 0 ? `${Math.round(monthSpend / budgets.monthly * 100)}% used` : 'No limit set'}`} tone="violet" icon={<TrendingUp size={20} strokeWidth={2} />} to="/budgets" />
 
-      {/* Next 7 days - Low urgency */}
-      <Metric label="Upcoming" value={upcoming.length} note={`${money(upcoming.reduce((total, expense) => total + expense.amount, 0))} in next 7 days`} tone="mint" icon={<CalendarDays size={20} strokeWidth={2} />} to="/calendar" />
+      {/* Upcoming - Mirrors this month */}
+      <Metric label="Upcoming" value={money(upcoming.reduce((total, expense) => total + expense.amount, 0))} note={`${upcoming.length} payment${upcoming.length === 1 ? '' : 's'}`} tone="mint" icon={<CalendarDays size={20} strokeWidth={2} />} to="/calendar" />
 
       {/* Influence Card 1 - Best day to spend */}
       <InfluenceCard

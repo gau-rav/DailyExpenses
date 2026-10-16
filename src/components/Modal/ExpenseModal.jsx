@@ -159,7 +159,7 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
                   Split this expense
                 </label>
                 {data.splitExpense.enabled && (
-                  <div className="split-payments">
+                  <>
                     <small>Add each payer's share</small>
                     {data.splitExpense.payments.map((payment, idx) => (
                       <div key={idx} className="split-payment-row">
@@ -211,7 +211,24 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
                     >
                       + Add payer
                     </button>
-                  </div>
+                    {/* Split payment summary */}
+                    {(() => {
+                      const paid = parseFloat(data.splitExpense.payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0))
+                      const remaining = data.amount - paid
+                      return (
+                        <div className="split-summary">
+                          <div className="split-row">
+                            <span>Total split amount</span>
+                            <strong>{money(paid)}</strong>
+                          </div>
+                          <div className={`split-row ${remaining > 0 ? '' : 'success'}`}>
+                            <span>{remaining > 0 ? 'Remaining' : 'Fully paid'}</span>
+                            <strong>{remaining > 0 ? money(remaining) : money(0)}</strong>
+                          </div>
+                        </div>
+                      )
+                    })()}
+                  </>
                 )}
               </>
             ), expanded)}

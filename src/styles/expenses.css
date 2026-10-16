@@ -76,10 +76,107 @@ td strong,.amount-cell{color:var(--text-primary)}
 /* Theme overrides */
 .current-cycle-label{color:var(--text-secondary);font-size:inherit;font-weight:600;letter-spacing:normal;text-transform:none}
 .expense-main b{color:var(--text-muted)}
-.status-paid{background:#e8f7f0;color:#087a57}
-.status-due-today{background:var(--accent-light);color:#9b5a1c}
-.status-upcoming{background:#e5f3f1;color:var(--primary-dark)}
-.status-overdue{background:#fff0ef;color:#c23d35}
+
+/* ===== Enhanced Status Badges with Visual Emphasis ===== */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+/* Overdue - Red swag/urgent */
+.status-overdue {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.15);
+}
+.status-overdue::before {
+  content: '';
+  position: absolute;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-radius: 50%;
+  width: 6px;
+  height: 6px;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: status-swag 2s ease-in-out infinite;
+}
+.status-overdue i {
+  background: #ef4444;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+@keyframes status-swag {
+  0%, 100% { transform: translateY(-50%) scale(1); opacity: 0.6; }
+  50% { transform: translateY(-50%) scale(1.3); opacity: 1; }
+}
+
+/* Pending - Amber/warning */
+.status-pending {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #d97706;
+  border: 1px solid #fcd34d;
+  box-shadow: 0 2px 4px rgba(217, 119, 6, 0.1);
+}
+.status-pending i {
+  background: #f59e0b;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+/* Upcoming - Blue/subtle */
+.status-upcoming {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  color: #0284c7;
+  border: 1px solid #7dd3fc;
+  box-shadow: 0 1px 2px rgba(2, 132, 199, 0.1);
+}
+.status-upcoming i {
+  background: #38bdf8;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+/* Due Today - Orange/urgent */
+.status-due-today {
+  background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+  color: #ea580c;
+  border: 1px solid #fb923c;
+  box-shadow: 0 2px 4px rgba(234, 88, 12, 0.15);
+}
+.status-due-today i {
+  background: #f97316;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+/* Paid - Green/complete */
+.status-paid {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+.status-paid i {
+  background: #22c55e;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
 
 .table-wrap tbody tr:hover td {
   background: color-mix(in srgb, var(--surface-hover) 60%, transparent);
