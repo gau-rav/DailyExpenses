@@ -8,6 +8,7 @@ const PAGE_SIZE = 20
 export default function ExpensesPage({ expenses, query, setQuery, categoryFilter, setCategoryFilter, statusFilter, setStatusFilter, sort, setSort, selected, setSelected, onBulkDelete, onAdd, onEdit, onDelete, exportCsv }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [focusTrapRef, setFocusTrapRef] = useState(null)
   const loadMoreRef = useRef(null)
   const hasMore = visibleCount < expenses.length
   const allSelected = expenses.length > 0 && expenses.every(expense => selected.includes(expense.id))
@@ -53,7 +54,21 @@ export default function ExpensesPage({ expenses, query, setQuery, categoryFilter
         <small>{expenses.length}</small>
       </label>
       {filtersOpen && <button className="expense-filter-backdrop" type="button" aria-label="Close expense filters" onClick={() => setFiltersOpen(false)} />}
-      <div className="expense-filters" id="expense-filters" role={filtersOpen ? 'dialog' : undefined} aria-modal={filtersOpen || undefined} aria-label="Expense filters">
+      <div
+        ref={filterRef => setFocusTrapRef(filterRef)}
+        className="expense-filters"
+        id="expense-filters"
+        role={filtersOpen ? 'dialog' : undefined}
+        aria-modal={filtersOpen || undefined}
+        aria-label="Expense filters"
+        tabIndex={filtersOpen ? 0 : undefined}
+        onKeyDown={(e) => {
+          if (e.key === 'Tab' && e.shiftKey && focusTrapRef) {
+            e.preventDefault()
+            focusTrapRef.lastElementChild?.focus()
+          }
+        }}
+      >
         <div className="mobile-filter-heading">
           <strong>Filters</strong>
           <button type="button" aria-label="Close expense filters" onClick={() => setFiltersOpen(false)}><X size={20} aria-hidden="true" /></button>

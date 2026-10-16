@@ -1,7 +1,42 @@
 /* App Shell */
-:root{--ink:var(--text-primary);--muted:var(--text-muted);--line:var(--border);--blue:var(--primary)}
-.app-shell{display:flex;min-height:100vh;background:#f8fafc}
-.app-shell{background:var(--background);color:var(--text-primary)}
+:root{
+  --ink:var(--text-primary);
+  --muted:var(--text-muted);
+  --line:var(--border);
+  --blue:var(--primary);
+  --focus-ring:0 0 0 3px rgba(13,115,119,0.3);
+  --focus-ring-offset:0 0 0 3px var(--background);
+}
+
+/* Skip link for screen readers */
+.skip-link{
+  position:absolute;
+  top:-100%;
+  left:0;
+  background:var(--primary);
+  color:#fff;
+  padding:10px 16px;
+  border-radius:0 0 8px 8px;
+  font-size:12px;
+  font-weight:600;
+  z-index:9999;
+  transition:top 0.2s ease;
+}
+.skip-link:focus{
+  top:0;
+  outline:var(--focus-ring);
+  outline-offset:var(--focus-ring-offset);
+}
+
+.app-shell{
+  display:flex;
+  min-height:100vh;
+  background:#f8fafc
+}
+.app-shell{
+  background:var(--background);
+  color:var(--text-primary)
+}
 
 /* Auth screen */
 .auth-screen{min-height:100vh;display:grid;place-items:center;background:#f8fafc;padding:24px}
@@ -11,7 +46,18 @@
 .brand{display:flex;align-items:center;gap:10px;padding:0 12px 32px}
 
 /* Workspace */
-.workspace{display:flex;align-items:center;gap:9px;padding:11px 10px;margin:0 0 23px;background:#f8faff;border:1px solid #eef2fb;border-radius:10px;color:#63718a;font-size:12px}
+.workspace{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:11px 10px;
+  margin:0 0 23px;
+  background:#f8faff;
+  border:1px solid #eef2fb;
+  border-radius:10px;
+  color:#63718a;
+  font-size:12px
+}
 
 /* Brand mark */
 .brand-mark{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:var(--blue);color:#fff;font-size:17px;box-shadow:0 5px 12px #4f7cff44}
