@@ -3,6 +3,7 @@ import { Bell, CalendarDays, ChartNoAxesCombined, Clock3, House, Plus, ReceiptTe
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { addExpense, DATA_MODE, deleteExpense as deleteRemoteExpense, fetchDeletedExpenses, fetchExpenses, getLastExpensesSource, isApiConfigured, purgeExpense, readExpenseCache, restoreExpense as restoreRemoteExpense, syncQueuedActions, updateExpense, writeExpenseCache } from './api/expensesApi'
 import { seedExpenses, defaultBudgets, today, dateOffset, getMonthlyCycleRange, cycleRangeLabel, money } from './utils/appData'
+import { getCurrencyCode, setCurrencyCode } from './utils/currency'
 import PwaInstallButton from './components/PwaInstallButton'
 import MobileBottomNav from './components/MobileBottomNav'
 import { ExpenseModal, DeleteModal } from './components/Modal'
@@ -134,6 +135,29 @@ function App() {
   const [budgets, setBudgets] = useState(defaultBudgets)
   const [budgetUserLoaded, setBudgetUserLoaded] = useState('')
   const budgetsLoaded = Boolean(authUser && budgetUserLoaded === authUser.id)
+  const [currency, setCurrency] = useState(getCurrencyCode)
+  const changeCurrency = async code => {
+    const previous = getCurrencyCode()
+    setCurrencyCode(code)
+    setCurrency(getCurrencyCode())
+    try {
+      const response = await fetch('/api/user-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ currency: code }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data.ok) throw new Error(data.error || 'Unable to save currency preference')
+      setCurrencyCode(data.currency)
+      setCurrency(getCurrencyCode())
+      notify('Currency preference saved')
+    } catch (error) {
+      setCurrencyCode(previous)
+      setCurrency(getCurrencyCode())
+      notify(error.message || 'Unable to save currency preference')
+    }
+  }
   const [monthlyCycleStartDate, setMonthlyCycleStartDate] = useState(null)
   const [monthlyCycleOwnerId, setMonthlyCycleOwnerId] = useState('')
   const monthlyCycleLoaded = Boolean(authUser && monthlyCycleOwnerId === authUser.id)
@@ -197,6 +221,23 @@ function App() {
       .finally(() => {
         if (active) setMonthlyCycleOwnerId(authUser.id)
       })
+    return () => { active = false }
+  }, [authUser])
+  useEffect(() => {
+    if (!authUser) return undefined
+    let active = true
+    fetch('/api/user-settings', { credentials: 'include', cache: 'no-store' })
+      .then(async response => {
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok || !data.ok) throw new Error(data.error || 'Unable to load user settings')
+        return data.currency
+      })
+      .then(code => {
+        if (!active || !code) return
+        setCurrencyCode(code)
+        setCurrency(getCurrencyCode())
+      })
+      .catch(() => { /* keep the device-local currency if the account preference is unavailable */ })
     return () => { active = false }
   }, [authUser])
   useEffect(() => {
@@ -361,7 +402,7 @@ function App() {
             <Route path="/calendar" element={<CalendarPage month={month} setMonth={setMonth} expenses={expenses} onAdd={openAdd} budgets={budgets} monthSpend={monthSpend} />} />
             <Route path="/budgets" element={<BudgetsPage budgets={budgets} budgetsLoaded={budgetsLoaded} onSaveBudgets={saveBudgets} expenses={expenses} monthSpend={monthSpend} cycleLabel={cycleLabel} money={money} exportCsv={exportCsv} />} />
             <Route path="/trash" element={<TrashPage deleted={deleted} setDeleted={setDeleted} setExpenses={setExpenses} notify={notify} onRestore={async item => { try { await restoreRemoteExpense(item.id); setApiStatus('connected') } catch { setApiStatus('offline') } }} onPurge={emptyTrash} />} />
-            <Route path="/settings" element={monthlyCycleLoaded ? <SettingsPage notify={notify} theme={theme} setTheme={setTheme} monthlyCycleStartDate={monthlyCycleStartDate} onSaveMonthlyCycle={saveMonthlyCycle} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} appInstalled={appInstalled} setAppInstalled={setAppInstalled} /> : <PageLoading label="Loading your settings…" />} />
+            <Route path="/settings" element={monthlyCycleLoaded ? <SettingsPage notify={notify} theme={theme} setTheme={setTheme} currency={currency} setCurrency={changeCurrency} monthlyCycleStartDate={monthlyCycleStartDate} onSaveMonthlyCycle={saveMonthlyCycle} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} appInstalled={appInstalled} setAppInstalled={setAppInstalled} /> : <PageLoading label="Loading your settings…" />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

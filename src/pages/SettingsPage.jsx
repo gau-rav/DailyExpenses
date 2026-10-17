@@ -3,8 +3,9 @@ import { CalendarDays } from 'lucide-react'
 import { PageTitle } from '../components/PageComponents'
 import PwaInstallButton from '../components/PwaInstallButton'
 import { cycleRangeLabel, getCycleDateForSettings, getMonthlyCycleRange, getPreviousMonthStart, previewCycleRange } from '../utils/appData'
+import { CURRENCIES } from '../utils/currency'
 
-export default function SettingsPage({ notify, theme, setTheme, monthlyCycleStartDate, onSaveMonthlyCycle, installPrompt, setInstallPrompt, appInstalled, setAppInstalled }) {
+export default function SettingsPage({ notify, theme, setTheme, currency, setCurrency, monthlyCycleStartDate, onSaveMonthlyCycle, installPrompt, setInstallPrompt, appInstalled, setAppInstalled }) {
   const [notifications, setNotifications] = useState(true)
   const [cycleDraft, setCycleDraft] = useState(() => getCycleDateForSettings(monthlyCycleStartDate))
   const [cycleSaving, setCycleSaving] = useState(false)
@@ -90,8 +91,10 @@ export default function SettingsPage({ notify, theme, setTheme, monthlyCycleStar
         <button className={`toggle ${notifications ? 'on' : ''}`} onClick={() => setNotifications(!notifications)}><i></i></button>
       </div>
       <div className="setting-row">
-        <div><strong>Currency</strong><p>Used across all budgets and reports.</p></div>
-        <select defaultValue="INR"><option>INR — Indian Rupee</option><option>USD — US Dollar</option><option>EUR — Euro</option><option>GBP — Pound Sterling</option></select>
+        <div><strong>Currency</strong><p>Display currency only — amounts are always stored in rupees.</p></div>
+        <select value={currency} onChange={event => setCurrency(event.target.value)}>
+          {CURRENCIES.map(option => <option key={option.code} value={option.code}>{option.label}</option>)}
+        </select>
       </div>
       <div className="setting-row">
         <div><strong>Test reminder</strong><p>Preview how a PaisaWise reminder looks.</p></div>

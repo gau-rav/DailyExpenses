@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Check, Plus, X } from 'lucide-react'
 import { categories, today, money } from '../../utils/appData'
+import { currencySymbol, fromINRInput, toINR } from '../../utils/currency'
 
 const getInitialData = (item) => {
   const rawPayments = Array.isArray(item?.splitPayments)
@@ -103,12 +104,12 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
           <label>
             Amount
             <div className="input-prefix">
-              <span>₹</span>
+              <span>{currencySymbol()}</span>
               <input
                 type="number"
                 step="0.01"
-                value={data.amount}
-                onChange={e => update('amount', e.target.value)}
+                value={fromINRInput(data.amount)}
+                onChange={e => update('amount', toINR(e.target.value))}
                 placeholder="0.00"
               />
             </div>
@@ -213,15 +214,15 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
                       }}
                     />
                     <div className="input-prefix">
-                      <span>₹</span>
+                      <span>{currencySymbol()}</span>
                       <input
                         type="number"
                         step="0.01"
                         placeholder="Amount"
-                        value={payment.amount}
+                        value={fromINRInput(payment.amount)}
                         onChange={e => {
                           const newPayments = [...data.splitExpense.payments]
-                          newPayments[idx] = { ...payment, amount: e.target.value }
+                          newPayments[idx] = { ...payment, amount: toINR(e.target.value) }
                           update('splitExpense', { ...data.splitExpense, payments: newPayments })
                         }}
                       />

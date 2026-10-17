@@ -10,7 +10,7 @@ import { promisify } from 'node:util'
 import fs from 'node:fs'
 import path from 'node:path'
 import { parse, serialize } from 'cookie'
-import { connectDatabase, createExpense, createPasswordUser, createSession, deleteExpense, deleteSession, deleteUserSessions, getBudgetLimits, getMonthlyCycle, getUserByEmail, getUserBySession, listExpenses, pruneSessions, purgeExpense, restoreExpense, saveBudgetLimits, saveMonthlyCycle, setPasswordHash, updateExpense } from './db.js'
+import { connectDatabase, createExpense, createPasswordUser, createSession, deleteExpense, deleteSession, deleteUserSessions, getBudgetLimits, getMonthlyCycle, getUserByEmail, getUserBySession, getUserCurrency, listExpenses, pruneSessions, purgeExpense, restoreExpense, saveBudgetLimits, saveMonthlyCycle, saveUserCurrency, setPasswordHash, updateExpense } from './db.js'
 
 const app = express()
 const port = Number(process.env.PORT || process.env.AUTH_PORT || 8787)
@@ -285,6 +285,29 @@ app.post('/api/expenses', async (req, res) => {
   } catch (error) {
     console.error('Expense write failed', error)
     res.status(400).json({ ok: false, error: error.message || 'Unable to save expense' })
+  }
+})
+
+app.get('/api/user-settings', async (req, res) => {
+  res.set('Cache-Control', 'private, no-store')
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+    res.json({ ok: true, ...await getUserCurrency(user.id) })
+  } catch (error) {
+    console.error('User settings read failed', error)
+    res.status(500).json({ ok: false, error: 'Unable to load user settings' })
+  }
+})
+
+app.put('/api/user-settings', async (req, res) => {
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+    res.json({ ok: true, ...await saveUserCurrency(user.id, req.body?.currency) })
+  } catch (error) {
+    console.error('User settings save failed', error)
+    res.status(400).json({ ok: false, error: error.message || 'Unable to save user settings' })
   }
 })
 

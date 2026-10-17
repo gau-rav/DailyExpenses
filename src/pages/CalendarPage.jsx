@@ -1,25 +1,22 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import { PageTitle } from '../components/PageComponents'
 import { categoryMeta, money, today } from '../utils/appData'
+import { formatDateFull } from '../utils/dateUtils'
+
+const MAX_EVENTS_PER_DAY = 1
+
+const pad2 = value => String(value).padStart(2, '0')
+const dateKey = date => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
 
 export default function CalendarPage({ month, setMonth, expenses, onAdd, budgets, monthSpend }) {
   const [viewToggle, setViewToggle] = useState('month') // 'month' or '2weeks'
+  const [dayDetail, setDayDetail] = useState(null)
 
   const year = month.getFullYear()
   const monthIndex = month.getMonth()
   const firstDay = new Date(year, monthIndex, 1).getDay()
   const days = new Date(year, monthIndex + 1, 0).getDate()
-
-  // Calculate 64-hour buffer events (display 15 days before and after each day)
-  const bufferDays = Array.from({ length: 47 }, (_, index) => {
-    if (index >= firstDay && index < firstDay + days) return index - firstDay + 1
-    if (index < firstDay) return index - firstDay + 1 + days // Previous month overflow
-    if (index >= firstDay + days) return index - firstDay + 1 - days // Next month overflow
-    return null
-  }).filter(Boolean)
-
-  const monthKey = `${year}-${String(monthIndex + 1).padStart(2, '0')}`
 
   // Get max budget to determine color coding
   const maxBudget = Math.max(...Object.values(budgets).filter(Boolean), 0)
@@ -30,6 +27,42 @@ export default function CalendarPage({ month, setMonth, expenses, onAdd, budgets
     category: e.category,
     title: e.title
   }))
+
+  // Full month: pad to whole weeks so days line up under the weekday header.
+  const buildMonthCells = () => {
+    const cells = []
+    const prevMonthDays = new Date(year, monthIndex, 0).getDate()
+    for (let i = firstDay - 1; i >= 0; i--) {
+      const dt = new Date(year, monthIndex - 1, prevMonthDays - i)
+      cells.push({ date: dateKey(dt), day: dt.getDate() })
+    }
+    for (let day = 1; day <= days; day++) {
+      cells.push({ date: dateKey(new Date(year, monthIndex, day)), day })
+    }
+    const trailing = (7 - (cells.length % 7)) % 7
+    for (let i = 1; i <= trailing; i++) {
+      const dt = new Date(year, monthIndex + 1, i)
+      cells.push({ date: dateKey(dt), day: dt.getDate() })
+    }
+    return cells
+  }
+
+  // 2-week view: 14 days starting from the Sunday of the week that contains
+  // today (when viewing the current month) or the 1st of the selected month.
+  const buildTwoWeekCells = () => {
+    const todayDate = new Date(`${today}T00:00:00`)
+    const isCurrentMonth = todayDate.getFullYear() === year && todayDate.getMonth() === monthIndex
+    const reference = isCurrentMonth ? todayDate : new Date(year, monthIndex, 1)
+    const start = new Date(reference)
+    start.setDate(reference.getDate() - reference.getDay())
+    return Array.from({ length: 14 }, (_, i) => {
+      const dt = new Date(start)
+      dt.setDate(start.getDate() + i)
+      return { date: dateKey(dt), day: dt.getDate() }
+    })
+  }
+
+  const calendarCells = viewToggle === '2weeks' ? buildTwoWeekCells() : buildMonthCells()
 
   return <>
     <PageTitle
@@ -72,24 +105,42 @@ export default function CalendarPage({ month, setMonth, expenses, onAdd, budgets
       </div>
 
       <div className={`calendar-grid ${viewToggle === '2weeks' ? 'two-weeks' : ''}`}>
-        {bufferDays.map((day, index) => {
-          if (!day) return <div className="calendar-day empty" key={index}></div>
-
-          const date = `${monthKey}-${String(day).padStart(2, '0')}`
+        {calendarCells.map((cell, index) => {
+          const { date, day } = cell
           const isToday = date === today
           const dayEvents = dayWithOptions.filter(e => e.date === date)
+          const hasEvents = dayEvents.length > 0
+          const openDay = () => setDayDetail({ date, events: dayEvents })
+
+          // Show at most MAX_EVENTS_PER_DAY per day; collapse the rest behind a "+N more"
+          // chip that opens the full list for the day.
+          const visibleEvents = dayEvents.slice(0, MAX_EVENTS_PER_DAY)
+          const hiddenCount = dayEvents.length - visibleEvents.length
 
           // Calculate budget safety indicator
           const isOverBudget = dayEvents.reduce((sum, e) => sum + e.amount, 0) < monthSpend &&
                                dayEvents.reduce((sum, e) => sum + e.amount, 0) < maxBudget
           const budgetColor = isOverBudget ? 'budget-alert' : 'budget-safe'
 
-          return <div className={`calendar-day ${isToday ? 'is-today' : ''} ${budgetColor}`} key={index}>
+          return <div
+            className={`calendar-day ${isToday ? 'is-today' : ''} ${budgetColor} ${hasEvents ? 'has-events' : ''}`}
+            key={index}
+            role={hasEvents ? 'button' : undefined}
+            tabIndex={hasEvents ? 0 : undefined}
+            aria-label={hasEvents ? `${dayEvents.length} expense${dayEvents.length === 1 ? '' : 's'} on day ${day}` : undefined}
+            onClick={hasEvents ? openDay : undefined}
+            onKeyDown={hasEvents ? event => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                openDay()
+              }
+            } : undefined}
+          >
             <span className="day-num">{day}</span>
 
-            {dayEvents.length > 0 && (
+            {hasEvents && (
               <div className="calendar-events">
-                {dayEvents.map(expense => (
+                {visibleEvents.map(expense => (
                   <div
                     key={expense.id}
                     className={`cal-event ${viewToggle === '2weeks' ? 'full-width' : ''}`}
@@ -107,10 +158,8 @@ export default function CalendarPage({ month, setMonth, expenses, onAdd, budgets
                   </div>
                 ))}
 
-                {dayEvents.length > 2 && viewToggle !== '2weeks' && (
-                  <div className="more-events">
-                    +{dayEvents.length - 2} more
-                  </div>
+                {hiddenCount > 0 && (
+                  <span className="more-events">+{hiddenCount} more</span>
                 )}
               </div>
             )}
@@ -118,5 +167,42 @@ export default function CalendarPage({ month, setMonth, expenses, onAdd, budgets
         })}
       </div>
     </section>
+
+    {dayDetail && (
+      <div className="modal-backdrop" onClick={() => setDayDetail(null)}>
+        <div className="modal day-list-modal" role="dialog" aria-modal="true" aria-label="Expenses for the day" onClick={event => event.stopPropagation()}>
+          <div className="modal-head">
+            <div>
+              <div className="eyebrow">Day overview</div>
+              <h2>{formatDateFull(dayDetail.date)}</h2>
+            </div>
+            <button type="button" className="close" aria-label="Close" onClick={() => setDayDetail(null)}>
+              <X size={20} aria-hidden="true" />
+            </button>
+          </div>
+
+          <div className="day-list-head">
+            <span>{dayDetail.events.length} expense{dayDetail.events.length === 1 ? '' : 's'}</span>
+            <strong>{money(dayDetail.events.reduce((sum, e) => sum + e.amount, 0))}</strong>
+          </div>
+
+          <div className="day-list">
+            {dayDetail.events.map(expense => (
+              <div
+                className="day-list-item"
+                key={expense.id}
+                style={{ borderLeftColor: categoryMeta[expense.category]?.[0] }}
+              >
+                <div className="event-header">
+                  <strong>{expense.title}</strong>
+                  <span>{money(expense.amount)}</span>
+                </div>
+                <div className="event-category">{expense.category}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
   </>
 }

@@ -33,7 +33,7 @@ export default function DuePage({ expenses, selected, setSelected, onBulkDelete,
     }
 
     if (wouldExceedBudget && remainingBudget > 0) {
-      const message = `Paying ₹${selectedAmount} would exceed your remaining monthly budget of ₹${remainingBudget}. \n\nPay anyway, or reduce the selection?`
+      const message = `Paying ${money(selectedAmount)} would exceed your remaining monthly budget of ${money(remainingBudget)}. \n\nPay anyway, or reduce the selection?`
       if (!window.confirm(message)) return
     }
 
@@ -57,12 +57,12 @@ export default function DuePage({ expenses, selected, setSelected, onBulkDelete,
       return { type: 'danger', message: 'You have no budget left this month' }
     }
     if (wouldExceedBudget) {
-      return { type: 'warning', message: `Paying all would exceed budget by ₹${selectedAmount - remainingBudget}` }
+      return { type: 'warning', message: `Paying all would exceed budget by ${money(selectedAmount - remainingBudget)}` }
     }
     if (remainingBudget >= totalDueAmount) {
-      return { type: 'success', message: `You can pay all bills and still have ₹${remainingBudget - totalDueAmount} left` }
+      return { type: 'success', message: `You can pay all bills and still have ${money(remainingBudget - totalDueAmount)} left` }
     }
-    return { type: 'info', message: `You have ₹${remainingBudget} left for bills this month` }
+    return { type: 'info', message: `You have ${money(remainingBudget)} left for bills this month` }
   }
 
   const budgetRecommendation = getBudgetRecommendation()
@@ -209,7 +209,7 @@ export default function DuePage({ expenses, selected, setSelected, onBulkDelete,
             />
             <ExpenseRow expense={expense} onEdit={onEdit} />
             {itemOverBudget && (
-              <div className="budget-hint" title={`This expense exceeds your remaining budget of ₹${remainingBudget}`}>
+              <div className="budget-hint" title={`This expense exceeds your remaining budget of ${money(remainingBudget)}`}>
                 ⚠️ Over budget
               </div>
             )}

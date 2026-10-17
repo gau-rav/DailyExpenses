@@ -1,5 +1,6 @@
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { formatDate } from '../utils/appData'
+import { currencySymbol, fromINR } from '../utils/currency'
 
 const DAY_MS = 86400000
 
@@ -24,8 +25,11 @@ const buildDailySeries = (expenses, cycleRange) => {
 }
 
 const formatAxisAmount = value => {
-  if (value >= 1000) return `₹${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}k`
-  return `₹${value}`
+  const amount = fromINR(value)
+  const symbol = currencySymbol()
+  if (amount >= 1000) return `${symbol}${(amount / 1000).toFixed(amount % 1000 === 0 ? 0 : 1)}k`
+  if (amount >= 100) return `${symbol}${Math.round(amount)}`
+  return `${symbol}${Math.round(amount * 100) / 100}`
 }
 
 export default function SpendingTrendChart({ expenses, cycleRange, money }) {

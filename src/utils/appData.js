@@ -1,3 +1,5 @@
+import { formatMoney } from './currency'
+
 export const categories = ['Food', 'Grocery', 'Transport', 'Bills', 'Shopping', 'Entertainment', 'Health', 'Rent', 'Education', 'Other']
 export const defaultBudgets = { daily: 1500, weekly: 6500, monthly: 24000 }
 export const categoryMeta = { Food: ['#f4a261', '🍜'], Grocery: ['#42a879', '🛒'], Transport: ['#0d7377', '🚕'], Bills: ['#c67837', '🧾'], Shopping: ['#d88950', '🛍️'], Entertainment: ['#2f9c79', '🎧'], Health: ['#d96857', '💊'], Rent: ['#0a5c5f', '🏠'], Education: ['#398f89', '📚'], Other: ['#94a3b8', '✦'] }
@@ -84,5 +86,5 @@ export const seedExpenses = [
   { id: 7, title: 'Coffee with Maya', amount: 7.50, category: 'Food', payment: 'Cash', date: dateOffset(-1), dueDate: dateOffset(-1), notes: '', recurring: false, status: 'Paid' },
   { id: 8, title: 'New running shoes', amount: 118.00, category: 'Shopping', payment: 'Card', date: dateOffset(-6), dueDate: dateOffset(-6), notes: '', recurring: false, status: 'Paid' },
 ]
-export const money = n => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n) || 0)
+export const money = n => formatMoney(n)
 export const formatDate = value => new Date(`${value}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })

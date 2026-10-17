@@ -211,6 +211,24 @@ export async function saveMonthlyCycle(userId, startDate) {
   return { startDate }
 }
 
+export const CURRENCY_CODES = ['INR', 'USD', 'EUR', 'GBP']
+
+export async function getUserCurrency(userId) {
+  const saved = await userSettings().findOne({ user_id: userId }, { projection: { currency: 1 } })
+  const currency = CURRENCY_CODES.includes(saved?.currency) ? saved.currency : 'INR'
+  return { currency }
+}
+
+export async function saveUserCurrency(userId, currency) {
+  if (!CURRENCY_CODES.includes(currency)) throw new Error('Unsupported currency')
+  await userSettings().updateOne(
+    { user_id: userId },
+    { $set: { currency, updated_at: new Date() } },
+    { upsert: true },
+  )
+  return { currency }
+}
+
 function expenses() {
   if (!database) throw new Error('MongoDB is not connected')
   return database.collection('expenses')

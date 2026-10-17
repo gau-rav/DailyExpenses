@@ -14,6 +14,8 @@
 
 /* Calendar day */
 .calendar-day{min-height:105px;border-top:1px solid var(--line);border-right:1px solid var(--line);padding:8px;overflow:hidden}
+.calendar-day.has-events{cursor:pointer}
+.calendar-day.has-events:focus-visible{outline:2px solid color-mix(in srgb,var(--primary) 45%,transparent);outline-offset:-2px}
 .calendar-day:nth-child(7n){border-right:0}
 .calendar-day{border-radius:7px;background:color-mix(in srgb,var(--surface) 86%,var(--primary) 14%)}
 .calendar-day.is-today .day-num{background:var(--primary);color:#fff;border-radius:50%;width:23px;height:23px;display:grid;place-items:center;margin:-3px 0 3px -3px}
@@ -101,7 +103,18 @@
 .event-category{font-size:9px;color:var(--text-secondary);opacity:0.8}
 
 /* More events indicator */
-.more-events{margin-top:4px;font-size:9px;color:var(--text-secondary);opacity:0.6}
+.more-events{display:inline-block;margin-top:4px;padding:2px 6px;border-radius:5px;font-size:9px;font-weight:600;color:var(--primary);background:var(--primary-light);opacity:0.9;transition:background 0.15s ease}
+.calendar-day.has-events:hover .more-events{background:color-mix(in srgb,var(--primary) 18%,transparent)}
+
+/* Day detail modal (full list for a single day) */
+.day-list-modal{width:min(460px,100%)}
+.day-list-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-secondary)}
+.day-list-head strong{font-size:13px;font-weight:700;color:var(--primary)}
+.day-list{display:flex;flex-direction:column;gap:8px}
+.day-list-item{padding:10px 12px;border:1px solid var(--border);border-left:3px solid;border-radius:8px;background:var(--surface)}
+.day-list-item .event-header strong{font-size:12px}
+.day-list-item .event-header span{font-size:11px}
+.day-list-item .event-category{font-size:10px;margin-top:2px}
 
 /* Full-width for 2-week view events */
 .calendar-grid.two-weeks .cal-event{margin-top:8px;padding:10px 12px}

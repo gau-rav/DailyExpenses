@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Download, Sparkles } from 'lucide-react'
 import { CategoryChart, MoreMenu, PageTitle } from '../components/PageComponents'
+import { currencySymbol, fromINRInput, toINR } from '../utils/currency'
 
 export default function BudgetsPage({ budgets, budgetsLoaded, onSaveBudgets, expenses, monthSpend, cycleLabel, money, exportCsv }) {
   // Warning banner state
@@ -38,7 +39,7 @@ export default function BudgetsPage({ budgets, budgetsLoaded, onSaveBudgets, exp
       <div className="guidance-icon">⚠️</div>
       <div className="guidance-content">
         <strong>Budget alert: {warningBanner.threshold}% used</strong>
-        <p>Only ₹{warningBanner.totalRemaining} remaining for the rest of the month</p>
+        <p>Only {money(warningBanner.totalRemaining)} remaining for the rest of the month</p>
         <small>Tap to acknowledge this warning</small>
       </div>
     </div>
@@ -87,15 +88,15 @@ export default function BudgetsPage({ budgets, budgetsLoaded, onSaveBudgets, exp
                   </small>
                 </span>
                 <div>
-                  <span>₹</span>
+                  <span>{currencySymbol()}</span>
                   <input
                     type="number"
                     min="0"
                     max="1000000000"
-                    step="1"
-                    value={currentDraft[key]}
+                    step="0.01"
+                    value={fromINRInput(currentDraft[key])}
                     disabled={!budgetsLoaded || saving}
-                    onChange={event => { setDraft({ ...currentDraft, [key]: Number(event.target.value) }); setDirty(true) }}
+                    onChange={event => { setDraft({ ...currentDraft, [key]: toINR(event.target.value) }); setDirty(true) }}
                   />
                 </div>
               </label>

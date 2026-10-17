@@ -8,6 +8,13 @@
 .cycle-settings{max-width:720px;margin-bottom:18px;padding:22px}
 .cycle-settings>.section-head{align-items:center}
 .cycle-settings>.section-head>svg{flex:none;color:var(--primary)}
+.cycle-date-field{display:grid;gap:8px;color:var(--text-secondary);font-size:12px;font-weight:600}
+.cycle-date-field input{width:100%;min-height:44px;padding:9px 12px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text-primary);font:inherit}
+.cycle-date-field input:focus-visible{outline:2px solid color-mix(in srgb,var(--primary) 45%,transparent);outline-offset:2px}
+.cycle-help{margin:10px 0 0;color:var(--text-secondary);font-size:11px;line-height:1.5}
+.cycle-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+.cycle-actions button{width:auto;min-height:40px}
+
 
 /* Install app control on the Settings page */
 .pwa-install-setting {
@@ -41,4 +48,16 @@
 
   .pwa-install-setting > div { flex: 1; }
   .pwa-install-setting .pwa-install-button { min-height: 36px; padding: 0 10px; font-size: 11px; }
+
+  /* Monthly cycle settings */
+  .cycle-settings {
+    margin-bottom: 14px;
+    padding: 16px;
+    border-radius: 17px;
+    background: linear-gradient(145deg, color-mix(in srgb, var(--surface) 92%, var(--primary) 8%), var(--surface) 85%);
+  }
+  .cycle-settings > .section-head { margin-bottom: 14px; }
+  .cycle-settings > .section-head h2 { font-size: 14px; }
+  .cycle-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .cycle-actions button { min-width: 0; padding: 10px 8px; font-size: 11px; }
 }
