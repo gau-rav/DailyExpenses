@@ -45,14 +45,16 @@ export default function ExpensesPage({ expenses, query, setQuery, categoryFilter
         <div className="search"><Search size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} aria-hidden="true" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search expenses..." /></div>
         <button className="mobile-filter-toggle" type="button" aria-label="Open expense filters" aria-expanded={filtersOpen} aria-controls="expense-filters" onClick={() => setFiltersOpen(open => !open)}>
           <Filter size={18} aria-hidden="true" />
-          <span>Filter</span>
+          <span>Filters</span>
         </button>
       </div>
-      <label className="mobile-select-all">
-        <input type="checkbox" aria-label="Select all expenses" checked={allSelected} onChange={() => setSelected(allSelected ? [] : expenses.map(expense => expense.id))} />
-        <span>Select all expenses</span>
-        <small>{expenses.length}</small>
-      </label>
+      <div className="expense-controls-row">
+        <label className="mobile-select-all">
+          <input type="checkbox" aria-label="Select all expenses" checked={allSelected} onChange={() => setSelected(allSelected ? [] : expenses.map(expense => expense.id))} />
+          <span>Select all expenses</span>
+          <small>{expenses.length}</small>
+        </label>
+      </div>
       {filtersOpen && <button className="expense-filter-backdrop" type="button" aria-label="Close expense filters" onClick={() => setFiltersOpen(false)} />}
       <div
         ref={filterRef => setFocusTrapRef(filterRef)}

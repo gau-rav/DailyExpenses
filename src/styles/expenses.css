@@ -60,7 +60,7 @@ td strong{color:#3e4d66;font-size:11px}
 .table-card>.toolbar .expense-filters{display:flex;flex:1 1 520px;min-width:0;flex-wrap:wrap;align-items:center;gap:8px}
 .table-card>.toolbar .expense-filters select{flex:1 1 120px;min-width:110px}
 .table-card>.toolbar .expense-filters .export{flex:0 0 auto;margin-left:0}
-.expense-search-row{display:contents}
+.expense-search-row,.expense-controls-row{display:contents}
 .mobile-filter-toggle,.mobile-filter-heading,.expense-filter-backdrop,.mobile-select-all{display:none}
 .expenses-load-more,.expenses-end-message{margin:0;padding:16px 12px;color:var(--text-secondary);font-size:12px;text-align:center}
 .expenses-load-more{min-height:48px}
