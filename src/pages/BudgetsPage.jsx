@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Download, Sparkles } from 'lucide-react'
 import { CategoryChart, MoreMenu, PageTitle } from '../components/PageComponents'
 
 export default function BudgetsPage({ budgets, budgetsLoaded, onSaveBudgets, expenses, monthSpend, cycleLabel, money, exportCsv }) {
@@ -57,7 +58,7 @@ export default function BudgetsPage({ budgets, budgetsLoaded, onSaveBudgets, exp
 
   return budgetsLoaded
     ? <>
-        <PageTitle eyebrow="Workspace / Planning" title="Budgets & reports" subtitle="Give your money a plan." action={<button className="outline-btn export" onClick={exportCsv}>↥ Export CSV</button>} />
+        <PageTitle eyebrow="Workspace / Planning" title="Budgets & reports" subtitle="Give your money a plan." action={<button className="outline-btn export" onClick={exportCsv}><Download size={14} aria-hidden="true" /><span>Export CSV</span></button>} />
 
         {/* One-time warning banner */}
         {WarningBannerHTML}
@@ -125,7 +126,7 @@ export default function BudgetsPage({ budgets, budgetsLoaded, onSaveBudgets, exp
             </div>
             <CategoryChart expenses={expenses} />
             <div className="report-note">
-              <span>✦</span>
+              <span><Sparkles size={16} aria-hidden="true" /></span>
               <p>Your biggest category is <strong>{expenses[0]?.category || 'Food'}</strong>. Keep going — small choices add up.</p>
             </div>
           </section>

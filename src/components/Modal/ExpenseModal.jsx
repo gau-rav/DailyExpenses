@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Check, Plus, X } from 'lucide-react'
 import { categories, today, money } from '../../utils/appData'
 
 const getInitialData = (item) => {
@@ -85,7 +86,7 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
             <div className="eyebrow">{expense ? 'Update transaction' : 'New transaction'}</div>
             <h2>{expense ? 'Edit expense' : 'Add expense'}</h2>
           </div>
-          <button type="button" className="close" onClick={onClose}>×</button>
+          <button type="button" className="close" aria-label="Close" onClick={onClose}><X size={20} aria-hidden="true" /></button>
         </div>
 
         <div className="form-grid">
@@ -229,12 +230,13 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
                       <button
                         type="button"
                         className="remove-btn"
+                        aria-label="Remove payer"
                         onClick={() => {
                           const newPayments = data.splitExpense.payments.filter((_, i) => i !== idx)
                           update('splitExpense', { ...data.splitExpense, payments: newPayments })
                         }}
                       >
-                        ×
+                        <X size={14} aria-hidden="true" />
                       </button>
                     )}
                   </div>
@@ -247,7 +249,8 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
                     payments: [...(data.splitExpense.payments || []), { name: '', amount: '' }]
                   })}
                 >
-                  + Add payer
+                  <Plus size={14} aria-hidden="true" />
+                  <span>Add payer</span>
                 </button>
                 {/* Split payment summary */}
                 {(() => {
@@ -274,8 +277,9 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
 
         <div className="modal-actions">
           <button type="button" className="outline-btn" onClick={onClose}>Cancel</button>
-          <button type="submit" className="primary-btn" style={{ padding: '10px 20px', background: 'var(--primary)', color: '#fff', border: 0, borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>
-            ✓ Save
+          <button type="submit" className="primary-btn" style={{ padding: '10px 20px', gap: '6px' }}>
+            <Check size={16} aria-hidden="true" />
+            <span>Save</span>
           </button>
         </div>
       </form>

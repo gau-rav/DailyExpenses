@@ -100,10 +100,6 @@
 /* Category badge inside event */
 .event-category{font-size:9px;color:var(--text-secondary);opacity:0.8}
 
-/* Metadata for 2-week view */
-.event-meta{display:flex;gap:8px;margin-top:6px;font-size:9px;color:var(--text-secondary);opacity:0.7}
-.event-meta span{white-space:nowrap}
-
 /* More events indicator */
 .more-events{margin-top:4px;font-size:9px;color:var(--text-secondary);opacity:0.6}
 

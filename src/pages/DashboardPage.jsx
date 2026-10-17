@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { CalendarDays, ChartNoAxesCombined, CircleCheck, Clock3, TrendingUp, Star, Filter, AlertTriangle } from 'lucide-react'
+import { CalendarDays, ChartNoAxesCombined, CircleCheck, Clock3, TrendingUp, Star, Filter, AlertTriangle, Plus } from 'lucide-react'
 import { DashboardEmpty, ExpenseRow, FinHealthCheck, InfluenceCard, FavoritesCard, MoreMenu, PageTitle, Metric, CategoryChart, QuickFilterBar } from '../components/PageComponents'
-import { categoryMeta, cycleHeaderLabel, indiaGreeting, todayDateLabel, formatDate, money } from '../utils/appData'
+import { categoryMeta, cycleHeaderLabel, indiaGreeting, todayDateLabel, formatDate } from '../utils/appData'
 
-export default function DashboardPage({ firstName, dueToday, overdue, upcoming, todaySpend, monthSpend, monthExpenses, cycleRange, cycleLabel, budgets, money, onPage, onAdd, onEdit }) {
+export default function DashboardPage({ firstName, dueToday, upcoming, todaySpend, monthSpend, monthExpenses, cycleRange, cycleLabel, budgets, money, onPage, onAdd, onEdit }) {
   const [activeFilter, setActiveFilter] = useState('overview')
 
   // Calculate biggest category by spending
@@ -56,19 +56,6 @@ export default function DashboardPage({ firstName, dueToday, overdue, upcoming, 
     return bestDay
   }
 
-  // Calculate savings opportunity
-  const getSavingsOpportunity = () => {
-    if (monthExpenses.length < 5 || !biggestCategory) return 0
-
-    const biggestCatTotal = monthExpenses
-      .filter(e => e.category === biggestCategory)
-      .reduce((total, e) => total + e.amount, 0)
-
-    return Math.round(biggestCatTotal * 0.1) // 10% of biggest category spending
-  }
-
-  const savingsOpportunity = getSavingsOpportunity()
-
   const bestDay = getBestDayToSpend()
   const biggestExpense = monthExpenses.sort((a, b) => b.amount - a.amount)[0]
 
@@ -79,11 +66,11 @@ export default function DashboardPage({ firstName, dueToday, overdue, upcoming, 
 
   // Quick Filter options
   const quickFilters = [
-    { id: 'overview', label: 'Overview', icon: <Filter size={12} /> },
-    { id: 'due', label: 'Due today', icon: <AlertTriangle size={12} /> },
-    { id: 'upcoming', label: 'Upcoming', icon: <CalendarDays size={12} /> },
-    { id: 'budget', label: 'Budget', icon: <TrendingUp size={12} /> },
-    { id: 'favorites', label: 'Favorites', icon: <Star size={12} /> },
+    { id: 'overview', label: 'Overview', icon: <Filter size={12} aria-hidden="true" /> },
+    { id: 'due', label: 'Due today', icon: <AlertTriangle size={12} aria-hidden="true" /> },
+    { id: 'upcoming', label: 'Upcoming', icon: <CalendarDays size={12} aria-hidden="true" /> },
+    { id: 'budget', label: 'Budget', icon: <TrendingUp size={12} aria-hidden="true" /> },
+    { id: 'favorites', label: 'Favorites', icon: <Star size={12} aria-hidden="true" /> },
   ]
 
   const handleFilterChange = (filterId) => {
@@ -91,8 +78,7 @@ export default function DashboardPage({ firstName, dueToday, overdue, upcoming, 
     if (filterId === 'due') onPage('due')
     else if (filterId === 'upcoming') onPage('calendar')
     else if (filterId === 'budget') onPage('budgets')
-    else if (filterId === 'favorites') {} // Will be handled in favorites
-    // 'overview' just shows dashboard
+    // 'overview' and 'favorites' stay on dashboard
   }
 
   return <>
@@ -101,7 +87,7 @@ export default function DashboardPage({ firstName, dueToday, overdue, upcoming, 
       cycleLabel={cycleHeaderLabel(cycleRange)}
       title={`${indiaGreeting()}, ${firstName}`}
       subtitle="Check your money at a glance."
-      action={<button className="primary-btn page-add-button" onClick={onAdd}>＋ Add expense</button>}
+      action={<button className="primary-btn page-add-button" style={{ gap: '6px' }} onClick={onAdd}><Plus size={16} strokeWidth={2.2} aria-hidden="true" /><span>Add expense</span></button>}
     />
     <QuickFilterBar filters={quickFilters} activeFilter={activeFilter} onFilterChange={handleFilterChange} />
     <div className="dashboard-grid">

@@ -1,16 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { Trash2, X } from 'lucide-react'
 import { Empty, PageTitle } from '../components/PageComponents'
 import { formatDate, money, categoryMeta } from '../utils/appData'
 
 export default function TrashPage({ deleted, setDeleted, setExpenses, notify, onRestore, onPurge }) {
   const [selected, setSelected] = useState([])
-  const [undoItem, setUndoItem] = useState(null) // for undo toast
-  const [undoTimer, setUndoTimer] = useState(null)
   const [previewItem, setPreviewItem] = useState(null) // for delete preview modal
   const [isRestoring, setIsRestoring] = useState(false)
-
-  // Clean up undo timer on unmount
-  useEffect(() => () => undoTimer && clearTimeout(undoTimer), [undoTimer])
 
   const allSelected = deleted.length > 0 && deleted.every(e => selected.includes(e.id))
 
@@ -162,7 +158,7 @@ export default function TrashPage({ deleted, setDeleted, setExpenses, notify, on
                     title="Permanently delete"
                     aria-label={`Permanently delete ${expense.title}`}
                   >
-                    🗑
+                    <Trash2 size={15} aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -181,7 +177,9 @@ export default function TrashPage({ deleted, setDeleted, setExpenses, notify, on
               <div className="eyebrow">This cannot be undone</div>
               <h2>Permanently delete?</h2>
             </div>
-            <button type="button" className="close" onClick={() => setPreviewItem(null)}>×</button>
+            <button type="button" className="close" aria-label="Close" onClick={() => setPreviewItem(null)}>
+              <X size={18} aria-hidden="true" />
+            </button>
           </div>
 
           <div className="preview-list">

@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, MoreHorizontal, Sparkles, Clock3, TrendingUp, Star, CalendarDays, AlertTriangle, Filter, RefreshCw, Wifi, WifiOff, Cloud, Check, X } from 'lucide-react'
+import { ArrowRight, MoreHorizontal, Sparkles } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { categories, categoryMeta, formatDate, money } from '../utils/appData'
-import { getSyncMessage, getSyncStatus } from '../utils/syncUtils'
 
 // Quick Filter Bar Component
 export function QuickFilterBar({ filters, activeFilter, onFilterChange }) {
@@ -70,7 +69,7 @@ export function FinHealthCheck({ monthlyBudget, monthSpend, biggestCategory, bil
   return <div className={`fin-health-check ${overBudget ? 'is-over-budget' : ''}`}>
     <div className="fin-health-header">
       <div className={`status-pill ${overBudget ? 'danger' : 'success'}`}>
-        {overBudget ? <i></i> : <i></i>}
+        <i></i>
         <span>{overBudget ? 'Over budget' : 'On track'}</span>
       </div>
       <span className="fin-health-percent">{percentUsed}% used</span>

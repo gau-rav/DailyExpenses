@@ -5,7 +5,7 @@
 .sidebar nav a,
 .sidebar-bottom > a{
   text-decoration:none;
-  color:#8290a6;
+  color:var(--text-secondary);
   text-align:left;
   border-radius:9px;
   padding:11px 13px;
@@ -20,12 +20,31 @@
 .sidebar-bottom > a.active,
 .sidebar-bottom > a:hover{
   background:var(--accent-light);
-  color:var(--primary-dark);
+  color:var(--primary);
   font-weight:600;
 }
+
 .sidebar-bottom{margin-top:auto}
 .sidebar-bottom>button{width:100%}
-.nav-icon{font-size:18px;line-height:1;width:19px;text-align:center;flex-shrink:0}
+
+.nav-icon{
+  width:20px;
+  height:20px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  color:currentColor;
+}
+
+.nav-icon svg{
+  width:18px;
+  height:18px;
+  display:block;
+  stroke:currentColor;
+  flex-shrink:0;
+}
+
 .nav-count{font-size:10px;background:#ffecbd;color:#b57e14;padding:2px 6px;border-radius:5px;margin-left:auto}
 
 /* Topbar */
@@ -68,9 +87,11 @@
 .icon-btn svg {
   width: 18px;
   height: 18px;
+  display: block;
   stroke: currentColor;
-  stroke-width: 2;
+  stroke-width: 1.8;
   fill: none;
+  flex-shrink: 0;
 }
 .icon-btn i {
   position: absolute;

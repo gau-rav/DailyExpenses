@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { PageTitle, ExpenseRow, Empty } from '../components/PageComponents'
-import { todayDay, todayMonth, money, dateOffset } from '../utils/appData'
+import { todayDay, todayMonth, money } from '../utils/appData'
 import { generateDuePageFilters } from '../utils/filterUtils'
 
-export default function DuePage({ expenses, selected, setSelected, onBulkDelete, onEdit, onMarkAsPaid, budgets, monthlyBudgetUsed, monthSpend }) {
+export default function DuePage({ expenses, selected, setSelected, onBulkDelete, onEdit, onMarkAsPaid, budgets, monthSpend }) {
   const allSelected = expenses.length > 0 && expenses.every(expense => selected.includes(expense.id))
   const [isProcessingBatch, setIsProcessingBatch] = useState(false)
   const [activeFilter, setActiveFilter] = useState('all')
@@ -20,7 +20,6 @@ export default function DuePage({ expenses, selected, setSelected, onBulkDelete,
   // Check if paying selected items would exceed remaining budget
   const remainingBudget = budgets.monthly - monthSpend
   const wouldExceedBudget = selectedAmount > remainingBudget && remainingBudget > 0
-  const canAffordToPay = remainingBudget >= selectedAmount || remainingBudget <= 0
 
   // Calculate progress: paid vs total due (for future state tracking)
   const paidCount = expenses.filter(e => e.status === 'Paid').length

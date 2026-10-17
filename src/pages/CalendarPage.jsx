@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { PageTitle } from '../components/PageComponents'
 import { categoryMeta, money, today } from '../utils/appData'
 
@@ -17,8 +18,6 @@ export default function CalendarPage({ month, setMonth, expenses, onAdd, budgets
     if (index >= firstDay + days) return index - firstDay + 1 - days // Next month overflow
     return null
   }).filter(Boolean)
-
-  const isCurrentMonth = (day) => day >= 1 && day <= days
 
   const monthKey = `${year}-${String(monthIndex + 1).padStart(2, '0')}`
 
@@ -51,13 +50,17 @@ export default function CalendarPage({ month, setMonth, expenses, onAdd, budgets
         </div>
 
         <div className="calendar-nav">
-          <button className="circle-btn" onClick={() => setMonth(new Date(year, monthIndex - 1, 1))}>‹</button>
+          <button className="circle-btn" aria-label="Previous month" onClick={() => setMonth(new Date(year, monthIndex - 1, 1))}>
+            <ChevronLeft size={16} strokeWidth={2} aria-hidden="true" />
+          </button>
           <h2>
             {viewToggle === 'month'
               ? month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
               : `${monthIndex + 1}/${year}`}
           </h2>
-          <button className="circle-btn" onClick={() => setMonth(new Date(year, monthIndex + 1, 1))}>›</button>
+          <button className="circle-btn" aria-label="Next month" onClick={() => setMonth(new Date(year, monthIndex + 1, 1))}>
+            <ChevronRight size={16} strokeWidth={2} aria-hidden="true" />
+          </button>
         </div>
 
         <button className="outline-btn today-btn" onClick={() => setMonth(new Date())}>Today</button>
@@ -90,12 +93,8 @@ export default function CalendarPage({ month, setMonth, expenses, onAdd, budgets
                     <div
                       className={`cal-event ${viewToggle === '2weeks' ? 'full-width' : ''}`}
                       style={{
-                        borderLeftColor: categoryMeta[expense.category]?.[0],
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease'
+                        borderLeftColor: categoryMeta[expense.category]?.[0]
                       }}
-                      onClick={() => {/* Quick-tap: Navigate to expense detail */}}
-                      onContextMenu={(e) => {/* Long-press: Delete option */}}
                     >
                       <div className="event-header">
                         <strong>{expense.title}</strong>
@@ -104,12 +103,6 @@ export default function CalendarPage({ month, setMonth, expenses, onAdd, budgets
                       <div className="event-category">
                         {expense.category}
                       </div>
-                      {viewToggle === '2weeks' && (
-                        <div className="event-meta">
-                          <span>• Click to view</span>
-                          <span>• Long press for options</span>
-                        </div>
-                      )}
                     </div>
                   ))}
 

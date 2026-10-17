@@ -77,9 +77,10 @@
 /* Quick Filter Bar */
 .quick-filter-bar{display:flex;gap:8px;margin-top:16px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow-x:auto}
 .quick-filter-bar::-webkit-scrollbar{display:none}
-.quick-filter-bar .filter-chip{padding:6px 12px;border-radius:16px;font-size:10px;font-weight:600;color:var(--text-secondary);background:var(--surface-hover);border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:all 0.15s ease}
+.quick-filter-bar .filter-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:16px;font-size:11px;font-weight:600;color:var(--text-secondary);background:var(--surface-hover);border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:all 0.15s ease}
+.quick-filter-bar .filter-chip svg{width:13px;height:13px;display:block;stroke:currentColor;flex-shrink:0}
 .quick-filter-bar .filter-chip:hover{border-color:var(--primary);color:var(--primary)}
-.quick-filter-bar .filter-chip.active{background:var(--primary-light);color:var(--primary);border-color:var(--primary-light)}
+.quick-filter-bar .filter-chip.active{background:var(--accent-light);color:var(--primary);border-color:color-mix(in srgb, var(--primary) 30%, transparent)}
 
 .metric,.card{border-color:var(--border);box-shadow:var(--shadow)}
 .metric{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;gap:13px;text-decoration:none;color:var(--text-primary)}
@@ -88,9 +89,9 @@
 /* Metric colors */
 .metric-blue .metric-icon,.metric-mint .metric-icon{background:#e5f3ef;color:var(--primary)}
 .metric-violet .metric-icon{background:var(--accent-light);color:#c67837}
-.metric-orange .metric-icon{background:#fff0dc;color:#bf6a1b}
-.metric-orange .metric-icon{background:var(--accent-light);color:#a85d19}
-.metric-icon{border-radius:11px}
+.metric-orange .metric-icon,.metric-amber .metric-icon{background:#fff0dc;color:#bf6a1b}
+.metric-icon{border-radius:11px;width:36px;height:36px;display:grid;place-items:center;font-size:17px;font-weight:700;flex-shrink:0}
+.metric-icon svg{width:20px;height:20px;display:block;stroke:currentColor;flex-shrink:0}
 
 /* Metric grid */
 .metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:17px}

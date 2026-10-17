@@ -1,8 +1,8 @@
-﻿import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { CalendarDays, ChartNoAxesCombined, Clock3, House, Plus, ReceiptText, Settings, Sparkles, Trash2 } from 'lucide-react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { Bell, CalendarDays, ChartNoAxesCombined, Clock3, House, Plus, ReceiptText, Settings, Sparkles, Trash2 } from 'lucide-react'
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { addExpense, DATA_MODE, deleteExpense as deleteRemoteExpense, fetchDeletedExpenses, fetchExpenses, getLastExpensesSource, isApiConfigured, purgeExpense, readExpenseCache, restoreExpense as restoreRemoteExpense, syncQueuedActions, updateExpense, writeExpenseCache } from './api/expensesApi'
-import { categories, seedExpenses, defaultBudgets, today, dateOffset, getMonthlyCycleRange, cycleRangeLabel, money } from './utils/appData'
+import { seedExpenses, defaultBudgets, today, dateOffset, getMonthlyCycleRange, cycleRangeLabel, money } from './utils/appData'
 import PwaInstallButton from './components/PwaInstallButton'
 import MobileBottomNav from './components/MobileBottomNav'
 import { ExpenseModal, DeleteModal } from './components/Modal'
@@ -210,7 +210,7 @@ function App() {
   }, [])
   useEffect(() => { if (toast) { const t = setTimeout(() => setToast(''), 3000); return () => clearTimeout(t) } }, [toast])
   const cycleRange = getMonthlyCycleRange(monthlyCycleStartDate)
-  const dueToday = expenses.filter(e => e.dueDate === today && e.status !== 'Paid'), overdue = expenses.filter(e => e.status === 'Overdue'), upcoming = expenses.filter(e => e.dueDate > today && e.dueDate <= dateOffset(7) && e.status !== 'Paid').sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 4), monthExpenses = expenses.filter(e => e.date >= cycleRange.start && e.date <= cycleRange.end), todaySpend = expenses.filter(e => e.date === today && e.status === 'Paid').reduce((a, e) => a + e.amount, 0), monthSpend = monthExpenses.reduce((a, e) => a + e.amount, 0), cycleLabel = cycleRangeLabel(cycleRange)
+  const dueToday = expenses.filter(e => e.dueDate === today && e.status !== 'Paid'), upcoming = expenses.filter(e => e.dueDate > today && e.dueDate <= dateOffset(7) && e.status !== 'Paid').sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 4), monthExpenses = expenses.filter(e => e.date >= cycleRange.start && e.date <= cycleRange.end), todaySpend = expenses.filter(e => e.date === today && e.status === 'Paid').reduce((a, e) => a + e.amount, 0), monthSpend = monthExpenses.reduce((a, e) => a + e.amount, 0), cycleLabel = cycleRangeLabel(cycleRange)
   const filtered = useMemo(() => expenses.filter(e => `${e.title} ${e.category} ${e.payment}`.toLowerCase().includes(query.toLowerCase()) && (categoryFilter === 'All categories' || e.category === categoryFilter) && (statusFilter === 'All statuses' || e.status === statusFilter)).sort((a, b) => sort === 'amount' ? b.amount - a.amount : sort === 'category' ? a.category.localeCompare(b.category) : b.date.localeCompare(a.date)), [expenses, query, categoryFilter, statusFilter, sort])
   const notify = (message) => setToast(message)
   const saveBudgets = async (nextBudgets) => {
@@ -324,8 +324,10 @@ function App() {
         <div className="top-actions">
           <button className={`connection-status ${apiStatus} sync-indicator`} title="Sync status" onClick={() => {
             if (apiStatus === 'offline' || apiStatus === 'connecting') {
-              syncQueuedActions().then(() => {
-                syncExpenses()
+              syncQueuedActions().then(async () => {
+                const remote = await fetchExpenses()
+                setExpenses(remote)
+                setApiStatus(getLastExpensesSource() === 'remote' ? 'connected' : 'offline')
                 notify('Forced sync completed')
               })
             }
@@ -337,10 +339,7 @@ function App() {
             )}
           </button>
           <button className="icon-btn" aria-label="Notifications" onClick={() => notify(dueToday.length ? `${dueToday.length} expense(s) due today` : 'You are all caught up')}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
+            <Bell size={18} strokeWidth={1.8} aria-hidden="true" />
             <i></i>
           </button>
           <div className="profile-menu">
@@ -356,7 +355,7 @@ function App() {
       <div className="content">
         <Suspense fallback={<PageLoading />}>
           <Routes>
-            <Route path="/" element={<DashboardPage firstName={greetingName} dueToday={dueToday} overdue={overdue} upcoming={upcoming} todaySpend={todaySpend} monthSpend={monthSpend} monthExpenses={monthExpenses} cycleRange={cycleRange} cycleLabel={cycleLabel} budgets={budgets} money={money} onPage={setPage} {...common} />} />
+            <Route path="/" element={<DashboardPage firstName={greetingName} dueToday={dueToday} upcoming={upcoming} todaySpend={todaySpend} monthSpend={monthSpend} monthExpenses={monthExpenses} cycleRange={cycleRange} cycleLabel={cycleLabel} budgets={budgets} money={money} onPage={setPage} {...common} />} />
             <Route path="/expenses" element={<ExpensesPage key={`${query}|${categoryFilter}|${statusFilter}|${sort}`} expenses={filtered} query={query} setQuery={setQuery} categoryFilter={categoryFilter} setCategoryFilter={setCategoryFilter} statusFilter={statusFilter} setStatusFilter={setStatusFilter} sort={sort} setSort={setSort} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} exportCsv={exportCsv} {...common} />} />
             <Route path="/due" element={<DuePage expenses={dueToday} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} onMarkAsPaid={markPaid} budgets={budgets} monthSpend={monthSpend} {...common} />} />
             <Route path="/calendar" element={<CalendarPage month={month} setMonth={setMonth} expenses={expenses} onAdd={openAdd} budgets={budgets} monthSpend={monthSpend} />} />

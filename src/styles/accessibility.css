@@ -81,7 +81,6 @@ textarea:focus-visible {
 }
 
 /* ===== Tooltips & ARIA ===== */
-[aria-hidden="true"],
 .visually-hidden {
   position: absolute;
   width: 1px;

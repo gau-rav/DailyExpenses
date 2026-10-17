@@ -369,6 +369,10 @@
 }
 
 .add-split-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   width: 100%;
   padding: 10px;
   border: 1px dashed var(--primary);

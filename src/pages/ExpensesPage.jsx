@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Filter, X } from 'lucide-react'
+import { Download, Filter, Search, X } from 'lucide-react'
 import { PageTitle, Category, Status, Empty } from '../components/PageComponents'
 import { categories, categoryMeta, formatDate, money } from '../utils/appData'
 
@@ -42,7 +42,7 @@ export default function ExpensesPage({ expenses, query, setQuery, categoryFilter
     <section className="card table-card">
     <div className={`toolbar${filtersOpen ? ' filters-open' : ''}`}>
       <div className="expense-search-row">
-        <div className="search"><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search expenses..." /></div>
+        <div className="search"><Search size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} aria-hidden="true" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search expenses..." /></div>
         <button className="mobile-filter-toggle" type="button" aria-label="Open expense filters" aria-expanded={filtersOpen} aria-controls="expense-filters" onClick={() => setFiltersOpen(open => !open)}>
           <Filter size={18} aria-hidden="true" />
           <span>Filter</span>
@@ -86,7 +86,10 @@ export default function ExpensesPage({ expenses, query, setQuery, categoryFilter
             <option value="amount">Highest amount</option>
             <option value="category">Category</option>
           </select>
-          <button className="outline-btn export" onClick={() => { exportCsv(); setFiltersOpen(false) }}>↥ Export</button>
+          <button className="outline-btn export" onClick={() => { exportCsv(); setFiltersOpen(false) }}>
+            <Download size={14} aria-hidden="true" />
+            <span>Export</span>
+          </button>
         </div>
       </div>
       {selected.length > 0 && <div className="bulk-bar"><span>{selected.length} selected</span><button onClick={onBulkDelete}>Delete selected</button></div>}
