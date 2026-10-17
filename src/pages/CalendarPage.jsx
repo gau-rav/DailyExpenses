@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { PageTitle } from '../components/PageComponents'
 import { categoryMeta, money, today } from '../utils/appData'
 
@@ -24,6 +24,7 @@ export default function CalendarPage({ month, setMonth, expenses, onAdd, budgets
   // Get max budget to determine color coding
   const maxBudget = Math.max(...Object.values(budgets).filter(Boolean), 0)
   const dayWithOptions = expenses.filter(e => e.dueDate && e.amount).map(e => ({
+    id: e.id,
     date: e.dueDate,
     amount: e.amount,
     category: e.category,
@@ -35,7 +36,7 @@ export default function CalendarPage({ month, setMonth, expenses, onAdd, budgets
       eyebrow="Workspace / Calendar"
       title="Calendar"
       subtitle="See your spending and due dates at a glance."
-      action={<button className="primary-btn page-add-button" onClick={onAdd}>＋ Add expense</button>}
+      action={<button className="primary-btn page-add-button" style={{ gap: '6px' }} onClick={onAdd}><Plus size={16} strokeWidth={2.2} aria-hidden="true" /><span>Add expense</span></button>}
     />
 
     <section className="card calendar-card">
@@ -83,38 +84,37 @@ export default function CalendarPage({ month, setMonth, expenses, onAdd, budgets
                                dayEvents.reduce((sum, e) => sum + e.amount, 0) < maxBudget
           const budgetColor = isOverBudget ? 'budget-alert' : 'budget-safe'
 
-          return <>
-            <div className={`calendar-day ${isToday ? 'is-today' : ''} ${budgetColor}`} key={index}>
-              <span className="day-num">{day}</span>
+          return <div className={`calendar-day ${isToday ? 'is-today' : ''} ${budgetColor}`} key={index}>
+            <span className="day-num">{day}</span>
 
-              {dayEvents.length > 0 && (
-                <div className="calendar-events">
-                  {dayEvents.map(expense => (
-                    <div
-                      className={`cal-event ${viewToggle === '2weeks' ? 'full-width' : ''}`}
-                      style={{
-                        borderLeftColor: categoryMeta[expense.category]?.[0]
-                      }}
-                    >
-                      <div className="event-header">
-                        <strong>{expense.title}</strong>
-                        <span>{money(expense.amount)}</span>
-                      </div>
-                      <div className="event-category">
-                        {expense.category}
-                      </div>
+            {dayEvents.length > 0 && (
+              <div className="calendar-events">
+                {dayEvents.map(expense => (
+                  <div
+                    key={expense.id}
+                    className={`cal-event ${viewToggle === '2weeks' ? 'full-width' : ''}`}
+                    style={{
+                      borderLeftColor: categoryMeta[expense.category]?.[0]
+                    }}
+                  >
+                    <div className="event-header">
+                      <strong>{expense.title}</strong>
+                      <span>{money(expense.amount)}</span>
                     </div>
-                  ))}
+                    <div className="event-category">
+                      {expense.category}
+                    </div>
+                  </div>
+                ))}
 
-                  {dayEvents.length > 2 && viewToggle !== '2weeks' && (
-                    <div className="more-events">
-                      +{dayEvents.length - 2} more
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </>
+                {dayEvents.length > 2 && viewToggle !== '2weeks' && (
+                  <div className="more-events">
+                    +{dayEvents.length - 2} more
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         })}
       </div>
     </section>

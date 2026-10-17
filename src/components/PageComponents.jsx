@@ -3,39 +3,6 @@ import { ArrowRight, MoreHorizontal, Sparkles } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { categories, categoryMeta, formatDate, money } from '../utils/appData'
 
-// Quick Filter Bar Component
-export function QuickFilterBar({ filters, activeFilter, onFilterChange }) {
-  return <div className="quick-filter-bar">
-    {filters.map(filter => (
-      <button
-        key={filter.id}
-        className={`filter-chip ${activeFilter === filter.id ? 'active' : ''}`}
-        onClick={() => onFilterChange(filter.id)}
-      >
-        {filter.icon} {filter.label}
-      </button>
-    ))}
-  </div>
-}
-
-// Page Actions Bar (with filters on right side)
-export function PageActionsBar({ title, subtitle, action, filters, activeFilter, onFilterChange }) {
-  return (
-    <div className="page-actions">
-      <div className="page-actions-content">
-        <div className="page-actions-info">
-          <h2>{title}</h2>
-          {subtitle && <p>{subtitle}</p>}
-        </div>
-        {action && <div className="page-actions-action">{action}</div>}
-      </div>
-      {filters && filters.length > 0 && (
-        <QuickFilterBar filters={filters} activeFilter={activeFilter} onFilterChange={onFilterChange} />
-      )}
-    </div>
-  )
-}
-
 // PageTitle - Simple header component
 export function PageTitle({ eyebrow, cycleLabel, title, subtitle, action }) {
   return <div className="page-title">
@@ -113,45 +80,6 @@ export function InfluenceCard({ type, icon, title, insight, actionText, to }) {
       {actionText && <Link to={to} onClick={handleClick} className="influence-action">
         {actionText} <ArrowRight size={14} aria-hidden="true" />
       </Link>}
-    </div>
-  </div>
-}
-
-// Favorites Card - Quick access to common categories
-export function FavoritesCard({ myExpenses }) {
-  // Calculate favorite categories by frequency
-  const categoryCounts = {}
-  myExpenses?.forEach(expense => {
-    categoryCounts[expense.category] = (categoryCounts[expense.category] || 0) + 1
-  })
-  const sorted = Object.entries(categoryCounts)
-    .map(([category, count]) => ({ category, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5)
-
-  if (sorted.length === 0) return null
-
-  const getIcon = (category) => categoryMeta[category]?.[1] || '✦'
-
-  return <div className="favorites-card">
-    <div className="section-head">
-      <div>
-        <h2>Favorites</h2>
-        <p>Quick access to your most used categories</p>
-      </div>
-    </div>
-    <div className="favorites-list">
-      {sorted.map(({ category, count }) => (
-        <Link key={category} to="/expenses" className={`favorite-item ${category}`}>
-          <div className="favorite-icon" style={{ background: `${categoryMeta[category]?.[0]}20` }}>
-            {getIcon(category)}
-          </div>
-          <div className="favorite-content">
-            <strong>{category}</strong>
-            <small>{count} expense{count > 1 ? 's' : ''}</small>
-          </div>
-        </Link>
-      ))}
     </div>
   </div>
 }

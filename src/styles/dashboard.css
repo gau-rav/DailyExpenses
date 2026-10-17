@@ -6,20 +6,10 @@
   min-height: 500px;
 }
 
-.dashboard-grid .fin-health-panel {
-  grid-column: 1 / -1;
-}
-
-.dashboard-grid .favorites-card {
-  grid-column: 1 / -1;
-}
-
 .dashboard-grid .chart-card:last-child {
   grid-column: 1 / -1;
 }
 
-.dashboard-grid .fin-health-panel,
-.dashboard-grid .favorites-card,
 .dashboard-grid .budget-card,
 .dashboard-grid .due-card,
 .dashboard-grid .upcoming-card,
@@ -30,8 +20,6 @@
 }
 
 .dashboard-grid > .card,
-.dashboard-grid > .fin-health-panel,
-.dashboard-grid > .favorites-card,
 .dashboard-grid > .influence-card {
   min-height: 220px;
   padding: 24px;
@@ -43,26 +31,46 @@
 }
 
 .dashboard-grid > .card:hover,
-.dashboard-grid > .fin-health-panel:hover,
-.dashboard-grid > .favorites-card:hover,
 .dashboard-grid > .influence-card:hover {
   border-color: var(--primary);
   box-shadow: 0 8px 24px rgba(13, 115, 119, 0.08);
 }
 
-/* FinHealth Check Panel */
-.dashboard-grid > .fin-health-panel {
+/* Merged overview card: financial health + spending trend */
+.dashboard-grid > .overview-card {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 26px;
+  align-items: stretch;
   background: linear-gradient(145deg, color-mix(in srgb, var(--surface) 92%, #e5f3ef 8%), var(--surface) 88%);
+}
+
+.overview-card .fin-health-check {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.overview-trend {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+  padding-left: 26px;
+  border-left: 1px solid var(--border);
+}
+
+.overview-trend .section-head {
+  margin-bottom: 0;
 }
 
 /* Influence Cards */
 .dashboard-grid > .influence-card {
   border-left: 4px solid var(--primary);
-}
-
-/* Favorites Card */
-.dashboard-grid > .favorites-card {
-  border-left: 4px solid var(--accent);
 }
 
 /* Budget Card */
@@ -157,13 +165,64 @@
   padding-top: 4px;
 }
 
+/* Spending trend chart */
+.trend-chart {
+  position: relative;
+  width: 100%;
+  height: 240px;
+}
+
+.trend-chart-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.trend-chart .trend-stop-top {
+  stop-color: var(--primary);
+  stop-opacity: 0.35;
+}
+
+.trend-chart .trend-stop-bottom {
+  stop-color: var(--primary);
+  stop-opacity: 0;
+}
+
+.trend-chart .recharts-area-curve {
+  stroke: var(--primary);
+}
+
+.trend-chart .recharts-cartesian-grid line {
+  stroke: var(--border);
+}
+
+.trend-chart .recharts-cartesian-axis-tick-value {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
 @media (max-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-  .dashboard-grid .fin-health-panel,
-  .dashboard-grid .favorites-card,
+  .dashboard-grid > .overview-card {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .overview-trend {
+    padding-top: 18px;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
   .dashboard-grid .chart-card:last-child {
     grid-column: span 1;
+  }
+  .trend-chart {
+    height: 200px;
   }
 }

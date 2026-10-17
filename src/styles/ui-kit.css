@@ -64,24 +64,6 @@
 .influence-content p.influence-insight:last-child{margin-bottom:0}
 .influence-action{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--primary);text-decoration:none}
 
-/* Favorites Card */
-.favorites-card{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;background:#fff}
-.favorites-list{padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));gap:10px}
-.favorite-item{display:flex;gap:8px;padding:8px;border-radius:8px;text-decoration:none;color:var(--text-primary);transition:background 0.15s ease}
-.favorite-item:hover{background:var(--surface-hover)}
-.favorite-icon{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;font-size:13px;flex:none;color:var(--primary);background:var(--primary-light, #e5f3ef)}
-.favorite-content{flex:1;min-width:0}
-.favorite-content strong{font-size:11px;font-weight:700;display:block;color:var(--text-primary)}
-.favorite-content small{font-size:9px;color:var(--text-secondary)}
-
-/* Quick Filter Bar */
-.quick-filter-bar{display:flex;gap:8px;margin-top:16px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow-x:auto}
-.quick-filter-bar::-webkit-scrollbar{display:none}
-.quick-filter-bar .filter-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:16px;font-size:11px;font-weight:600;color:var(--text-secondary);background:var(--surface-hover);border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:all 0.15s ease}
-.quick-filter-bar .filter-chip svg{width:13px;height:13px;display:block;stroke:currentColor;flex-shrink:0}
-.quick-filter-bar .filter-chip:hover{border-color:var(--primary);color:var(--primary)}
-.quick-filter-bar .filter-chip.active{background:var(--accent-light);color:var(--primary);border-color:color-mix(in srgb, var(--primary) 30%, transparent)}
-
 .metric,.card{border-color:var(--border);box-shadow:var(--shadow)}
 .metric{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;gap:13px;text-decoration:none;color:var(--text-primary)}
 .metric-content{min-width:0}

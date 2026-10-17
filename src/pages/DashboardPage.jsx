@@ -1,11 +1,9 @@
-import { useState } from 'react'
-import { CalendarDays, ChartNoAxesCombined, CircleCheck, Clock3, TrendingUp, Star, Filter, AlertTriangle, Plus } from 'lucide-react'
-import { DashboardEmpty, ExpenseRow, FinHealthCheck, InfluenceCard, FavoritesCard, MoreMenu, PageTitle, Metric, CategoryChart, QuickFilterBar } from '../components/PageComponents'
+import { CalendarDays, ChartNoAxesCombined, CircleCheck, Clock3, TrendingUp, Star, AlertTriangle, Plus, ArrowRight } from 'lucide-react'
+import { DashboardEmpty, ExpenseRow, FinHealthCheck, InfluenceCard, MoreMenu, PageTitle, Metric, CategoryChart } from '../components/PageComponents'
+import SpendingTrendChart from '../components/SpendingTrendChart'
 import { categoryMeta, cycleHeaderLabel, indiaGreeting, todayDateLabel, formatDate } from '../utils/appData'
 
 export default function DashboardPage({ firstName, dueToday, upcoming, todaySpend, monthSpend, monthExpenses, cycleRange, cycleLabel, budgets, money, onPage, onAdd, onEdit }) {
-  const [activeFilter, setActiveFilter] = useState('overview')
-
   // Calculate biggest category by spending
   const biggestCategory = monthExpenses.length > 0 ? (function() {
     const categoryTotals = {}
@@ -57,29 +55,12 @@ export default function DashboardPage({ firstName, dueToday, upcoming, todaySpen
   }
 
   const bestDay = getBestDayToSpend()
-  const biggestExpense = monthExpenses.sort((a, b) => b.amount - a.amount)[0]
+  const biggestExpense = [...monthExpenses].sort((a, b) => b.amount - a.amount)[0]
 
   const insightMenu = [
     { label: 'View full insight', onSelect: () => onPage('budgets') },
     { label: 'Find spending patterns', onSelect: () => onPage('calendar') },
   ]
-
-  // Quick Filter options
-  const quickFilters = [
-    { id: 'overview', label: 'Overview', icon: <Filter size={12} aria-hidden="true" /> },
-    { id: 'due', label: 'Due today', icon: <AlertTriangle size={12} aria-hidden="true" /> },
-    { id: 'upcoming', label: 'Upcoming', icon: <CalendarDays size={12} aria-hidden="true" /> },
-    { id: 'budget', label: 'Budget', icon: <TrendingUp size={12} aria-hidden="true" /> },
-    { id: 'favorites', label: 'Favorites', icon: <Star size={12} aria-hidden="true" /> },
-  ]
-
-  const handleFilterChange = (filterId) => {
-    setActiveFilter(filterId)
-    if (filterId === 'due') onPage('due')
-    else if (filterId === 'upcoming') onPage('calendar')
-    else if (filterId === 'budget') onPage('budgets')
-    // 'overview' and 'favorites' stay on dashboard
-  }
 
   return <>
     <PageTitle
@@ -89,10 +70,9 @@ export default function DashboardPage({ firstName, dueToday, upcoming, todaySpen
       subtitle="Check your money at a glance."
       action={<button className="primary-btn page-add-button" style={{ gap: '6px' }} onClick={onAdd}><Plus size={16} strokeWidth={2.2} aria-hidden="true" /><span>Add expense</span></button>}
     />
-    <QuickFilterBar filters={quickFilters} activeFilter={activeFilter} onFilterChange={handleFilterChange} />
     <div className="dashboard-grid">
-      {/* FinHealth Check Panel - Top priority */}
-      <div className="fin-health-panel">
+      {/* Merged card: financial health (left) + spending trend (right) */}
+      <section className="card overview-card">
         <FinHealthCheck
           monthlyBudget={budgets.monthly}
           monthSpend={monthSpend}
@@ -100,7 +80,11 @@ export default function DashboardPage({ firstName, dueToday, upcoming, todaySpen
           billsDue48h={billsDue48h}
           expenses={monthExpenses}
         />
-      </div>
+        <div className="overview-trend">
+          <div className="section-head"><div><h2>Spending trend</h2><p>Daily spend · {cycleLabel}</p></div><button className="text-btn" onClick={() => onPage('expenses')}>View expenses <ArrowRight size={14} aria-hidden="true" /></button></div>
+          {monthExpenses.length ? <SpendingTrendChart expenses={monthExpenses} cycleRange={cycleRange} money={money} /> : <DashboardEmpty Icon={ChartNoAxesCombined} title="Your trend starts here" detail="Add an expense to see your daily spending pattern." action="Browse expenses" onClick={() => onPage('expenses')} />}
+        </div>
+      </section>
 
       {/* Today's spending - 50/50 balance */}
       <Metric label="Today's spending" value={money(todaySpend)} note={`${todaySpend ? 'On track' : 'No spending yet'} · ${budgets.daily > 0 ? `${money(budgets.daily - todaySpend)} left` : 'No daily limit'}`} tone="blue" icon={<Clock3 size={20} strokeWidth={2} />} to="/expenses" />
@@ -139,18 +123,15 @@ export default function DashboardPage({ firstName, dueToday, upcoming, todaySpen
         action={!biggestExpense ? onAdd : undefined}
       />
 
-      {/* Favorites Category */}
-      <FavoritesCard myExpenses={monthExpenses} />
-
       {/* Due Today - Active action */}
       <section className="card due-card">
-        <div className="section-head"><div><h2>Due today <span className="pill-yellow">{dueToday.length}</span></h2><p>Expenses that need your attention</p></div><button className="text-btn" onClick={() => onPage('due')}>View all <span>→</span></button></div>
+        <div className="section-head"><div><h2>Due today <span className="pill-yellow">{dueToday.length}</span></h2><p>Expenses that need your attention</p></div><button className="text-btn" onClick={() => onPage('due')}>View all <ArrowRight size={14} aria-hidden="true" /></button></div>
         {dueToday.length ? dueToday.slice(0, 2).map(expense => <ExpenseRow key={expense.id} expense={expense} onEdit={onEdit} />) : <DashboardEmpty Icon={CircleCheck} title="All clear for today" detail={upcoming.length ? `${upcoming.length} payment${upcoming.length === 1 ? '' : 's'} coming up this week.` : 'No payments due today.'} action="Browse expenses" onClick={() => onPage('expenses')} />}
       </section>
 
       {/* Calendar Summary */}
       <section className="card chart-card calendar-card">
-        <div className="section-head"><div><h2>Calendar</h2><p>Next 28 days</p></div><button className="text-btn" onClick={() => onPage('calendar')}>View calendar <span>→</span></button></div>
+        <div className="section-head"><div><h2>Calendar</h2><p>Next 28 days</p></div><button className="text-btn" onClick={() => onPage('calendar')}>View calendar <ArrowRight size={14} aria-hidden="true" /></button></div>
         <div className="simple-calendar">
           <div className="calendar-summary">
             <div>

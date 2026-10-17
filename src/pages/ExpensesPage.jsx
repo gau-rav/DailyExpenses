@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Download, Filter, Search, X } from 'lucide-react'
+import { Download, Filter, Plus, Search, X } from 'lucide-react'
 import { PageTitle, Category, Status, Empty } from '../components/PageComponents'
 import { categories, categoryMeta, formatDate, money } from '../utils/appData'
 
@@ -38,7 +38,7 @@ export default function ExpensesPage({ expenses, query, setQuery, categoryFilter
   const visibleExpenses = expenses.slice(0, visibleCount)
 
   return <>
-    <PageTitle eyebrow="Workspace / Expenses" title="All expenses" subtitle="Every transaction, all in one place." action={<button className="primary-btn page-add-button" onClick={onAdd}>＋ Add expense</button>} />
+    <PageTitle eyebrow="Workspace / Expenses" title="All expenses" subtitle="Every transaction, all in one place." action={<button className="primary-btn page-add-button" style={{ gap: '6px' }} onClick={onAdd}><Plus size={16} strokeWidth={2.2} aria-hidden="true" /><span>Add expense</span></button>} />
     <section className="card table-card">
     <div className={`toolbar${filtersOpen ? ' filters-open' : ''}`}>
       <div className="expense-search-row">

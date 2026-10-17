@@ -102,11 +102,17 @@
 
 @media(max-width:720px){
   .app-shell:has(.dashboard-grid) .mobile-add-button{display:none}
-  .app-shell:has(.dashboard-grid) .page-title:has(.page-add-button){flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:10px;margin-bottom:24px}
+  .app-shell:has(.dashboard-grid) .page-title:has(.page-add-button){flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:9px;margin-bottom:20px}
   .app-shell:has(.dashboard-grid) .page-title:has(.page-add-button)>div{width:100%;min-width:0}
   .app-shell:has(.dashboard-grid) .page-title:has(.page-add-button) .eyebrow{column-gap:10px;row-gap:5px;letter-spacing:1.1px}
-  .app-shell:has(.dashboard-grid) .page-title:has(.page-add-button) h1{font-size:22px;line-height:1.2;letter-spacing:-.65px;overflow-wrap:normal}
-  .app-shell:has(.dashboard-grid) .page-title:has(.page-add-button)>.page-add-button{display:inline-flex;flex:none;align-self:flex-start;width:auto;min-height:42px;padding:0 15px;border-radius:11px;font-size:12px}
+  .app-shell:has(.dashboard-grid) .page-title:has(.page-add-button) h1{font-size:21px;line-height:1.2;letter-spacing:-.6px;overflow-wrap:normal}
+  .app-shell:has(.dashboard-grid) .page-title:has(.page-add-button)>.page-add-button{display:inline-flex;flex:none;align-self:flex-start;width:auto;min-height:36px;gap:5px;padding:0 12px;border-radius:10px;font-size:12px;box-shadow:0 4px 12px rgb(13 115 119 / 20%)}
+
+  /* Two-up metric cards, full-width panels */
+  .app-shell:has(.dashboard-grid) .dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-height:0}
+  .app-shell:has(.dashboard-grid) .dashboard-grid>.card,
+  .app-shell:has(.dashboard-grid) .dashboard-grid>.influence-card{grid-column:1/-1}
+  .app-shell:has(.dashboard-grid) .dashboard-grid>.metric{min-height:132px}
 }
 
 @media(max-width:380px){
