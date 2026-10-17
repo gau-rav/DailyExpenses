@@ -78,7 +78,7 @@
 .main{flex:1;min-width:0}
 
 /* Top actions */
-.topbar{height:70px;padding:0 46px;border-bottom:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:space-between}
+.topbar{position:sticky;top:0;z-index:5;height:70px;padding:0 46px;border-bottom:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:space-between}
 
 /* Content */
 .content{max-width:1240px;margin:auto;padding:40px 48px 70px}

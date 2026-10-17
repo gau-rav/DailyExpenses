@@ -9,7 +9,7 @@
 .due-banner strong{font-size:12px;color:#3a5077}
 .due-banner p{font-size:11px;color:#8191ae;margin:4px 0 0}
 .due-total{margin-left:auto;font:700 17px 'Plus Jakarta Sans'!important}
-.due-list{padding:0 22px}
+.due-list{padding:0 12px}
 .list-head{display:flex;justify-content:space-between;padding:17px 0;border-bottom:1px solid var(--line);font-size:11px;color:#8a97aa}
 .list-head label{display:flex;gap:8px;align-items:center}
 .due-item{display:flex;align-items:center;gap:9px}

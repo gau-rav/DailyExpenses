@@ -112,6 +112,10 @@ function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     localStorage.setItem('penny-theme', theme)
+    const meta = document.getElementById('theme-color')
+    if (meta) {
+      meta.setAttribute('content', theme === 'dark' ? '#0f172a' : '#fdf8f0')
+    }
   }, [theme])
   useEffect(() => {
     if (!profileOpen) return undefined

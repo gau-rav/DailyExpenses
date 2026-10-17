@@ -45,7 +45,7 @@
 .trash-selection-summary{font-size:11px;font-weight:700;color:var(--primary)}
 
 /* Trash row */
-.trash-row{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);border-left:3px solid transparent;transition:background 0.15s ease}
+.trash-row{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);border-left:3px solid transparent;transition:background 0.15s ease;flex-wrap:wrap}
 .trash-row:last-child{border-bottom:0}
 .trash-row:hover{background:var(--surface-hover)}
 .trash-row.selected{background:color-mix(in srgb, var(--primary) 6%, var(--surface))}
@@ -55,14 +55,15 @@
 .trash-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:16px;flex:none}
 
 /* Trash info */
-.trash-info{flex:1;min-width:0}
+.trash-info{flex:1 1 min(200px,100%);min-width:0}
 .trash-info strong{display:block;font-size:13px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .trash-info span{display:block;font-size:11px;color:var(--text-secondary);margin-top:2px}
 .trash-info small{display:block;font-size:10px;color:var(--text-secondary);opacity:0.7;margin-top:2px}
 
 /* Trash actions */
-.trash-actions{display:flex;align-items:center;gap:8px;flex:none}
-.icon-outline-btn{display:grid;place-items:center;width:32px;height:32px;border:1px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer;font-size:14px;transition:all 0.15s ease}
+.trash-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;flex:none}
+.trash-actions .outline-btn,.trash-actions .icon-outline-btn{flex:none}
+.icon-outline-btn{display:grid;place-items:center;min-width:44px;min-height:44px;border:1px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer;font-size:14px;transition:all 0.15s ease}
 .icon-outline-btn:hover{background:#fef2f2;border-color:#fecaca;color:#991b1b}
 
 /* Delete preview modal */

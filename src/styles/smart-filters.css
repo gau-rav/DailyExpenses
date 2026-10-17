@@ -28,6 +28,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
+  min-height: 36px;
   border-radius: 20px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -155,7 +156,10 @@
 @media (max-width: 720px) {
   .smart-filter-bar {
     overflow-x: auto;
-    padding: 6px 10px;
+    padding: 6px 4px;
+    gap: 6px;
+    margin: 0 -2px;
+    scrollbar-width: none;
   }
 
   .smart-filter-bar::-webkit-scrollbar {

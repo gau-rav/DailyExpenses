@@ -48,7 +48,7 @@
 .nav-count{font-size:10px;background:#ffecbd;color:#b57e14;padding:2px 6px;border-radius:5px;margin-left:auto}
 
 /* Topbar */
-.topbar{height:70px;padding:0 46px;border-bottom:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:space-between}
+.topbar{position:sticky;top:0;z-index:5;height:70px;padding:0 46px;border-bottom:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:space-between;-webkit-backdrop-filter:none;backdrop-filter:none}
 
 /* App shell */
 .app-shell{background:#f8fafc}
@@ -113,15 +113,16 @@
     right: 0;
     bottom: 0;
     left: 0;
-    z-index: 100;
+    z-index: 110;
     display: flex;
-    height: calc(64px + env(safe-area-inset-bottom));
+    height: calc(72px + env(safe-area-inset-bottom));
     align-items: center;
     justify-content: space-around;
     padding-bottom: env(safe-area-inset-bottom);
     border-top: 1px solid var(--border);
     background: rgb(255 255 255 / 95%);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   .mobile-bottom-nav a,
@@ -131,18 +132,20 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    padding: 9px 14px;
+    padding: 6px 8px;
     border: 0;
     border-radius: 10px;
     background: none;
     color: var(--text-secondary);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
     text-decoration: none;
     cursor: pointer;
     min-height: 48px;
-    min-width: 48px;
+    min-width: 44px;
     touch-action: manipulation;
+    flex: 1;
+    max-width: 18%;
   }
 
   .mobile-bottom-nav a.active,
@@ -155,8 +158,8 @@
   .mobile-add-button {
     position: fixed;
     right: 20px;
-    bottom: calc(78px + env(safe-area-inset-bottom));
-    z-index: 101;
+    bottom: calc(88px + env(safe-area-inset-bottom));
+    z-index: 111;
     display: flex;
     flex-direction: column;
     align-items: center;

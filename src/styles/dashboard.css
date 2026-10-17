@@ -13,16 +13,15 @@
 .dashboard-grid .budget-card,
 .dashboard-grid .due-card,
 .dashboard-grid .upcoming-card,
-.dashboard-grid .chart-card,
-.dashboard-grid .influence-card {
+.dashboard-grid .chart-card {
   display: flex;
   flex-direction: column;
 }
 
 .dashboard-grid > .card,
 .dashboard-grid > .influence-card {
-  min-height: 220px;
-  padding: 24px;
+  min-height: 0;
+  padding: 20px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
@@ -40,8 +39,8 @@
 .dashboard-grid > .overview-card {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-  gap: 26px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 22px;
   align-items: stretch;
   background: linear-gradient(145deg, color-mix(in srgb, var(--surface) 92%, #e5f3ef 8%), var(--surface) 88%);
 }
@@ -92,13 +91,18 @@
 /* Chart Card */
 .dashboard-grid > .chart-card {
   border-top: 3px solid #d88950;
-  min-height: 250px;
+  min-height: 0;
+}
+
+/* Calendar card spans full width on desktop now that the due list is gone */
+.dashboard-grid > .calendar-card {
+  grid-column: 1 / -1;
 }
 
 /* Dashboard empty state */
 .dashboard-empty {
   display: flex;
-  min-height: 165px;
+  min-height: 140px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -161,8 +165,83 @@
 
 /* Chart list */
 .dashboard-grid .chart-list {
-  min-height: 145px;
+  min-height: 0;
   padding-top: 4px;
+}
+
+/* Category donut (mobile) */
+.category-donut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 0 2px;
+}
+
+.category-donut-chart {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  flex: none;
+}
+
+.category-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  pointer-events: none;
+}
+
+.category-donut-center strong {
+  color: var(--text-primary);
+  font: 700 16px 'Plus Jakarta Sans';
+}
+
+.category-donut-center span {
+  color: var(--text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.category-donut-legend {
+  display: grid;
+  width: 100%;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.category-donut-legend li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.category-donut-legend li i {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+
+.category-donut-legend li span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-donut-legend li strong {
+  color: var(--text-primary);
+  font-size: 12px;
 }
 
 /* Spending trend chart */

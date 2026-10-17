@@ -1,9 +1,12 @@
-import { CalendarDays, ChartNoAxesCombined, CircleCheck, Clock3, TrendingUp, Star, AlertTriangle, Plus, ArrowRight } from 'lucide-react'
-import { DashboardEmpty, ExpenseRow, FinHealthCheck, InfluenceCard, MoreMenu, PageTitle, Metric, CategoryChart } from '../components/PageComponents'
+import { CalendarDays, ChartNoAxesCombined, Clock3, TrendingUp, Star, AlertTriangle, Plus, ArrowRight } from 'lucide-react'
+import { DashboardEmpty, FinHealthCheck, InfluenceCard, MoreMenu, PageTitle, Metric, CategoryChart, CategoryDonut } from '../components/PageComponents'
 import SpendingTrendChart from '../components/SpendingTrendChart'
+import useIsMobile from '../hooks/useIsMobile'
 import { categoryMeta, cycleHeaderLabel, indiaGreeting, todayDateLabel, formatDate } from '../utils/appData'
 
-export default function DashboardPage({ firstName, dueToday, upcoming, todaySpend, monthSpend, monthExpenses, cycleRange, cycleLabel, budgets, money, onPage, onAdd, onEdit }) {
+export default function DashboardPage({ firstName, dueToday, upcoming, todaySpend, monthSpend, monthExpenses, cycleRange, cycleLabel, budgets, money, onPage, onAdd }) {
+  const isMobile = useIsMobile()
+
   // Calculate biggest category by spending
   const biggestCategory = monthExpenses.length > 0 ? (function() {
     const categoryTotals = {}
@@ -71,6 +74,11 @@ export default function DashboardPage({ firstName, dueToday, upcoming, todaySpen
       action={<button className="primary-btn page-add-button" style={{ gap: '6px' }} onClick={onAdd}><Plus size={16} strokeWidth={2.2} aria-hidden="true" /><span>Add expense</span></button>}
     />
     <div className="dashboard-grid">
+      {/* Top KPIs - Today's spending + This month side by side */}
+      <Metric label="Today's spending" value={money(todaySpend)} note={`${todaySpend ? 'On track' : 'No spending yet'} · ${budgets.daily > 0 ? `${money(budgets.daily - todaySpend)} left` : 'No daily limit'}`} tone="blue" icon={<Clock3 size={20} strokeWidth={2} />} to="/expenses" />
+
+      <Metric label="This month" value={money(monthSpend)} note={`${cycleLabel} · ${budgets.monthly > 0 ? `${Math.round(monthSpend / budgets.monthly * 100)}% used` : 'No limit set'}`} tone="violet" icon={<TrendingUp size={20} strokeWidth={2} />} to="/budgets" />
+
       {/* Merged card: financial health (left) + spending trend (right) */}
       <section className="card overview-card">
         <FinHealthCheck
@@ -86,14 +94,8 @@ export default function DashboardPage({ firstName, dueToday, upcoming, todaySpen
         </div>
       </section>
 
-      {/* Today's spending - 50/50 balance */}
-      <Metric label="Today's spending" value={money(todaySpend)} note={`${todaySpend ? 'On track' : 'No spending yet'} · ${budgets.daily > 0 ? `${money(budgets.daily - todaySpend)} left` : 'No daily limit'}`} tone="blue" icon={<Clock3 size={20} strokeWidth={2} />} to="/expenses" />
-
       {/* Due today payments - Mirrors today's spending card */}
       <Metric label="Due today" value={money(dueToday.reduce((total, expense) => total + expense.amount, 0))} note={`${dueToday.length} payment${dueToday.length === 1 ? '' : 's'}`} tone="amber" icon={<AlertTriangle size={20} strokeWidth={2} />} to="/due" />
-
-      {/* This month - 50/50 balance */}
-      <Metric label="This month" value={money(monthSpend)} note={`${cycleLabel} · ${budgets.monthly > 0 ? `${Math.round(monthSpend / budgets.monthly * 100)}% used` : 'No limit set'}`} tone="violet" icon={<TrendingUp size={20} strokeWidth={2} />} to="/budgets" />
 
       {/* Upcoming - Mirrors this month */}
       <Metric label="Upcoming" value={money(upcoming.reduce((total, expense) => total + expense.amount, 0))} note={`${upcoming.length} payment${upcoming.length === 1 ? '' : 's'}`} tone="mint" icon={<CalendarDays size={20} strokeWidth={2} />} to="/calendar" />
@@ -123,12 +125,6 @@ export default function DashboardPage({ firstName, dueToday, upcoming, todaySpen
         action={!biggestExpense ? onAdd : undefined}
       />
 
-      {/* Due Today - Active action */}
-      <section className="card due-card">
-        <div className="section-head"><div><h2>Due today <span className="pill-yellow">{dueToday.length}</span></h2><p>Expenses that need your attention</p></div><button className="text-btn" onClick={() => onPage('due')}>View all <ArrowRight size={14} aria-hidden="true" /></button></div>
-        {dueToday.length ? dueToday.slice(0, 2).map(expense => <ExpenseRow key={expense.id} expense={expense} onEdit={onEdit} />) : <DashboardEmpty Icon={CircleCheck} title="All clear for today" detail={upcoming.length ? `${upcoming.length} payment${upcoming.length === 1 ? '' : 's'} coming up this week.` : 'No payments due today.'} action="Browse expenses" onClick={() => onPage('expenses')} />}
-      </section>
-
       {/* Calendar Summary */}
       <section className="card chart-card calendar-card">
         <div className="section-head"><div><h2>Calendar</h2><p>Next 28 days</p></div><button className="text-btn" onClick={() => onPage('calendar')}>View calendar <ArrowRight size={14} aria-hidden="true" /></button></div>
@@ -155,7 +151,7 @@ export default function DashboardPage({ firstName, dueToday, upcoming, todaySpen
       {/* Spending Chart */}
       <section className="card chart-card">
         <div className="section-head"><div><h2>Spending by category</h2><p>{monthExpenses.length} expense{monthExpenses.length === 1 ? '' : 's'} · {cycleLabel}</p></div><MoreMenu label="This report" items={insightMenu} /></div>
-        {monthExpenses.length ? <CategoryChart expenses={monthExpenses} /> : <DashboardEmpty Icon={ChartNoAxesCombined} title="Your monthly report starts here" detail="Add an expense to see where your money goes." action="Browse expenses" onClick={() => onPage('expenses')} />}
+        {monthExpenses.length ? (isMobile ? <CategoryDonut expenses={monthExpenses} /> : <CategoryChart expenses={monthExpenses} />) : <DashboardEmpty Icon={ChartNoAxesCombined} title="Your monthly report starts here" detail="Add an expense to see where your money goes." action="Browse expenses" onClick={() => onPage('expenses')} />}
       </section>
     </div>
   </>

@@ -234,6 +234,11 @@ html[data-theme='dark'] .auth-screen {
     var(--background);
 }
 
+html[data-theme='dark'] .auth-error {
+  background: color-mix(in srgb, var(--error) 16%, var(--surface));
+  color: color-mix(in srgb, var(--error) 55%, #fff);
+}
+
 @media (max-width: 720px) {
   .auth-screen {
     min-height: 100svh;
@@ -248,4 +253,9 @@ html[data-theme='dark'] .auth-screen {
   .auth-card form > p {
     font-size: 12px;
   }
+
+  .auth-mode-switch button { min-height: 44px; }
+  .auth-field input { font-size: 16px; }
+  .auth-links button { min-height: 44px; }
+  .auth-button { min-height: 48px; }
 }

@@ -608,18 +608,22 @@
 /* Toast */
 .toast {
   position: fixed;
-  right: 25px;
-  bottom: 25px;
+  left: 16px;
+  right: 16px;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  max-width: calc(100vw - 32px);
+  margin: 0 auto;
+  width: fit-content;
   background: #243552;
   color: #fff;
-  padding: 13px 17px;
-  border-radius: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
   font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
   box-shadow: 0 8px 20px #172a4b33;
-  z-index: 5;
-}
-
-.toast {
+  z-index: 200;
+  pointer-events: none;
   background: var(--primary-dark);
   box-shadow: 0 8px 20px rgb(10 92 95 / 22%);
 }
