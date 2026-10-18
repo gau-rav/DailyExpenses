@@ -166,6 +166,9 @@ With `VITE_DATA_MODE=local` the app skips all API calls and works purely against
 | `npm run build` | Production build to `dist/` |
 | `npm run preview` | Preview the production build |
 | `npm run lint` | Run ESLint over the repo (`dist/` ignored) |
+| `npm test` | Run the Vitest suite once |
+| `npm run test:watch` | Run Vitest in watch mode |
+| `npm run test:coverage` | Run Vitest with V8 coverage (HTML + text) |
 
 ---
 
@@ -349,16 +352,21 @@ CSS import order in `src/index.css` matters — `responsive.css` loads near the 
 
 ## Testing & linting
 
-There is no unit-test framework wired up yet; verification is:
+Unit tests use **Vitest** (jsdom environment) via the `test` block in `vite.config.js`:
 
 ```bash
-npm run lint     # ESLint across src/ and server/
-npm run build    # production build must succeed
+npm test              # run the suite once
+npm run test:watch    # watch mode
+npm run test:coverage # V8 coverage report for src/utils and src/api
+npm run lint          # ESLint across src/ and server/
+npm run build         # production build must succeed
 ```
+
+Tests live next to the code as `*.test.js`; shared setup is in `src/test/setup.js`. The suite covers the pure utils (`src/utils/`) and the data/sync layer (`src/api/expensesApi.js`).
 
 > Note: `server/*.js` and `src/components/Modal/ExpenseModal.jsx` carry a small number of **pre-existing** lint errors (`process`/`Buffer` globals and one `set-state-in-effect` warning). Keep new code lint-clean.
 
-Existing QA documents live in the repo: `TESTING_PHASES_1-4.md` and `PHASE_10_TESTING_CHECKLIST.md`.
+Manual QA documents also live in the repo: `TESTING_PHASES_1-4.md` and `PHASE_10_TESTING_CHECKLIST.md`.
 
 ---
 

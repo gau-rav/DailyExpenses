@@ -11,11 +11,14 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+coverage
+graphify-out/
 *.local
 .env
 .codex*
 data/
 .claude*
+.playwright-mcp/
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

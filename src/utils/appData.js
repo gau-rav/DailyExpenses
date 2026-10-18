@@ -72,7 +72,7 @@ export const previewCycleRange = startDate => {
 export const getCycleDateForSettings = (startDate, asOf = today) => {
   if (!startDate) {
     const [year, month] = asOf.split('-').slice(0, 2).map(Number)
-    return cycleDateInMonth(year, month, 1)
+    return cycleDateInMonth(year, month - 1, 1)
   }
   return startDate > asOf ? startDate : getMonthlyCycleRange(startDate, asOf).start
 }
@@ -88,3 +88,10 @@ export const seedExpenses = [
 ]
 export const money = n => formatMoney(n)
 export const formatDate = value => new Date(`${value}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+export const formatTimestamp = value => {
+  if (!value) return ''
+  const text = String(value)
+  const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(text) ? `${text}T00:00:00.000Z` : text)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', year: 'numeric' })
+}

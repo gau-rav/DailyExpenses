@@ -308,3 +308,19 @@
   .section-head h2{font-size:15px}
   .chart-list{margin:4px 0}
 }
+
+/* Trash list: compact single-line rows on mobile */
+@media(max-width:720px){
+  .trash-header{padding:10px 14px}
+  .trash-row{flex-wrap:nowrap;gap:8px;padding:9px 12px}
+  .trash-row input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary)}
+  .trash-icon{width:30px;height:30px;border-radius:9px;font-size:13px}
+  .trash-info{flex:1 1 0;min-width:0}
+  .trash-info strong{font-size:12px}
+  .trash-info span,
+  .trash-info small{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .trash-info small{font-size:9px}
+  .trash-actions{flex-wrap:nowrap;gap:6px}
+  .trash-actions .outline-btn{min-height:32px;padding:0 10px;font-size:11px}
+  .trash-actions .icon-outline-btn{min-width:32px;min-height:32px;border-radius:8px}
+}

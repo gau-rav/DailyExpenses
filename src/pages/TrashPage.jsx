@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Trash2, X } from 'lucide-react'
 import { Empty, PageTitle } from '../components/PageComponents'
-import { formatDate, money, categoryMeta } from '../utils/appData'
+import { formatDate, formatTimestamp, money, categoryMeta } from '../utils/appData'
 
 export default function TrashPage({ deleted, setDeleted, setExpenses, notify, onRestore, onPurge }) {
   const [selected, setSelected] = useState([])
@@ -141,7 +141,7 @@ export default function TrashPage({ deleted, setDeleted, setExpenses, notify, on
                   <strong>{expense.title}</strong>
                   <span>{expense.category} · {formatDate(expense.date)} · {money(expense.amount)}</span>
                   {expense.deletedAt && (
-                    <small>Deleted {formatDate(expense.deletedAt)}</small>
+                    <small>Deleted {formatTimestamp(expense.deletedAt)}</small>
                   )}
                 </div>
                 <div className="trash-actions">
