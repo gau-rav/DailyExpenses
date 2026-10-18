@@ -16,12 +16,13 @@
   text-align: center;
 }
 .splash-screen img {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  margin-bottom: 20px;
-  box-shadow: 0 8px 24px rgba(13, 115, 119, 0.25);
-  object-fit: cover;
+  max-width: min(92vw, 560px);
+  width: auto;
+  height: auto;
+  border-radius: clamp(12px, 2.5vw, 16px);
+  margin-bottom: clamp(14px, 4vw, 20px);
+  box-shadow: 0 20px 60px rgb(35 48 66 / 16%);
+  object-fit: contain;
 }
 .splash-loader {
   display: flex;
