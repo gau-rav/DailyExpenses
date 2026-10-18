@@ -250,7 +250,7 @@
   .table-card .table-wrap tbody td:first-child input{display:block;width:16px;height:16px;margin:0;accent-color:var(--primary)}
   .table-card .table-wrap tbody td:nth-child(2){display:flex;grid-column:2;grid-row:1;min-width:0;min-height:0;padding:0}
   .table-card .table-wrap tbody td:nth-child(7){display:block;grid-column:3;grid-row:1;align-self:center}
-  .table-card .table-wrap tbody td:nth-child(8){display:flex;grid-column:4;grid-row:1;align-items:center;justify-content:flex-end;gap:2px}
+  .table-card .table-wrap tbody td:nth-child(8){display:flex;grid-column:4;grid-row:1;align-items:center;justify-content:flex-end;gap:1px}
   .table-card .table-wrap tbody td::before{display:none}
   .table-card .table-wrap .table-expense{width:100%;min-width:0;gap:7px}
   .table-card .table-wrap .table-expense .expense-icon{width:29px;height:29px;flex:none;border-radius:9px;font-size:12px}
@@ -261,13 +261,14 @@
   .table-card .table-wrap .expense-mobile-meta>.category i,.table-card .table-wrap .expense-mobile-meta>.status i{width:5px;height:5px}
   .table-card .table-wrap .expense-mobile-meta>.status{padding:2px 4px;border-radius:5px;font-size:7px}
   .table-card .table-wrap .amount-cell{color:var(--text-primary);font-size:11px;font-weight:700;line-height:1;white-space:nowrap}
-  .table-card .table-wrap .table-action,.table-card .table-wrap .table-delete{display:grid;min-width:44px;min-height:44px;place-items:center;padding:0 3px;border-radius:6px;background:transparent;font-size:9px}
-  .table-card .table-wrap .table-delete{font-size:16px}
+  .table-card .table-wrap .table-action,.table-card .table-wrap .table-delete{display:grid;min-height:32px;place-items:center;border-radius:6px;background:transparent}
+  .table-card .table-wrap .table-action{min-width:auto;padding:0 6px;font-size:10px}
+  .table-card .table-wrap .table-delete{min-width:22px;padding:0;font-size:16px}
   .table-card .bulk-bar{margin-top:8px;padding:8px 10px;border-radius:10px}
 }
 
 @media(max-width:380px){
-  .table-card .table-wrap tbody tr{grid-template-columns:17px minmax(0,1fr) max-content 46px;gap:0 5px;padding-right:6px;padding-left:6px}
+  .table-card .table-wrap tbody tr{grid-template-columns:17px minmax(0,1fr) max-content max-content;gap:0 5px;padding-right:6px;padding-left:6px}
   .table-card .toolbar .expense-controls-row{padding-right:6px;padding-left:9px}
   .table-card .table-wrap .table-expense{gap:5px}
   .table-card .table-wrap .table-expense .expense-icon{width:25px;height:25px}
