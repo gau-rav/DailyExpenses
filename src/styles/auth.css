@@ -176,25 +176,51 @@
   flex-shrink: 0;
 }
 
+/* Base field input — shared with the Settings password form. */
 .auth-field input {
   display: block;
   width: 100%;
   box-sizing: border-box;
   min-height: clamp(40px, 4.5vw, 42px);
-  padding: 0 40px 0 38px;
-  border: 0;
+  margin-top: 6px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
   border-radius: 9px;
   font: inherit;
   color: var(--text-primary);
-  background: transparent;
+  background: var(--surface);
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+.auth-field input:hover {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
 }
 
 .auth-field input:focus {
   outline: 0;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 13%, transparent);
 }
 
 .auth-field input::placeholder {
   color: var(--text-muted);
+}
+
+/* Auth-page inputs sit inside an icon wrapper that draws the border itself. */
+.auth-card .auth-input-wrap input {
+  min-height: clamp(40px, 4.5vw, 42px);
+  margin-top: 0;
+  padding: 0 40px 0 38px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+}
+
+.auth-card .auth-input-wrap input:hover,
+.auth-card .auth-input-wrap input:focus {
+  border-color: transparent;
+  box-shadow: none;
+  outline: 0;
 }
 
 .auth-field .password-visibility {
