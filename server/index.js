@@ -10,7 +10,8 @@ import { promisify } from 'node:util'
 import fs from 'node:fs'
 import path from 'node:path'
 import { parse, serialize } from 'cookie'
-import { connectDatabase, createExpense, createPasswordUser, createSession, deleteExpense, deleteSession, deleteUserSessions, getBudgetLimits, getMonthlyCycle, getUserByEmail, getUserBySession, getUserCurrency, listExpenses, pruneSessions, purgeExpense, restoreExpense, saveBudgetLimits, saveMonthlyCycle, saveUserCurrency, setPasswordHash, updateExpense } from './db.js'
+import { OAuth2Client } from 'google-auth-library'
+import { connectDatabase, createExpense, createPasswordUser, createSession, deleteExpense, deleteSession, deleteUserSessions, getBudgetLimits, getMonthlyCycle, getUserByEmail, getUserBySession, getUserCurrency, listExpenses, pruneSessions, purgeExpense, restoreExpense, saveBudgetLimits, saveMonthlyCycle, saveUserCurrency, setPasswordHash, updateExpense, upsertGoogleUser } from './db.js'
 
 const app = express()
 const port = Number(process.env.PORT || process.env.AUTH_PORT || 8787)
@@ -20,6 +21,24 @@ const dummyEmail = (process.env.AUTH_DUMMY_EMAIL || '').trim().toLowerCase()
 const dummyPassword = process.env.AUTH_DUMMY_PASSWORD || ''
 const distPath = path.join(process.cwd(), 'dist')
 const scrypt = promisify(crypto.scrypt)
+
+const appUrl = process.env.APP_URL || 'http://localhost:5173'
+const googleClientId = process.env.GOOGLE_CLIENT_ID
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
+const googleRedirectUri = process.env.GOOGLE_REDIRECT_URI || `http://localhost:${port}/api/auth/google/callback`
+const googleConfigured = Boolean(
+  googleClientId && googleClientSecret
+  && googleClientId.endsWith('.apps.googleusercontent.com')
+  && !googleClientId.startsWith('your-'),
+)
+const googleClient = googleConfigured
+  ? new OAuth2Client(googleClientId, googleClientSecret, googleRedirectUri)
+  : null
+const oauthStateCookie = 'penny_oauth_state'
+const oauthVerifierCookie = 'penny_oauth_verifier'
+const oauthReturnCookie = 'penny_oauth_return'
+
+class AuthFlowError extends Error {}
 
 app.use((req, _res, next) => {
   req.url = req.url.replace(/^\/\.netlify\/functions\/api(?=\/|\?)/, '/api')
@@ -55,7 +74,13 @@ function cookieOptions(maxAge) {
 }
 
 function setCookie(res, name, value, options = {}) {
-  res.setHeader('Set-Cookie', serialize(name, value, { ...cookieOptions(options.maxAge), ...options }))
+  const serialized = serialize(name, value, { ...cookieOptions(options.maxAge), ...options })
+  const existing = res.getHeader('Set-Cookie')
+  if (!existing) {
+    res.setHeader('Set-Cookie', serialized)
+  } else {
+    res.setHeader('Set-Cookie', Array.isArray(existing) ? [...existing, serialized] : [existing, serialized])
+  }
 }
 
 function clearCookie(res, name) {
@@ -64,6 +89,18 @@ function clearCookie(res, name) {
 
 function getCookie(req, name) {
   return parse(req.headers.cookie || '')[name]
+}
+
+// Keep the OAuth return origin limited to the app that started the flow.
+function sanitizeReturnUrl(value) {
+  if (!value) return ''
+  try {
+    const url = new URL(value)
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return ''
+    return url.origin
+  } catch {
+    return ''
+  }
 }
 
 app.post(['/auth/register', '/api/auth/register'], async (req, res) => {
@@ -188,6 +225,77 @@ app.post(['/auth/logout', '/api/auth/logout'], async (req, res) => {
   await deleteSession(getCookie(req, sessionCookie))
   clearCookie(res, sessionCookie)
   res.json({ ok: true })
+})
+
+app.get(['/auth/providers', '/api/auth/providers'], (_req, res) => {
+  res.json({ ok: true, providers: { google: Boolean(googleClient) } })
+})
+
+app.get(['/auth/google', '/api/auth/google'], (req, res) => {
+  if (!googleClient) return res.status(503).json({ ok: false, error: 'Google sign-in is not configured on the server' })
+
+  const state = crypto.randomBytes(24).toString('base64url')
+  const codeVerifier = crypto.randomBytes(32).toString('base64url')
+  const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url')
+  const returnTo = sanitizeReturnUrl(req.get('referer') || req.get('origin')) || appUrl
+
+  setCookie(res, oauthStateCookie, state, { maxAge: 600 })
+  setCookie(res, oauthVerifierCookie, codeVerifier, { maxAge: 600 })
+  setCookie(res, oauthReturnCookie, returnTo, { maxAge: 600 })
+
+  res.redirect(googleClient.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['openid', 'email', 'profile'],
+    state,
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
+    prompt: 'select_account',
+  }))
+})
+
+app.get(['/auth/google/callback', '/api/auth/google/callback'], async (req, res) => {
+  const returnTo = sanitizeReturnUrl(getCookie(req, oauthReturnCookie)) || appUrl
+  try {
+    if (!googleClient) throw new AuthFlowError('Google sign-in is not configured')
+
+    const { code, state, error } = req.query
+    const savedState = getCookie(req, oauthStateCookie)
+    const codeVerifier = getCookie(req, oauthVerifierCookie)
+    clearCookie(res, oauthStateCookie)
+    clearCookie(res, oauthVerifierCookie)
+    clearCookie(res, oauthReturnCookie)
+
+    if (error) throw new AuthFlowError('Google sign-in was cancelled')
+    if (!code || !state || !savedState) throw new AuthFlowError('Invalid sign-in request')
+    const receivedState = Buffer.from(String(state))
+    const expectedState = Buffer.from(String(savedState))
+    if (receivedState.length !== expectedState.length || !crypto.timingSafeEqual(receivedState, expectedState)) {
+      throw new AuthFlowError('Invalid sign-in request')
+    }
+    if (!codeVerifier) throw new AuthFlowError('Sign-in session expired, please try again')
+
+    const { tokens } = await googleClient.getToken({ code, codeVerifier, redirect_uri: googleRedirectUri })
+    if (!tokens.id_token) throw new AuthFlowError('Google did not return an identity token')
+    const ticket = await googleClient.verifyIdToken({ idToken: tokens.id_token, audience: googleClientId })
+    const payload = ticket.getPayload()
+    if (!payload?.sub || !payload.email) throw new AuthFlowError('Google account information is incomplete')
+    if (!payload.email_verified) throw new AuthFlowError('Your Google email is not verified')
+
+    const user = await upsertGoogleUser({
+      sub: payload.sub,
+      email: payload.email,
+      name: payload.name || payload.email,
+      picture: payload.picture || '',
+      emailVerified: true,
+    })
+    const session = await createSession(user.id)
+    setCookie(res, sessionCookie, session.rawToken, { maxAge: 60 * 60 * 24 * 7 })
+    res.redirect(returnTo)
+  } catch (error) {
+    console.error('Google OAuth callback failed', error)
+    const message = error instanceof AuthFlowError ? error.message : 'Google sign-in failed'
+    res.redirect(`${returnTo}?authError=${encodeURIComponent(message)}`)
+  }
 })
 
 app.get('/health', (_req, res) => res.json({ ok: true }))

@@ -49,7 +49,7 @@ In Google Cloud Console:
 5. Add this authorized redirect URI for local development:
 
 ```text
-http://localhost:8787/auth/google/callback
+http://localhost:8787/api/auth/google/callback
 ```
 
 The redirect URI must match the server value exactly. Do not put the client secret in the React `.env` file.
@@ -65,8 +65,10 @@ MONGODB_URI=mongodb://127.0.0.1:27017
 MONGODB_DB_NAME=penny_expenses_local
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-client-secret
-GOOGLE_REDIRECT_URI=http://localhost:8787/auth/google/callback
+GOOGLE_REDIRECT_URI=http://localhost:8787/api/auth/google/callback
 ```
+
+Leave the `GOOGLE_*` values blank to disable Google sign-in; the sign-in screen hides the Google button when the server reports it is not configured.
 
 Keep `.env`, `data/`, and the Google client secret out of source control.
 
@@ -85,7 +87,7 @@ Or use the combined command:
 npm run dev:full
 ```
 
-Open `http://localhost:5173`. The Vite proxy forwards `/auth` to the backend on port 8787.
+Open `http://localhost:5173`. The Vite proxy forwards `/api` and `/health` to the backend on port 8787. Cookies set on `localhost:8787` are also sent to `localhost:5173` because cookies ignore the port.
 
 For Render, use this build command so Vite is installed even when `NODE_ENV=production`:
 
@@ -123,11 +125,17 @@ Register the same production callback URL in Google Cloud Console. Local develop
 
 ## Authentication endpoints
 
-- `GET /auth/google` starts Google OAuth.
-- `GET /auth/google/callback` validates state and PKCE, verifies the Google ID token, creates or updates the user, and creates a server session.
-- `GET /auth/me` returns the authenticated user.
-- `POST /auth/logout` revokes the local session and clears the cookie.
-- `GET /health` checks that the auth server is running.
+Google OAuth uses the authorization-code flow with PKCE. `state` and the code verifier are stored in short-lived HTTP-only cookies, and the Google ID token is verified on the server against the configured client ID. When a Google sign-in uses an email that already belongs to a password account, the Google identity is linked to that account and the user is signed in.
+
+After the callback, the browser is sent back to the origin that started the flow (for example `http://localhost:8787` when using the Express server, or `http://localhost:5173` when using the Vite dev server). `APP_URL` is only the fallback used when that origin is not available.
+
+- `GET /api/auth/providers` reports which social providers are configured, so the client can show or hide the Google button.
+- `GET /api/auth/google` starts Google OAuth.
+- `GET /api/auth/google/callback` validates state and PKCE, verifies the Google ID token, creates or links the user, and creates a server session.
+- `GET /api/auth/me` returns the authenticated user.
+- `POST /api/auth/logout` revokes the local session and clears the cookie.
+
+The same routes are also available without the `/api` prefix on the standalone Express server; deployments that route only `/api/*` to the backend, such as Netlify, use the `/api` form.
 
 MongoDB creates the `users` and `sessions` collections automatically. Sessions contain only a SHA-256 hash of the random cookie token and expire automatically through a MongoDB TTL index after seven days.
 

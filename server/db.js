@@ -20,8 +20,7 @@ export async function connectDatabase() {
   await client.connect()
   database = client.db(databaseName)
 
-  // Google OAuth is temporarily disabled. Keep this partial index so password-only
-  // users can coexist with any legacy Google users already in the database.
+  // Partial index keeps password-only users (no google_sub) alongside Google users.
   await database.collection('users').dropIndex('google_sub_1').catch(() => {})
   await database.collection('users').createIndex({ google_sub: 1 }, { unique: true, partialFilterExpression: { google_sub: { $type: 'string' } } })
   await database.collection('users').createIndex({ email: 1 }, { unique: true })
@@ -55,30 +54,44 @@ function userSettings() {
   return database.collection('user_settings')
 }
 
-/* Temporarily disabled: Google OAuth will be re-enabled after email auth is ready.
 export async function upsertGoogleUser(profile) {
   const now = new Date()
-  const existing = await users().findOne({ google_sub: profile.sub })
+  const email = String(profile.email || '').trim().toLowerCase()
+  const name = String(profile.name || email).trim() || email
+  const picture = profile.picture || ''
+  const emailVerified = profile.emailVerified !== false
 
-  if (existing) {
-    const updated = {
-      email: profile.email,
-      name: profile.name,
-      picture: profile.picture || '',
-      email_verified: Boolean(profile.emailVerified),
-      updated_at: now,
-    }
-    await users().updateOne({ _id: existing._id }, { $set: updated })
-    return { ...existing, ...updated }
+  const bySub = await users().findOne({ google_sub: profile.sub })
+  if (bySub) {
+    const updated = { email, name, picture: picture || bySub.picture || '', email_verified: emailVerified, updated_at: now }
+    await users().updateOne({ _id: bySub._id }, { $set: updated })
+    return { ...bySub, ...updated }
   }
 
+  // Link Google to an existing password account that owns the same verified email.
+  const byEmail = await users().findOne({ email })
+  if (byEmail) {
+    const updated = {
+      google_sub: profile.sub,
+      picture: byEmail.picture || picture,
+      email_verified: emailVerified,
+      updated_at: now,
+    }
+    await users().updateOne({ _id: byEmail._id }, { $set: updated })
+    return { ...byEmail, ...updated }
+  }
+
+  const nameParts = name.split(/\s+/)
   const user = {
     id: crypto.randomUUID(),
+    email,
+    name,
+    first_name: nameParts[0] || '',
+    last_name: nameParts.slice(1).join(' '),
+    picture,
     google_sub: profile.sub,
-    email: profile.email,
-    name: profile.name,
-    picture: profile.picture || '',
-    email_verified: Boolean(profile.emailVerified),
+    auth_provider: 'google',
+    email_verified: emailVerified,
     created_at: now,
     updated_at: now,
   }
@@ -86,7 +99,6 @@ export async function upsertGoogleUser(profile) {
   await users().insertOne(user)
   return user
 }
-*/
 
 export async function getUserByEmail(email) {
   return users().findOne({ email })
