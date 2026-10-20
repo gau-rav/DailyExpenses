@@ -10,7 +10,7 @@
 .cycle-settings>.section-head>svg{flex:none;color:var(--primary)}
 .cycle-date-field{display:grid;gap:8px;color:var(--text-secondary);font-size:12px;font-weight:600}
 .cycle-date-field input{width:100%;min-height:44px;padding:9px 12px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text-primary);font:inherit}
-.cycle-date-field input:focus-visible{outline:2px solid color-mix(in srgb,var(--primary) 45%,transparent);outline-offset:2px}
+.cycle-date-field input:focus-visible{outline:none;border-color:color-mix(in srgb,var(--primary) 45%,var(--border));box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 14%,transparent)}
 .cycle-help{margin:10px 0 0;color:var(--text-secondary);font-size:11px;line-height:1.5}
 .cycle-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
 .cycle-actions button{width:auto;min-height:40px}

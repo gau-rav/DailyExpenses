@@ -82,7 +82,9 @@ export default function AuthPage({ loading = false }) {
   }
 
   if (loading) return <main className="splash-screen" aria-label="Loading PaisaWise">
-    <img src="/logo_message.jpg" alt="PaisaWise — Track every paisa wisely" />
+    <div className="splash-art">
+      <img src="/logo_message.jpg" alt="PaisaWise — Track every paisa wisely" />
+    </div>
     <div className="splash-loader" role="status" aria-label="Loading">
       <span className="splash-ring" aria-hidden="true" />
       <span className="splash-dots" aria-hidden="true"><i /><i /><i /></span>

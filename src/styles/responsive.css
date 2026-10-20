@@ -47,7 +47,7 @@
   .metric-grid{grid-template-columns:1fr 1fr;gap:9px}
   .metric{position:relative;min-height:142px;flex-direction:column;align-items:flex-start;gap:9px;padding:13px 12px 11px;border-radius:14px;transition:transform .16s ease,box-shadow .16s ease}
   .metric:active{transform:scale(.98)}
-  .metric:focus-visible{outline:3px solid color-mix(in srgb,var(--primary) 40%,transparent);outline-offset:2px}
+  .metric:focus-visible{outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 16%,transparent)}
   .metric-icon{width:42px;height:42px;flex:none;border-radius:13px;font-size:18px}
   .metric-icon svg{width:22px;height:22px}
   .metric-content{display:grid;width:100%;gap:3px}

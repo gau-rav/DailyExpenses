@@ -15,7 +15,7 @@
 /* Calendar day */
 .calendar-day{min-height:105px;border-top:1px solid var(--line);border-right:1px solid var(--line);padding:8px;overflow:hidden}
 .calendar-day.has-events{cursor:pointer}
-.calendar-day.has-events:focus-visible{outline:2px solid color-mix(in srgb,var(--primary) 45%,transparent);outline-offset:-2px}
+.calendar-day.has-events:focus-visible{outline:none;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--primary) 30%,transparent)}
 .calendar-day:nth-child(7n){border-right:0}
 .calendar-day{border-radius:7px;background:color-mix(in srgb,var(--surface) 86%,var(--primary) 14%)}
 .calendar-day.is-today .day-num{background:var(--primary);color:#fff;border-radius:50%;width:23px;height:23px;display:grid;place-items:center;margin:-3px 0 3px -3px}

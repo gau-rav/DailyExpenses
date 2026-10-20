@@ -48,16 +48,22 @@
 
 /* ===== Focus Management ===== */
 *:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
+  outline: 2px solid color-mix(in srgb, var(--primary) 40%, transparent);
+  outline-offset: 2px;
 }
 
 /* Mobile focus visible */
 @media (max-width: 720px) {
   *:focus-visible {
-    outline: 2px solid var(--primary);
+    outline: 2px solid color-mix(in srgb, var(--primary) 40%, transparent);
     outline-offset: 2px;
   }
+}
+
+/* Clicks, taps, and presses should not leave a hard ring behind. */
+:focus:not(:focus-visible),
+:active {
+  outline: none;
 }
 
 /* ===== Color Contrast Verification ===== */
@@ -73,11 +79,37 @@ button.disabled {
 /* Focus visible for interactive elements */
 button:focus-visible,
 a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 40%, transparent);
+  outline-offset: 2px;
+}
+
+/* Text fields keep their soft border/box-shadow focus style instead of a ring. */
+input:focus,
+select:focus,
+textarea:focus,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
+  outline: none;
+}
+
+/* Keep a soft indicator on field wrappers whose input has no outline. */
+.search:focus-within,
+.budget-input > div:focus-within {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+/* Chart surfaces are not controls — never draw a ring when clicked. */
+.recharts-wrapper:focus,
+.recharts-wrapper:focus-visible,
+.recharts-surface:focus,
+.recharts-surface:focus-visible,
+.trend-chart svg:focus,
+.trend-chart svg:focus-visible {
+  outline: none;
 }
 
 /* ===== Tooltips & ARIA ===== */
@@ -102,16 +134,11 @@ input[role="search"] {
   padding-left: 32px;
 }
 
-/* ===== Error States & Focus ===== */
-:has(:focus) {
-  focus-ring: var(--focus-ring);
-}
-
 /* ===== Touch Target Spacing ===== */
-button.mobile-bottom-nav:focus,
-.mobile-add-button:focus {
-  outline: 3px solid var(--primary);
-  outline-offset: 3px;
+button.mobile-bottom-nav:focus-visible,
+.mobile-add-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 40%, transparent);
+  outline-offset: 2px;
 }
 
 /* ===== Screen Reader Only Content ===== */
@@ -158,12 +185,12 @@ button.mobile-bottom-nav:focus,
 }
 
 .modal:focus-visible {
-  outline: 3px solid var(--primary);
+  outline: 2px solid color-mix(in srgb, var(--primary) 40%, transparent);
   outline-offset: -2px;
 }
 
 .modal-head:focus-visible button {
-  outline: 2px solid var(--primary);
+  outline: 2px solid color-mix(in srgb, var(--primary) 40%, transparent);
   outline-offset: 2px;
 }
 
@@ -172,7 +199,7 @@ button.mobile-bottom-nav:focus,
 }
 
 .modal-actions button:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid color-mix(in srgb, var(--primary) 40%, transparent);
   outline-offset: 2px;
 }
 
@@ -180,7 +207,7 @@ button.mobile-bottom-nav:focus,
 .modal-interactive .modal:has([data-focus-trap]) input:focus,
 .modal-interactive .modal:has([data-focus-trap]) select:focus,
 .modal-interactive .modal:has([data-focus-trap]) textarea:focus {
-  box-shadow: 0 0 0 3px var(--primary), 0 0 0 6px var(--surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
 /* ===== Dark Mode Contrast Improvements ===== */
