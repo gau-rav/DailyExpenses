@@ -3,7 +3,7 @@
   width: min(420px, 100%);
   padding: 42px 34px;
   text-align: center;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow: var(--shadow);
@@ -52,14 +52,14 @@
 
 .auth-card h1 {
   font: 700 24px 'Plus Jakarta Sans';
-  color: #243552;
+  color: var(--text-primary);
   margin: 0 0 10px;
 }
 
 .auth-card p {
   font-size: 13px;
   line-height: 1.6;
-  color: #8b98aa;
+  color: var(--text-secondary);
   margin: 0 0 24px;
 }
 
@@ -67,7 +67,7 @@
   display: none;
   align-items: center;
   gap: 8px;
-  color: #243552;
+  color: var(--text-primary);
 }
 
 .mobile-brand .brand-mark {
@@ -96,14 +96,14 @@
 
 .page-title h1 {
   font: 700 28px 'Plus Jakarta Sans';
-  color: #243552;
+  color: var(--text-primary);
   margin: 0 0 7px;
   letter-spacing: -0.8px;
 }
 
 .page-title p {
   margin: 0;
-  color: #909db0;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
@@ -115,19 +115,19 @@
 .metric span,
 .metric small {
   display: block;
-  color: #8491a5;
+  color: var(--text-secondary);
   font-size: 11px;
 }
 
 .metric strong {
   display: block;
   font: 700 21px 'Plus Jakarta Sans';
-  color: #243552;
+  color: var(--text-primary);
   margin: 4px 0;
 }
 
 .metric small {
-  color: #9aa6b6;
+  color: var(--text-muted);
   font-size: 10px;
 }
 
@@ -140,12 +140,12 @@
 
 .section-head h2 {
   font: 700 14px 'Plus Jakarta Sans';
-  color: #2d3e5c;
+  color: var(--text-primary);
   margin: 0 0 5px;
 }
 
 .section-head p {
   font-size: 11px;
-  color: #9ba6b5;
+  color: var(--text-secondary);
   margin: 0;
 }
