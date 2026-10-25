@@ -16,6 +16,7 @@ import {
   getCycleDateForSettings,
   indiaGreeting,
   formatDate,
+  formatDateFull,
   formatTimestamp,
   money,
 } from './appData.js'
@@ -120,6 +121,10 @@ describe('formatting helpers', () => {
 
   it('formatDate renders a short month/day', () => {
     expect(formatDate('2026-01-15')).toBe('Jan 15')
+  })
+
+  it('formatDateFull renders a long date', () => {
+    expect(formatDateFull('2026-01-15')).toBe('Thursday, 15 January 2026')
   })
 
   it('formatTimestamp formats ISO timestamps (and date-only values) with a year', () => {

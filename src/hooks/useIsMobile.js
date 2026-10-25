@@ -1,13 +1,13 @@
-import { useCallback, useSyncExternalStore } from 'react'
+import { useEffect, useState } from 'react'
 
-export default function useIsMobile(query = '(max-width: 720px)') {
-  const subscribe = useCallback(callback => {
-    const mediaQuery = window.matchMedia(query)
-    mediaQuery.addEventListener('change', callback)
-    return () => mediaQuery.removeEventListener('change', callback)
-  }, [query])
+export default function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
 
-  const getSnapshot = useCallback(() => window.matchMedia(query).matches, [query])
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
-  return useSyncExternalStore(subscribe, getSnapshot, () => false)
+  return isMobile
 }

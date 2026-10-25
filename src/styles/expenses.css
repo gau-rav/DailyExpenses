@@ -47,12 +47,12 @@ td strong{color:#3e4d66;font-size:11px}
 
 /* Table action buttons */
 .align-right{text-align:right}
-.amount-cell{font-weight:600;color:#3e4d66}
+.amount-cell{font-weight:600;color:var(--text-primary)}
 .table-action,.table-delete{border:0;background:none;color:#7290dd;font-size:10px}
 .table-delete{color:#c0c8d4;font-size:18px}
 
 /* Expense row */
-.expense-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-top:1px solid #f0f2f6;gap:10px}
+.expense-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-top:1px solid var(--border);gap:10px}
 
 /* Keep the desktop toolbar controls in one clean row when space allows. */
 .table-card>.toolbar{display:flex;position:static;z-index:auto;align-items:center;gap:9px;padding:17px;border:0;border-bottom:1px solid var(--border);border-radius:0;background:var(--surface)}
@@ -83,18 +83,18 @@ td strong,.amount-cell{color:var(--text-primary)}
 .table-expense{gap:9px}
 .table-expense .expense-icon{width:27px;height:27px;font-size:12px}
 .align-right{text-align:right}
-.amount-cell{font-weight:600;color:#3e4d66}
+.amount-cell{font-weight:600;color:var(--text-primary)}
 .table-action, .table-delete {
   border: 0;
   outline: 0;
   background: transparent;
   box-shadow: none;
-  color: #7290dd;
+  color: var(--primary);
   font-size: 10px;
   cursor: pointer;
 }
 .table-delete {
-  color: #c0c8d4;
+  color: var(--text-muted);
   font-size: 18px;
 }
 .table-action:hover {
@@ -102,7 +102,7 @@ td strong,.amount-cell{color:var(--text-primary)}
   text-decoration: underline;
 }
 .table-delete:hover {
-  color: #ef4444;
+  color: var(--error);
 }
 .table-wrap tbody tr:has(.status-due-today){border-left:3px solid #e49a3b}
 .table-card .table-wrap tbody tr:has(.status-due-today){border-left-color:#e49a3b}

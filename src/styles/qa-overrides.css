@@ -1,0 +1,131 @@
+/* Final visual corrections for the QA reference layouts. */
+.pwa-install-banner {
+  padding: 14px 18px;
+}
+
+@media (min-width: 721px) {
+  .pwa-install-banner {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .pwa-install-banner {
+    padding: 3px 14px;
+  }
+}
+
+/* Keep accent surfaces in the mint family instead of amber-brown. */
+.due-banner {
+  background: var(--hero-gradient);
+  border-color: color-mix(in srgb, var(--primary) 26%, var(--border));
+}
+
+.calendar-day.is-today {
+  background: color-mix(in srgb, var(--primary-light) 82%, var(--surface));
+}
+
+.avatar {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+@media (max-width: 720px) {
+  .due-item {
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    row-gap: 6px;
+  }
+
+  .due-item .expense-row {
+    flex: 1 1 calc(100% - 40px);
+    min-width: 0;
+    padding: 8px 0;
+    align-items: flex-start;
+  }
+
+  .due-item .expense-main {
+    min-width: 0;
+  }
+
+  .due-item .expense-main strong {
+    max-width: 100%;
+  }
+
+  .due-item-actions {
+    margin-left: auto;
+  }
+
+  .due-pay {
+    min-height: 28px;
+    padding: 4px 10px;
+  }
+}
+
+/* Expenses list: use the full mobile width instead of an inset card. */
+@media (max-width: 720px) {
+  .content:has(.table-card) {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .content:has(.table-card) > .page-title {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .table-card.card {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .table-card > .toolbar {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .table-card > .toolbar .expense-search-row {
+    padding: 10px 14px;
+  }
+
+  .table-card > .toolbar .expense-controls-row {
+    padding: 0 14px;
+  }
+
+  .table-card .table-wrap {
+    width: 100%;
+    margin: 0;
+  }
+
+  .table-card .table-wrap tbody tr {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+}
+
+/* Mobile More menu: keep each item on a single row (icon left, label right). */
+@media (max-width: 720px) {
+  .mobile-bottom-nav {
+    z-index: 112;
+  }
+
+  .mobile-bottom-nav .mobile-more-menu a {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    max-width: none;
+    min-height: 44px;
+    padding: 10px 12px;
+  }
+}

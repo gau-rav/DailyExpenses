@@ -1,22 +1,29 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { Bell, CalendarDays, ChartNoAxesCombined, Clock3, House, Plus, ReceiptText, Settings, Sparkles, Trash2 } from 'lucide-react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { Bell, CalendarDays, CheckCircle, Clock3, House, Mail, Plus, ReceiptText, Settings, Sparkles, Trash2 } from 'lucide-react'
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { addExpense, DATA_MODE, deleteExpense as deleteRemoteExpense, fetchDeletedExpenses, fetchExpenses, getLastExpensesSource, isApiConfigured, purgeExpense, readExpenseCache, restoreExpense as restoreRemoteExpense, syncQueuedActions, updateExpense, writeExpenseCache } from './api/expensesApi'
-import { seedExpenses, defaultBudgets, today, dateOffset, getMonthlyCycleRange, cycleRangeLabel, money } from './utils/appData'
+import { addExpense, deleteExpense as deleteRemoteExpense, fetchDeletedExpenses, fetchExpenses, getLastExpensesSource, purgeExpense, readExpenseCache, restoreExpense as restoreRemoteExpense, syncQueuedActions, updateExpense, writeExpenseCache } from './api/expensesApi'
+import { fetchIngestStatus } from './api/ingestApi'
+import { seedExpenses, defaultBudgets, today, dateOffset, getMonthlyCycleRange, cycleRangeLabel } from './utils/appData'
 import { getCurrencyCode, setCurrencyCode } from './utils/currency'
 import PwaInstallButton from './components/PwaInstallButton'
 import MobileBottomNav from './components/MobileBottomNav'
 import { ExpenseModal, DeleteModal } from './components/Modal'
 import { pageByPath, pagePaths, primaryNavigation, routeLabels } from './routes'
+import Onboarding from './components/Onboarding'
+import QuickAddSheet from './components/QuickAddSheet'
+import SiteFooter from './components/SiteFooter'
 
 const AuthPage = lazy(() => import('./pages/AuthPage'))
+const LegalPage = lazy(() => import('./pages/LegalPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const ExpensesPage = lazy(() => import('./pages/ExpensesPage'))
+const InboxPage = lazy(() => import('./pages/InboxPage'))
 const DuePage = lazy(() => import('./pages/DuePage'))
 const CalendarPage = lazy(() => import('./pages/CalendarPage'))
 const BudgetsPage = lazy(() => import('./pages/BudgetsPage'))
 const TrashPage = lazy(() => import('./pages/TrashPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const BillsPage = lazy(() => import('./pages/BillsPage'))
 const PageLoading = ({ label = 'Loading page…', fullScreen = false }) => (
   <div className={`page-loading${fullScreen ? ' page-loading-screen' : ''}`} role="status" aria-live="polite">
     <span className="page-loading-spinner" aria-hidden="true" />
@@ -35,13 +42,34 @@ const readLegacyBudgetCache = () => {
     return null
   }
 }
+const emptyGmailStatus = { connected: false, configured: false, loaded: false, email: '', status: 'disconnected', lastSyncAt: '', lastError: '', syncInProgress: false }
+const normalizeIngestStatus = data => ({
+  enabled: data.enabled,
+  autoAdd: data.autoAdd,
+  connected: data.connected,
+  pendingCount: data.pendingCount || 0,
+  gmail: { ...(data.gmail || emptyGmailStatus), loaded: true },
+})
 
 function App() {
+  const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const [onboardingOpen, setOnboardingOpen] = useState(() => localStorage.getItem('penny-onboarding-complete') !== '1')
   const location = useLocation()
   const navigate = useNavigate()
   const page = pageByPath[location.pathname] || 'dashboard'
+  const legalKind = location.pathname === pagePaths.privacy ? 'privacy' : location.pathname === pagePaths.terms ? 'terms' : null
   const setPage = nextPage => navigate(pagePaths[nextPage] || '/')
   const [authUser, setAuthUser] = useState(undefined)
+  const [ingestStatus, setIngestStatus] = useState({ enabled: false, autoAdd: false, connected: false, pendingCount: 0, gmail: emptyGmailStatus })
+  const refreshIngestStatus = useCallback(async () => {
+    try {
+      const data = await fetchIngestStatus()
+      setIngestStatus(normalizeIngestStatus(data))
+      return data
+    } catch {
+      return null
+    }
+  }, [])
   const [profileOpen, setProfileOpen] = useState(false)
   const [theme, setTheme] = useState(() => localStorage.getItem('penny-theme') === 'dark' ? 'dark' : 'light')
   const [installPrompt, setInstallPrompt] = useState(null)
@@ -134,6 +162,16 @@ function App() {
       .then(data => setAuthUser(data?.user || null))
       .catch(() => setAuthUser(null))
   }, [])
+  useEffect(() => {
+    if (!authUser) return undefined
+    let active = true
+    fetchIngestStatus()
+      .then(data => {
+        if (active) setIngestStatus(normalizeIngestStatus(data))
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [authUser])
   const [expenses, setExpenses] = useState(() => { const saved = JSON.parse(localStorage.getItem('penny-expenses') || 'null'); const cached = readExpenseCache(); return saved || (cached.length ? cached : seedExpenses) })
   const [deleted, setDeleted] = useState(() => JSON.parse(localStorage.getItem('penny-trash') || '[]'))
   const [budgets, setBudgets] = useState(defaultBudgets)
@@ -165,8 +203,8 @@ function App() {
   const [monthlyCycleStartDate, setMonthlyCycleStartDate] = useState(null)
   const [monthlyCycleOwnerId, setMonthlyCycleOwnerId] = useState('')
   const monthlyCycleLoaded = Boolean(authUser && monthlyCycleOwnerId === authUser.id)
-  const [formOpen, setFormOpen] = useState(false), [editing, setEditing] = useState(null), [deleteTarget, setDeleteTarget] = useState(null), [toast, setToast] = useState(''), [apiStatus, setApiStatus] = useState(isApiConfigured ? 'connecting' : 'offline')
-  const [query, setQuery] = useState(''), [categoryFilter, setCategoryFilter] = useState('All categories'), [statusFilter, setStatusFilter] = useState('All statuses'), [sort, setSort] = useState('date'), [selected, setSelected] = useState([]), [month, setMonth] = useState(new Date())
+  const [formOpen, setFormOpen] = useState(false), [editing, setEditing] = useState(null), [addDate, setAddDate] = useState(null), [deleteTarget, setDeleteTarget] = useState(null), [toast, setToast] = useState(''), [apiStatus, setApiStatus] = useState('connecting')
+  const [selected, setSelected] = useState([]), [month, setMonth] = useState(new Date())
   useEffect(() => { localStorage.setItem('penny-expenses', JSON.stringify(expenses)); writeExpenseCache(expenses) }, [expenses]); useEffect(() => localStorage.setItem('penny-trash', JSON.stringify(deleted)), [deleted])
   useEffect(() => {
     if (!authUser) return undefined
@@ -245,7 +283,6 @@ function App() {
     return () => { active = false }
   }, [authUser])
   useEffect(() => {
-    if (!isApiConfigured) return undefined
     let active = true
     const refresh = async () => { await syncQueuedActions(); const remote = await fetchExpenses(); const remoteDeleted = await fetchDeletedExpenses(); if (active) { setExpenses(remote); if (remoteDeleted) setDeleted(remoteDeleted); setApiStatus(getLastExpensesSource() === 'remote' ? 'connected' : 'offline') } }
     refresh()
@@ -255,9 +292,14 @@ function App() {
   }, [])
   useEffect(() => { if (toast) { const t = setTimeout(() => setToast(''), 3000); return () => clearTimeout(t) } }, [toast])
   const cycleRange = getMonthlyCycleRange(monthlyCycleStartDate)
-  const dueToday = expenses.filter(e => e.dueDate === today && e.status !== 'Paid'), upcoming = expenses.filter(e => e.dueDate > today && e.dueDate <= dateOffset(7) && e.status !== 'Paid').sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 4), monthExpenses = expenses.filter(e => e.date >= cycleRange.start && e.date <= cycleRange.end), todaySpend = expenses.filter(e => e.date === today && e.status === 'Paid').reduce((a, e) => a + e.amount, 0), monthSpend = monthExpenses.reduce((a, e) => a + e.amount, 0), cycleLabel = cycleRangeLabel(cycleRange)
-  const filtered = useMemo(() => expenses.filter(e => `${e.title} ${e.category} ${e.payment}`.toLowerCase().includes(query.toLowerCase()) && (categoryFilter === 'All categories' || e.category === categoryFilter) && (statusFilter === 'All statuses' || e.status === statusFilter)).sort((a, b) => sort === 'amount' ? b.amount - a.amount : sort === 'category' ? a.category.localeCompare(b.category) : b.date.localeCompare(a.date)), [expenses, query, categoryFilter, statusFilter, sort])
-  const notify = (message) => setToast(message)
+  const monthExpenses = expenses.filter(e => e.date >= cycleRange.start && e.date <= cycleRange.end)
+  const todaySpend = expenses.filter(e => e.date === today && e.status === 'Paid').reduce((a, e) => a + e.amount, 0)
+  const monthSpend = monthExpenses.reduce((a, e) => a + e.amount, 0)
+  const monthCommitted = monthExpenses.filter(e => e.status !== 'Paid').reduce((a, e) => a + e.amount, 0)
+  const dueToday = expenses.filter(e => e.dueDate === today && e.status !== 'Paid')
+  const upcoming = expenses.filter(e => e.dueDate > today && e.dueDate <= dateOffset(7) && e.status !== 'Paid').sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 4)
+  const cycleLabel = cycleRangeLabel(cycleRange)
+  const notify = useCallback((message) => setToast(message), [])
   const saveBudgets = async (nextBudgets) => {
     try {
       const response = await fetch('/api/budgets', {
@@ -279,7 +321,21 @@ function App() {
       return false
     }
   }
-  const saveMonthlyCycle = async (startDate) => {
+  const quickAddExpense = async (data) => {
+  const payload = { ...data, amount: Number(data.amount), id: crypto.randomUUID() }
+  setExpenses(current => [payload, ...current])
+  setQuickAddOpen(false)
+  try {
+    const saved = await addExpense(payload)
+    if (saved) {
+      setExpenses(current => current.map(e => String(e.id) === String(saved.id) ? { ...payload, ...saved } : e))
+    }
+    setApiStatus('connected'); notify('Expense added')
+  }
+  catch { setApiStatus('offline'); notify('Saved locally. It will sync when you reconnect.') }
+}
+
+const saveMonthlyCycle = async (startDate) => {
     try {
       const response = await fetch('/api/current-monthly-cycle', {
         method: 'POST',
@@ -299,12 +355,12 @@ function App() {
       return false
     }
   }
-  const openAdd = () => { setEditing(null); setFormOpen(true) }; const openEdit = (e) => { setEditing(e); setFormOpen(true) }
+  const openAdd = (date) => { setEditing(null); setAddDate(typeof date === 'string' ? date : null); setFormOpen(true) }; const openEdit = (e) => { setEditing(e); setAddDate(null); setFormOpen(true) }
   const saveExpense = async (data) => {
     const payload = { ...data, amount: Number(data.amount), id: editing?.id || data.id || crypto.randomUUID() }
     const wasEditing = Boolean(editing)
     setExpenses(current => wasEditing ? current.map(e => String(e.id) === String(payload.id) ? { ...e, ...payload } : e) : [payload, ...current])
-    setFormOpen(false); setEditing(null)
+    setFormOpen(false); setEditing(null); setAddDate(null)
     try {
       const saved = wasEditing ? await updateExpense(payload) : await addExpense(payload)
       if (saved) {
@@ -317,13 +373,11 @@ function App() {
   const moveToTrash = async (items) => {
     let serverError = ''
     let offline = false
-    if (isApiConfigured) {
-      for (const item of items) {
-        try { await deleteRemoteExpense(item.id) }
-        catch (error) {
-          if (/not found|unsupported|invalid/i.test(error.message)) serverError = error.message
-          else offline = true
-        }
+    for (const item of items) {
+      try { await deleteRemoteExpense(item.id) }
+      catch (error) {
+        if (/not found|unsupported|invalid/i.test(error.message)) serverError = error.message
+        else offline = true
       }
     }
     if (serverError) { notify(`Delete failed: ${serverError}`); return }
@@ -337,6 +391,7 @@ function App() {
   const markPaid = async (items) => { setExpenses(current => current.map(x => items.some(item => item.id === x.id) ? { ...x, status: 'Paid' } : x)); for (const item of items) { try { await updateExpense({ ...item, status: 'Paid' }) } catch { setApiStatus('offline') } } setDeleteTarget(null); notify('Marked as paid') }
   const exportCsv = () => { const rows = [['Title', 'Amount', 'Category', 'Payment', 'Date', 'Due date', 'Status'], ...expenses.map(e => [e.title, e.amount, e.category, e.payment, e.date, e.dueDate, e.status])]; const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'penny-expenses.csv'; a.click(); notify('CSV exported') }
   const common = { onAdd: openAdd, onEdit: openEdit, onDelete: deleteExpense }
+  if (legalKind) return <Suspense fallback={<PageLoading label="Loading legal information…" fullScreen />}><LegalPage kind={legalKind} /></Suspense>
   if (authUser === undefined) return <Suspense fallback={<PageLoading label="Loading PaisaWise…" fullScreen />}><AuthPage loading /></Suspense>
   if (!authUser) return <Suspense fallback={<PageLoading label="Loading sign in…" fullScreen />}><AuthPage /></Suspense>
   const profileName = authUser.name || authUser.email.split('@')[0]
@@ -354,8 +409,9 @@ function App() {
         <div><strong>PaisaWise</strong><span>Track every paisa wisely.</span></div>
       </div>
       <nav>{primaryNavigation.map(({ id, label, path }) => {
-        const Icon = { dashboard: House, expenses: ReceiptText, due: Clock3, calendar: CalendarDays, budgets: ChartNoAxesCombined, trash: Trash2 }[id]
-        return <NavLink key={id} to={path} end={id === 'dashboard'} className={({ isActive }) => isActive ? 'active' : ''}><span className="nav-icon"><Icon size={18} strokeWidth={1.8} aria-hidden="true" /></span>{label}{id === 'due' && dueToday.length > 0 && <b className="nav-count">{dueToday.length}</b>}</NavLink>
+        const Icon = { dashboard: House, expenses: ReceiptText, bills: CheckCircle, inbox: Mail, due: Clock3, calendar: CalendarDays, budgets: ReceiptText, trash: Trash2 }[id]
+        const badge = id === 'inbox' ? ingestStatus.pendingCount : id === 'due' ? dueToday.length : 0
+        return <NavLink key={id} to={path} end={id === 'dashboard'} className={({ isActive }) => isActive ? 'active' : ''}><span className="nav-icon"><Icon size={18} strokeWidth={1.8} aria-hidden="true" /></span>{label}{badge > 0 && <b className="nav-count">{badge}</b>}</NavLink>
       })}</nav>
       <div className="sidebar-bottom">
         <NavLink to={pagePaths.settings} className={({ isActive }) => isActive ? 'active' : ''}><span className="nav-icon"><Settings size={18} strokeWidth={1.8} aria-hidden="true" /></span>Settings</NavLink>
@@ -378,7 +434,7 @@ function App() {
             }
           }}>
             <i></i>
-            {DATA_MODE === 'local' ? 'Local file' : apiStatus === 'connected' ? 'Synced' : apiStatus === 'connecting' ? 'Connecting…' : 'Offline'}
+            {apiStatus === 'connected' ? 'Synced' : apiStatus === 'connecting' ? 'Connecting…' : 'Offline'}
             {apiStatus === 'offline' && (
               <span className="sync-retry" aria-label="Try again">⟳</span>
             )}
@@ -400,24 +456,39 @@ function App() {
       <div className="content">
         <Suspense fallback={<PageLoading />}>
           <Routes>
-            <Route path="/" element={<DashboardPage firstName={greetingName} dueToday={dueToday} upcoming={upcoming} todaySpend={todaySpend} monthSpend={monthSpend} monthExpenses={monthExpenses} cycleRange={cycleRange} cycleLabel={cycleLabel} budgets={budgets} money={money} onPage={setPage} {...common} />} />
-            <Route path="/expenses" element={<ExpensesPage key={`${query}|${categoryFilter}|${statusFilter}|${sort}`} expenses={filtered} query={query} setQuery={setQuery} categoryFilter={categoryFilter} setCategoryFilter={setCategoryFilter} statusFilter={statusFilter} setStatusFilter={setStatusFilter} sort={sort} setSort={setSort} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} exportCsv={exportCsv} {...common} />} />
+            <Route path="/" element={<DashboardPage firstName={greetingName} today={today} todaySpend={todaySpend} monthSpend={monthSpend} monthCommitted={monthCommitted} monthExpenses={monthExpenses} cycleRange={cycleRange} cycleLabel={cycleLabel} budgets={budgets} dueToday={dueToday} overdue={[]} upcoming={upcoming} onPage={setPage} onQuickAdd={() => setQuickAddOpen(true)} />} />
+            <Route path="/expenses" element={<ExpensesPage expenses={expenses} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} exportCsv={exportCsv} onQuickAdd={() => setQuickAddOpen(true)} {...common} />} />
+            <Route path="/inbox" element={<InboxPage notify={notify} onChanged={refreshIngestStatus} onExpenseAdded={expense => { if (expense) setExpenses(current => [expense, ...current]) }} />} />
+            <Route path="/bills" element={<BillsPage expenses={expenses} today={today} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} onEdit={openEdit} onMarkAsPaid={markPaid} budgets={budgets} monthSpend={monthSpend} onQuickAdd={() => setQuickAddOpen(true)} />} />
             <Route path="/due" element={<DuePage expenses={dueToday} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} onMarkAsPaid={markPaid} budgets={budgets} monthSpend={monthSpend} {...common} />} />
-            <Route path="/calendar" element={<CalendarPage month={month} setMonth={setMonth} expenses={expenses} onAdd={openAdd} budgets={budgets} monthSpend={monthSpend} />} />
-            <Route path="/budgets" element={<BudgetsPage budgets={budgets} budgetsLoaded={budgetsLoaded} onSaveBudgets={saveBudgets} expenses={expenses} monthSpend={monthSpend} cycleLabel={cycleLabel} money={money} exportCsv={exportCsv} />} />
+            <Route path="/calendar" element={<CalendarPage month={month} setMonth={setMonth} expenses={expenses} today={today} budgets={budgets} onAdd={openAdd} onAddForDate={openAdd} />} />
+            <Route path="/budgets" element={<BudgetsPage budgets={budgets} budgetsLoaded={budgetsLoaded} onSaveBudgets={saveBudgets} expenses={monthExpenses} monthSpend={monthSpend} cycleStart={cycleRange.start} cycleEnd={cycleRange.end} today={today} cycleLabel={cycleLabel} exportCsv={exportCsv} />} />
             <Route path="/trash" element={<TrashPage deleted={deleted} setDeleted={setDeleted} setExpenses={setExpenses} notify={notify} onRestore={async item => { try { await restoreRemoteExpense(item.id); setApiStatus('connected') } catch { setApiStatus('offline') } }} onPurge={emptyTrash} />} />
-            <Route path="/settings" element={monthlyCycleLoaded ? <SettingsPage notify={notify} theme={theme} setTheme={setTheme} currency={currency} setCurrency={changeCurrency} monthlyCycleStartDate={monthlyCycleStartDate} onSaveMonthlyCycle={saveMonthlyCycle} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} appInstalled={appInstalled} setAppInstalled={setAppInstalled} /> : <PageLoading label="Loading your settings…" />} />
+            <Route path="/settings" element={monthlyCycleLoaded ? <SettingsPage notify={notify} theme={theme} setTheme={setTheme} currency={currency} setCurrency={changeCurrency} monthlyCycleStartDate={monthlyCycleStartDate} onSaveMonthlyCycle={saveMonthlyCycle} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} appInstalled={appInstalled} setAppInstalled={setAppInstalled} ingestStatus={ingestStatus} refreshIngestStatus={refreshIngestStatus} /> : <PageLoading label="Loading your settings…" />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </div>
+      <SiteFooter />
     </main>
-    <MobileBottomNav activePage={page} />
-    <button className="mobile-add-button" type="button" aria-label="Add expense" onClick={openAdd}>
+    <MobileBottomNav activePage={page} pendingCount={ingestStatus.pendingCount} />
+    {!['/settings', '/trash', '/inbox'].includes(location.pathname) && <button className="mobile-add-button" type="button" aria-label="Add expense" onClick={openAdd}>
       <span className="fab-label">Add expense</span>
       <Plus size={24} strokeWidth={2} aria-hidden="true" />
-    </button>
-    {formOpen && <ExpenseModal key={editing?.id || 'new'} expense={editing} onClose={() => { setFormOpen(false); setEditing(null) }} onSave={saveExpense} />}
+    </button>}
+    <QuickAddSheet
+      open={quickAddOpen}
+      onClose={() => setQuickAddOpen(false)}
+      onSave={async expense => { await quickAddExpense(expense); setQuickAddOpen(false) }}
+    />
+    <Onboarding
+      open={Boolean(authUser) && onboardingOpen}
+      firstName={greetingName}
+      onSaveBudgets={saveBudgets}
+      onQuickAdd={() => { setOnboardingOpen(false); setQuickAddOpen(true) }}
+      onDone={() => { localStorage.setItem('penny-onboarding-complete', '1'); setOnboardingOpen(false) }}
+    />
+    {formOpen && <ExpenseModal key={editing?.id || 'new'} expense={editing} defaultDate={addDate} onClose={() => { setFormOpen(false); setEditing(null); setAddDate(null) }} onSave={saveExpense} />}
     {deleteTarget && <DeleteModal target={deleteTarget} onClose={() => setDeleteTarget(null)} onPaid={() => markPaid(deleteTarget.items)} onDelete={() => moveToTrash(deleteTarget.items)} onPostpone={() => { setExpenses(e => e.map(x => deleteTarget.items.some(i => i.id === x.id) ? { ...x, status: 'Upcoming', dueDate: dateOffset(1) } : x)); setDeleteTarget(null); notify('Expense postponed until tomorrow') }} />}
     {toast && <div className="toast">✓ &nbsp;{toast}</div>}
   </div>

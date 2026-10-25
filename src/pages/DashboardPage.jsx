@@ -1,158 +1,198 @@
-import { CalendarDays, ChartNoAxesCombined, Clock3, TrendingUp, Star, AlertTriangle, Plus, ArrowRight } from 'lucide-react'
-import { DashboardEmpty, FinHealthCheck, InfluenceCard, MoreMenu, PageTitle, Metric, CategoryChart, CategoryDonut } from '../components/PageComponents'
-import SpendingTrendChart from '../components/SpendingTrendChart'
+import { lazy, Suspense } from 'react'
+import { AlertTriangle, ArrowRight, CalendarDays, ChartNoAxesCombined, Clock3, Plus, Sparkles, TrendingUp, WalletCards } from 'lucide-react'
+import { CategoryChart, PageTitle, Empty, Status } from '../components/PageComponents'
+import { AnimatedMoney } from '../components/ui/AnimatedMoney'
+import { ProgressRing } from '../components/ui/ProgressRing'
+import { Stagger, StaggerItem } from '../components/ui/Stagger'
+import { categoryMeta, formatDate, getTodayDateLabel, indiaGreeting, money } from '../utils/appData'
+import { dailyPace } from '../utils/moneyMath'
 import useIsMobile from '../hooks/useIsMobile'
-import { categoryMeta, cycleHeaderLabel, indiaGreeting, todayDateLabel, formatDate } from '../utils/appData'
 
-export default function DashboardPage({ firstName, dueToday, upcoming, todaySpend, monthSpend, monthExpenses, cycleRange, cycleLabel, budgets, money, onPage, onAdd }) {
+const SpendingTrendChart = lazy(() => import('../components/SpendingTrendChart'))
+const CategoryDonut = lazy(() => import('../components/CategoryDonut'))
+
+const chartFallback = <div className="chart-skeleton" aria-hidden="true"><span /><span /><span /></div>
+
+export default function DashboardPage({
+  firstName,
+  today,
+  todaySpend,
+  monthSpend,
+  monthCommitted,
+  monthExpenses,
+  cycleRange,
+  cycleLabel,
+  budgets,
+  dueToday,
+  overdue,
+  upcoming,
+  onPage,
+  onQuickAdd,
+}) {
   const isMobile = useIsMobile()
+  const pace = dailyPace({
+    monthSpend,
+    monthlyBudget: budgets.monthly,
+    cycleStart: cycleRange.start,
+    cycleEnd: cycleRange.end,
+    today,
+  })
 
-  // Calculate biggest category by spending
-  const biggestCategory = monthExpenses.length > 0 ? (function() {
-    const categoryTotals = {}
-    monthExpenses.forEach(e => {
-      categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount
-    })
-    const sorted = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])
-    return sorted[0]?.[0] || null
-  })() : null
-
-  // Calculate bills due in < 48 hours
-  const billsDue48h = monthExpenses.filter(e => {
-    const daysUntilDue = (new Date(e.dueDate) - new Date()) / (1000 * 60 * 60 * 24)
-    return daysUntilDue >= 0 && daysUntilDue <= 2
-  }).length
-
-  // Generate smart recommendations
-  const getBestDayToSpend = () => {
-    if (monthExpenses.length === 0) return 'No pattern yet'
-
-    // Analyze spending by day of week
-    const daySpending = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 } // Sun-Sat
-    const dayCounts = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
-
-    monthExpenses.forEach(e => {
-      const date = e.date || e.dueDate
-      if (!date) return
-      const day = new Date(date).getDay()
-      daySpending[day] += e.amount
-      dayCounts[day] += 1
-    })
-
-    // Find day with lowest average spending
-    let lowestAverage = Infinity
-    let bestDay = 'After 6pm weekdays' // Default
-
-    Object.entries(daySpending).forEach(([day, total]) => {
-      const count = dayCounts[day]
-      if (count > 0) {
-        const average = total / count
-        if (average < lowestAverage) {
-          lowestAverage = average
-          bestDay = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][day]
-        }
-      }
-    })
-
-    return bestDay
-  }
-
-  const bestDay = getBestDayToSpend()
+  const categoryTotals = monthExpenses.reduce((totals, expense) => {
+    totals[expense.category] = (totals[expense.category] || 0) + expense.amount
+    return totals
+  }, {})
+  const biggestCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]
   const biggestExpense = [...monthExpenses].sort((a, b) => b.amount - a.amount)[0]
+  const billsSoon = [...overdue, ...dueToday, ...upcoming]
+  const billsTotal = billsSoon.reduce((sum, expense) => sum + expense.amount, 0)
+  const dailyLeft = Math.max(0, budgets.daily - todaySpend)
 
-  const insightMenu = [
-    { label: 'View full insight', onSelect: () => onPage('budgets') },
-    { label: 'Find spending patterns', onSelect: () => onPage('calendar') },
-  ]
+  const paceTone = pace.over ? 'danger' : pace.status === 'fast' ? 'warn' : 'primary'
+  const paceHeadline = !pace.hasBudget
+    ? 'Set a monthly limit to unlock your daily pace'
+    : pace.over
+      ? `You're ${money(pace.spent - pace.budget)} over this cycle`
+      : `Spend ${money(pace.dailyAllowance)} a day to finish on budget`
+
+  const paceDetail = !pace.hasBudget
+    ? 'Budgets turn your spending into a simple daily number.'
+    : pace.over
+      ? 'Nothing breaks. Lower the limit, or pause non-essentials for the rest of the cycle.'
+      : `${money(pace.remaining)} left across ${pace.daysLeft} day${pace.daysLeft === 1 ? '' : 's'} · ${cycleLabel}`
+
+  const insight = monthExpenses.length === 0
+    ? null
+    : pace.status === 'fast'
+      ? {
+          icon: <TrendingUp size={18} aria-hidden="true" />,
+          title: 'Spending faster than the month',
+          body: `You've used ${Math.round(pace.percent)}% of the budget in ${pace.elapsedDays} of ${pace.totalDays} days.`,
+          action: 'Review budgets',
+          to: '/budgets',
+        }
+      : {
+          icon: <Sparkles size={18} aria-hidden="true" />,
+          title: 'You are pacing well',
+          body: `Spending is ${Math.round(Math.max(0, pace.expectedPercent - pace.percent))}% behind the month's pace. Keep it up.`,
+          action: 'See the breakdown',
+          to: '/expenses',
+        }
 
   return <>
     <PageTitle
-      eyebrow={todayDateLabel}
-      cycleLabel={cycleHeaderLabel(cycleRange)}
+      eyebrow={getTodayDateLabel()}
+      cycleLabel={cycleLabel}
       title={`${indiaGreeting()}, ${firstName}`}
-      subtitle="Check your money at a glance."
-      action={<button className="primary-btn page-add-button" style={{ gap: '6px' }} onClick={onAdd}><Plus size={16} strokeWidth={2.2} aria-hidden="true" /><span>Add expense</span></button>}
+      subtitle="Here's the one number that matters today."
+      action={<button className="primary-btn page-add-button" onClick={() => onQuickAdd()}><Plus size={16} strokeWidth={2.2} aria-hidden="true" /><span>Add expense</span></button>}
     />
-    <div className="dashboard-grid">
-      {/* Top KPIs - Today's spending + This month side by side */}
-      <Metric label="Today's spending" value={money(todaySpend)} note={`${todaySpend ? 'On track' : 'No spending yet'} · ${budgets.daily > 0 ? `${money(budgets.daily - todaySpend)} left` : 'No daily limit'}`} tone="blue" icon={<Clock3 size={20} strokeWidth={2} />} to="/expenses" />
 
-      <Metric label="This month" value={money(monthSpend)} note={`${cycleLabel} · ${budgets.monthly > 0 ? `${Math.round(monthSpend / budgets.monthly * 100)}% used` : 'No limit set'}`} tone="violet" icon={<TrendingUp size={20} strokeWidth={2} />} to="/budgets" />
-
-      {/* Merged card: financial health (left) + spending trend (right) */}
-      <section className="card overview-card">
-        <FinHealthCheck
-          monthlyBudget={budgets.monthly}
-          monthSpend={monthSpend}
-          biggestCategory={biggestCategory}
-          billsDue48h={billsDue48h}
-          expenses={monthExpenses}
-        />
-        <div className="overview-trend">
-          <div className="section-head"><div><h2>Spending trend</h2><p>Daily spend · {cycleLabel}</p></div><button className="text-btn" onClick={() => onPage('expenses')}>View expenses <ArrowRight size={14} aria-hidden="true" /></button></div>
-          {monthExpenses.length ? <SpendingTrendChart expenses={monthExpenses} cycleRange={cycleRange} money={money} /> : <DashboardEmpty Icon={ChartNoAxesCombined} title="Your trend starts here" detail="Add an expense to see your daily spending pattern." action="Browse expenses" onClick={() => onPage('expenses')} />}
+    <Stagger className="dashboard-stack">
+      <StaggerItem className={`card pace-card tone-${paceTone}`}>
+        <div className="pace-visual">
+          <ProgressRing value={pace.hasBudget ? pace.percent : 0} tone={paceTone} label={`${Math.round(pace.percent)} percent of monthly budget used`}>
+            <strong>{pace.hasBudget ? `${Math.round(pace.percent)}%` : '—'}</strong>
+            <span>of budget used</span>
+          </ProgressRing>
         </div>
-      </section>
+        <div className="pace-copy">
+          <span className="pace-eyebrow">{pace.over ? 'Over budget' : pace.hasBudget ? 'Your daily pace' : 'Start here'}</span>
+          <h2>{paceHeadline}</h2>
+          <p>{paceDetail}</p>
+          <div className="pace-stats">
+            <div><span>Spent</span><AnimatedMoney value={monthSpend} /></div>
+            <div><span>{pace.over ? 'Over by' : 'Remaining'}</span><strong>{money(pace.over ? pace.spent - pace.budget : pace.remaining)}</strong></div>
+            <div><span>Days left</span><strong>{pace.hasBudget ? pace.daysLeft : '—'}</strong></div>
+          </div>
+          {!pace.hasBudget && <button type="button" className="primary-btn pace-cta" onClick={() => onPage('budgets')}>Set a monthly limit <ArrowRight size={15} aria-hidden="true" /></button>}
+        </div>
+      </StaggerItem>
 
-      {/* Due today payments - Mirrors today's spending card */}
-      <Metric label="Due today" value={money(dueToday.reduce((total, expense) => total + expense.amount, 0))} note={`${dueToday.length} payment${dueToday.length === 1 ? '' : 's'}`} tone="amber" icon={<AlertTriangle size={20} strokeWidth={2} />} to="/due" />
+      <div className="stat-row">
+        <StaggerItem className="card stat-tile">
+          <span className="stat-icon tone-mint"><Clock3 size={18} strokeWidth={1.9} aria-hidden="true" /></span>
+          <div><span>Today</span><strong>{money(todaySpend)}</strong><small>{budgets.daily > 0 ? `${money(dailyLeft)} left of today's ${money(budgets.daily)}` : 'No daily limit set'}</small></div>
+        </StaggerItem>
+        <StaggerItem className="card stat-tile">
+          <span className={`stat-icon ${dueToday.length ? 'tone-amber' : 'tone-mint'}`}><WalletCards size={18} strokeWidth={1.9} aria-hidden="true" /></span>
+          <div><span>Bills due today</span><strong>{money(dueToday.reduce((sum, expense) => sum + expense.amount, 0))}</strong><small>{dueToday.length ? `${dueToday.length} payment${dueToday.length === 1 ? '' : 's'} to clear` : 'Nothing due — nice'}</small></div>
+        </StaggerItem>
+        <StaggerItem className="card stat-tile">
+          <span className="stat-icon tone-amber"><CalendarDays size={18} strokeWidth={1.9} aria-hidden="true" /></span>
+          <div><span>Committed this cycle</span><strong>{money(monthCommitted)}</strong><small>{Math.max(0, monthCommitted - monthSpend) > 0 ? `${money(monthCommitted - monthSpend)} still unpaid` : 'All logged spending is settled'}</small></div>
+        </StaggerItem>
+      </div>
 
-      {/* Upcoming - Mirrors this month */}
-      <Metric label="Upcoming" value={money(upcoming.reduce((total, expense) => total + expense.amount, 0))} note={`${upcoming.length} payment${upcoming.length === 1 ? '' : 's'}`} tone="mint" icon={<CalendarDays size={20} strokeWidth={2} />} to="/calendar" />
+      <div className="dashboard-columns">
+        <StaggerItem className="card bills-radar">
+          <div className="section-head">
+            <div><h2>Bills radar</h2><p>{billsSoon.length ? `${money(billsTotal)} overdue or due in the next 7 days` : 'No bills in the next 7 days'}</p></div>
+            <button className="text-btn" onClick={() => onPage('bills')}>All bills <ArrowRight size={14} aria-hidden="true" /></button>
+          </div>
+          {billsSoon.length
+            ? <ul className="radar-list">
+                {billsSoon.slice(0, 4).map(expense => <li key={expense.id} className="radar-item">
+                  <span className="radar-icon" style={{ background: `${categoryMeta[expense.category]?.[0]}22`, color: categoryMeta[expense.category]?.[0] }}>{categoryMeta[expense.category]?.[1]}</span>
+                  <div className="radar-copy"><strong>{expense.title}</strong><small>{formatDate(expense.dueDate)} · {expense.category}</small></div>
+                  <div className="radar-amount"><strong>{money(expense.amount)}</strong><Status value={expense.status} /></div>
+                </li>)}
+              </ul>
+            : <div className="radar-empty"><span aria-hidden="true">✓</span><p>You are all caught up. New bills will show up here a week before they are due.</p></div>}
+        </StaggerItem>
 
-      {/* Influence Card 1 - Best day to spend */}
-      <InfluenceCard
-        type="guidance"
-        icon={<TrendingUp size={20} />}
-        title="Best day to spend"
-        insight={bestDay === 'No pattern yet'
-          ? 'Add more expenses to see personalized recommendations'
-          : `Based on your history, ${bestDay} has lower spending. Consider scheduling payments here`}
-        actionText="Smart tips"
-        to="/calendar"
-      />
+        <StaggerItem className="card trend-card">
+          <div className="section-head">
+            <div><h2>Spending trend</h2><p>Daily spend · {cycleLabel}</p></div>
+            <button className="text-btn" onClick={() => onPage('expenses')}>View all <ArrowRight size={14} aria-hidden="true" /></button>
+          </div>
+          {monthExpenses.length
+            ? <Suspense fallback={chartFallback}><SpendingTrendChart expenses={monthExpenses} cycleRange={cycleRange} money={money} /></Suspense>
+            : <Empty text="Add an expense to start your trend." />}
+        </StaggerItem>
+      </div>
 
-      {/* Influence Card 2 - Biggest expense insight */}
-      <InfluenceCard
-        type="insight"
-        icon={<Star size={20} />}
-        title={biggestExpense ? 'Biggest expense' : 'Start tracking'}
-        insight={biggestExpense
-          ? `Your biggest expense is ${biggestExpense.category} at ${money(biggestExpense.amount)}`
-          : 'Track your first expense to see where your money goes'}
-        actionText={biggestExpense ? "View all" : "Add expense"}
-        to={biggestExpense ? `/expenses?category=${biggestExpense.category}` : undefined}
-        action={!biggestExpense ? onAdd : undefined}
-      />
+      <div className="dashboard-columns">
+        <StaggerItem className="card category-card">
+          <div className="section-head">
+            <div><h2>Where it went</h2><p>{monthExpenses.length} expense{monthExpenses.length === 1 ? '' : 's'} · {cycleLabel}</p></div>
+            <button className="text-btn" onClick={() => onPage('budgets')}>Reports <ArrowRight size={14} aria-hidden="true" /></button>
+          </div>
+          {monthExpenses.length
+            ? (isMobile
+                ? <Suspense fallback={chartFallback}><CategoryDonut expenses={monthExpenses} /></Suspense>
+                : <CategoryChart expenses={monthExpenses} />)
+            : <Empty text="Your category breakdown appears after your first expense." />}
+        </StaggerItem>
 
-      {/* Calendar Summary */}
-      <section className="card chart-card calendar-card">
-        <div className="section-head"><div><h2>Calendar</h2><p>Next 28 days</p></div><button className="text-btn" onClick={() => onPage('calendar')}>View calendar <ArrowRight size={14} aria-hidden="true" /></button></div>
-        <div className="simple-calendar">
-          <div className="calendar-summary">
+        <StaggerItem className="insight-stack">
+          {insight && <article className="insight-card">
+            <span className="insight-icon">{insight.icon}</span>
             <div>
-              <strong>{monthSpend === 0 ? 'No spending yet' : `${money(monthSpend)}`} <span>current month</span></strong>
-              <p>{cycleLabel}</p>
+              <h3>{insight.title}</h3>
+              <p>{insight.body}</p>
+              <button className="text-btn" onClick={() => onPage(insight.to === '/budgets' ? 'budgets' : 'expenses')}>{insight.action} <ArrowRight size={14} aria-hidden="true" /></button>
             </div>
-          </div>
-          <div className="calendar-preview">
-            {monthExpenses.slice(0, 5).map(expense => (
-              <div key={expense.id} className="preview-event" style={{ borderLeftColor: categoryMeta[expense.category]?.[0] || '#94a3b8' }}>
-                <span className="preview-date">{formatDate(expense.dueDate || expense.date)}</span>
-                <strong>{expense.title}</strong>
-                <span>{money(expense.amount)}</span>
-              </div>
-            ))}
-            {monthExpenses.length > 5 && <small>Plus {monthExpenses.length - 5} more expenses</small>}
-          </div>
-        </div>
-      </section>
-
-      {/* Spending Chart */}
-      <section className="card chart-card">
-        <div className="section-head"><div><h2>Spending by category</h2><p>{monthExpenses.length} expense{monthExpenses.length === 1 ? '' : 's'} · {cycleLabel}</p></div><MoreMenu label="This report" items={insightMenu} /></div>
-        {monthExpenses.length ? (isMobile ? <CategoryDonut expenses={monthExpenses} /> : <CategoryChart expenses={monthExpenses} />) : <DashboardEmpty Icon={ChartNoAxesCombined} title="Your monthly report starts here" detail="Add an expense to see where your money goes." action="Browse expenses" onClick={() => onPage('expenses')} />}
-      </section>
-    </div>
+          </article>}
+          <article className="insight-card">
+            <span className="insight-icon tone-amber"><AlertTriangle size={18} aria-hidden="true" /></span>
+            <div>
+              <h3>{biggestExpense ? 'Biggest single expense' : 'Start with one payment'}</h3>
+              <p>{biggestExpense ? `${biggestExpense.title} at ${money(biggestExpense.amount)}${biggestCategory ? ` · ${biggestCategory[0]} leads the month` : ''}` : 'Log a UPI payment now — it takes two taps and unlocks your pace.'}</p>
+              {biggestExpense
+                ? <button className="text-btn" onClick={() => onPage('expenses')}>Open expenses <ArrowRight size={14} aria-hidden="true" /></button>
+                : <button className="text-btn" onClick={() => onQuickAdd()}>Add expense <ArrowRight size={14} aria-hidden="true" /></button>}
+            </div>
+          </article>
+          {monthExpenses.length > 0 && <article className="insight-card insight-compact">
+            <span className="insight-icon"><ChartNoAxesCombined size={18} aria-hidden="true" /></span>
+            <div>
+              <h3>Category check</h3>
+              <p>{biggestCategory ? `${biggestCategory[0]} makes up ${Math.round((biggestCategory[1] / Math.max(1, monthSpend)) * 100)}% of this cycle's logged spend.` : 'Add more expenses for a category read.'}</p>
+            </div>
+          </article>}
+        </StaggerItem>
+      </div>
+    </Stagger>
   </>
 }

@@ -1,10 +1,7 @@
-export const DATA_MODE = import.meta.env.VITE_DATA_MODE || 'mongo'
-const API_URL = DATA_MODE === 'mongo' ? '/api/expenses' : ''
+const API_URL = '/api/expenses'
 const CACHE_KEY = 'penny-expenses'
 const QUEUE_KEY = 'penny-expense-sync-queue'
 let lastExpensesSource = 'unknown'
-
-export const isApiConfigured = DATA_MODE === 'mongo'
 
 export function getLastExpensesSource() {
   return lastExpensesSource
@@ -27,7 +24,6 @@ function writeQueue(queue) {
 }
 
 async function request(payload) {
-  if (!isApiConfigured) throw new Error('MongoDB mode is not configured')
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -87,10 +83,6 @@ function normalizeExpense(expense) {
 }
 
 export async function fetchExpenses() {
-  if (!isApiConfigured) {
-    lastExpensesSource = 'cache'
-    return readExpenseCache()
-  }
   try {
     const response = await fetch(API_URL, { credentials: 'include' })
     const data = await response.json().catch(() => ({}))
@@ -107,7 +99,6 @@ export async function fetchExpenses() {
 }
 
 export async function fetchDeletedExpenses() {
-  if (!isApiConfigured) return []
   try {
     const response = await fetch(`${API_URL}?includeDeleted=true`, { credentials: 'include' })
     const data = await response.json().catch(() => ({}))
@@ -121,31 +112,30 @@ export async function fetchDeletedExpenses() {
 
 export async function addExpense(expense) {
   const payload = { action: 'add', expense: normalizeExpense({ ...expense, id: expense.id || crypto.randomUUID() }) }
-  try { return await request(payload) } catch (error) { if (API_URL) queue(payload); throw error }
+  try { return await request(payload) } catch (error) { queue(payload); throw error }
 }
 
 export async function updateExpense(expense) {
   const payload = { action: 'update', expense: normalizeExpense(expense) }
-  try { return await request(payload) } catch (error) { if (API_URL) queue(payload); throw error }
+  try { return await request(payload) } catch (error) { queue(payload); throw error }
 }
 
 export async function deleteExpense(id) {
   const payload = { action: 'delete', id }
-  try { return await request(payload) } catch (error) { if (API_URL) queue(payload); throw error }
+  try { return await request(payload) } catch (error) { queue(payload); throw error }
 }
 
 export async function restoreExpense(id) {
   const payload = { action: 'restore', id }
-  try { return await request(payload) } catch (error) { if (API_URL) queue(payload); throw error }
+  try { return await request(payload) } catch (error) { queue(payload); throw error }
 }
 
 export async function purgeExpense(id) {
   const payload = { action: 'purge', id }
-  try { return await request(payload) } catch (error) { if (API_URL) queue(payload); throw error }
+  try { return await request(payload) } catch (error) { queue(payload); throw error }
 }
 
 export async function syncQueuedActions() {
-  if (!isApiConfigured) return false
   const pending = readQueue()
   if (!pending.length) return true
   const remaining = []

@@ -34,11 +34,11 @@
 
 @media(max-width:720px){
   .sidebar{display:none}
-  .mobile-brand{display:flex;align-items:center;gap:8px;color:#243552}
+  .mobile-brand{display:flex;align-items:center;gap:8px;color:var(--text-primary)}
   .mobile-brand .brand-mark{width:25px;height:25px;font-size:13px}
   .mobile-brand strong{font:800 17px 'Plus Jakarta Sans'}
   .breadcrumb{display:none}
-  .topbar{position:sticky;top:0;z-index:6;height:62px;padding:0 18px;background:rgb(255 255 255 / 95%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .topbar{position:sticky;top:0;z-index:6;height:62px;padding:0 18px;background:var(--topbar-surface);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   .content{padding:28px 15px 50px}
   .page-title{align-items:flex-start;gap:15px}
   .page-title .eyebrow{font-size:11px;line-height:1.35;text-transform:uppercase}
@@ -74,7 +74,7 @@
 }
 
 @media(max-width:720px){
-  .content{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+  .content{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
   .page-title{flex-direction:column;align-items:stretch;gap:12px}
   .page-title>button,.page-title>.outline-btn,.page-title>.primary-btn{align-self:flex-start;width:auto;max-width:100%}
   .page-title h1{overflow-wrap:anywhere}
@@ -109,6 +109,7 @@
   .setting-row{gap:12px;padding:16px}
   .setting-row>div{min-width:0;flex:1}
   .setting-row>button,.setting-row>select{flex:none;max-width:45%}
+  .setting-row>select{max-width:62%}
   .setting-row>.outline-btn,.setting-row>.primary-btn{min-height:44px}
   .setting-row select{min-height:44px;font-size:16px;padding:0 12px}
   .setting-row .toggle{width:48px;height:28px;padding:3px}
@@ -149,10 +150,10 @@
   .modal:not(.delete-modal) .form-grid .full-field{grid-column:1/-1}
   .modal:not(.delete-modal){display:flex;flex-direction:column;width:100%;height:100%;max-height:100dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:0;padding:0 20px}
   .modal:not(.delete-modal)::-webkit-scrollbar{display:none}
-  .modal:not(.delete-modal) .modal-head{position:sticky;top:0;z-index:2;justify-content:center;margin:0 -20px 14px;padding:max(24px,env(safe-area-inset-top)) 52px 12px;border-bottom:1px solid #f0f2f6;background:#fff;text-align:center}
+  .modal:not(.delete-modal) .modal-head{position:sticky;top:0;z-index:2;justify-content:center;margin:0 -20px 14px;padding:max(24px,env(safe-area-inset-top)) 52px 12px;border-bottom:1px solid var(--border);background:var(--surface);text-align:center}
   .modal:not(.delete-modal) .close{position:absolute;top:max(20px,env(safe-area-inset-top));right:20px}
   .modal:not(.delete-modal) .form-grid{flex:1;align-content:start}
-  .modal:not(.delete-modal) .modal-actions{position:sticky;bottom:0;z-index:2;justify-content:center;flex-wrap:wrap;gap:10px;margin:20px -20px 0;padding:12px 20px max(20px,env(safe-area-inset-bottom));border-top:1px solid #e9edf4;background:#fff}
+  .modal:not(.delete-modal) .modal-actions{position:sticky;bottom:0;z-index:2;justify-content:center;flex-wrap:wrap;gap:10px;margin:20px -20px 0;padding:12px 20px max(20px,env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface)}
   .modal:not(.delete-modal) .modal-actions button{min-width:110px}
   .modal:not(.delete-modal) .eyebrow{font-size:12px}
   .modal:not(.delete-modal) h2{font-size:24px}
@@ -293,7 +294,7 @@
   .pwa-install-banner strong{font-size:10px;color:var(--text-primary)}
   .pwa-install-banner .pwa-install-button{min-height:20px;gap:5px;padding:0 7px;border-radius:5px;font-size:9px;line-height:1}
   .pwa-install-banner .pwa-install-button svg{width:14px;height:14px}
-  .content{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+  .content{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
   .page-title>.page-add-button{display:none}
   .mobile-bottom-nav{height:calc(72px + env(safe-area-inset-bottom))}
   .mobile-add-button{right:16px;bottom:calc(88px + env(safe-area-inset-bottom))}

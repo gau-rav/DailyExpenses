@@ -250,7 +250,7 @@
   border: 0;
   border-radius: 9px;
   background: var(--primary);
-  color: #fff;
+  color: var(--on-primary);
   font-size: clamp(12px, 2.2vw, 13px);
   font-weight: 700;
   cursor: pointer;
@@ -376,15 +376,6 @@
 
 .auth-links button:hover {
   text-decoration: underline;
-}
-
-.auth-links span {
-  color: var(--text-secondary);
-  font-size: 11px;
-}
-
-.auth-muted {
-  color: var(--text-secondary);
 }
 
 html[data-theme='dark'] .auth-card {

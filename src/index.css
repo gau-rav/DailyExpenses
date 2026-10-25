@@ -12,6 +12,7 @@
 @import './styles/dashboard.css';
 @import './styles/calendar.css';
 @import './styles/expenses.css';
+@import './styles/inbox.css';
 @import './styles/budget.css';
 @import './styles/modals.css';
 @import './styles/global.css';
@@ -20,6 +21,8 @@
 @import './styles/conditionals.css';
 @import './styles/responsive.css';
 @import './styles/page-loading.css';
-@import './styles/smart-filters.css';
 @import './styles/sync-indicator.css';
 @import './styles/accessibility.css';
+@import './styles/phase0.css';
+@import './styles/qa-overrides.css';
+@import './styles/legal.css';

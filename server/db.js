@@ -30,8 +30,23 @@ export async function connectDatabase() {
   await database.collection('expenses').createIndex({ user_id: 1, deletedAt: 1 })
   await database.collection('budgets').createIndex({ user_id: 1 }, { unique: true })
   await database.collection('user_settings').createIndex({ user_id: 1 }, { unique: true })
+  await database.collection('ingest_messages').createIndex({ user_id: 1, external_id: 1 }, { unique: true })
+  await database.collection('ingest_messages').createIndex({ user_id: 1, status: 1, created_at: -1 })
+  await database.collection('gmail_accounts').createIndex({ user_id: 1 }, { unique: true })
+  await database.collection('gmail_accounts').createIndex(
+    { google_sub: 1 },
+    { unique: true, partialFilterExpression: { google_sub: { $type: 'string' } } },
+  )
+  await database.collection('gmail_accounts').createIndex({ status: 1, last_sync_at: 1 })
 
   console.log(`Connected to MongoDB database: ${databaseName}`)
+}
+
+export async function closeDatabase() {
+  if (!client) return
+  await client.close()
+  client = undefined
+  database = undefined
 }
 
 function users() {
@@ -52,6 +67,16 @@ function budgets() {
 function userSettings() {
   if (!database) throw new Error('MongoDB is not connected')
   return database.collection('user_settings')
+}
+
+function ingestMessages() {
+  if (!database) throw new Error('MongoDB is not connected')
+  return database.collection('ingest_messages')
+}
+
+function gmailAccounts() {
+  if (!database) throw new Error('MongoDB is not connected')
+  return database.collection('gmail_accounts')
 }
 
 export async function upsertGoogleUser(profile) {
@@ -170,6 +195,246 @@ export async function deleteUserSessions(userId) {
 
 export async function pruneSessions() {
   await sessions().deleteMany({ expires_at: { $lte: new Date() } })
+}
+
+export async function getIngestSettings(userId) {
+  const [saved, gmail] = await Promise.all([
+    userSettings().findOne({ user_id: userId }, {
+      projection: {
+        ingest_enabled: 1,
+        ingest_auto_add: 1,
+      },
+    }),
+    gmailAccounts().findOne({ user_id: userId }, {
+      projection: { refresh_token_enc: 1, status: 1 },
+    }),
+  ])
+  const gmailConnected = Boolean(gmail?.refresh_token_enc) && gmail?.status !== 'needs_reauth'
+  return {
+    enabled: gmailConnected && saved?.ingest_enabled !== false,
+    autoAdd: saved?.ingest_auto_add === true,
+    connected: gmailConnected,
+  }
+}
+
+export async function saveIngestSettings(userId, settings) {
+  const update = { updated_at: new Date() }
+  if (typeof settings.enabled === 'boolean') update.ingest_enabled = settings.enabled
+  if (typeof settings.autoAdd === 'boolean') update.ingest_auto_add = settings.autoAdd
+  await userSettings().updateOne({ user_id: userId }, { $set: update }, { upsert: true })
+  return getIngestSettings(userId)
+}
+
+export async function saveGmailAccount(userId, account) {
+  const now = new Date()
+  const set = {
+    google_sub: String(account.googleSub || ''),
+    gmail_email: String(account.email || '').toLowerCase(),
+    scopes: Array.isArray(account.scopes) ? account.scopes.map(String) : [],
+    status: 'connected',
+    last_error: '',
+    last_internal_date: 0,
+    updated_at: now,
+  }
+  if (account.refreshTokenEnc) set.refresh_token_enc = account.refreshTokenEnc
+  return gmailAccounts().findOneAndUpdate(
+    { user_id: userId },
+    {
+      $set: set,
+      $setOnInsert: {
+        user_id: userId,
+        last_sync_at: null,
+        created_at: now,
+      },
+    },
+    { upsert: true, returnDocument: 'after' },
+  )
+}
+
+export async function getGmailAccount(userId) {
+  return gmailAccounts().findOne({ user_id: userId })
+}
+
+export async function findGmailAccountBySub(googleSub) {
+  const sub = String(googleSub || '').trim()
+  if (!sub) return null
+  return gmailAccounts().findOne({ google_sub: sub })
+}
+
+export async function getGmailStatus(userId) {
+  const account = await getGmailAccount(userId)
+  if (!account) {
+    return {
+      connected: false,
+      email: '',
+      status: 'disconnected',
+      lastSyncAt: '',
+      lastError: '',
+      syncInProgress: false,
+    }
+  }
+  const lockUntil = account.sync_lock_until instanceof Date ? account.sync_lock_until.getTime() : 0
+  return {
+    connected: Boolean(account.refresh_token_enc),
+    email: account.gmail_email || '',
+    status: account.status || 'connected',
+    lastSyncAt: timestamp(account.last_sync_at),
+    lastError: account.last_error || '',
+    syncInProgress: lockUntil > Date.now(),
+  }
+}
+
+export async function deleteGmailAccount(userId) {
+  const account = await gmailAccounts().findOneAndDelete({ user_id: userId })
+  await userSettings().updateOne(
+    { user_id: userId },
+    { $set: { ingest_enabled: false, updated_at: new Date() } },
+  )
+  return account
+}
+
+export async function listGmailAccountsForSync(limit = 50) {
+  return gmailAccounts()
+    .find({ refresh_token_enc: { $type: 'string' }, status: { $ne: 'needs_reauth' } })
+    .limit(Math.max(1, Math.min(500, Number(limit) || 50)))
+    .toArray()
+}
+
+export async function claimGmailSync(userId, lockMs = 10 * 60 * 1000) {
+  const now = new Date()
+  const lockUntil = new Date(now.getTime() + lockMs)
+  return gmailAccounts().findOneAndUpdate(
+    {
+      user_id: userId,
+      status: { $ne: 'needs_reauth' },
+      $or: [
+        { sync_lock_until: { $exists: false } },
+        { sync_lock_until: { $lte: now } },
+      ],
+    },
+    { $set: { sync_lock_until: lockUntil, updated_at: now } },
+    { returnDocument: 'after' },
+  )
+}
+
+export async function finishGmailSync(userId, result = {}) {
+  const now = new Date()
+  const set = {
+    status: result.status || 'connected',
+    last_error: String(result.error || '').slice(0, 300),
+    last_sync_at: now,
+    updated_at: now,
+  }
+  if (Number.isFinite(result.lastInternalDate) && result.lastInternalDate > 0) {
+    set.last_internal_date = result.lastInternalDate
+  }
+  await gmailAccounts().updateOne(
+    { user_id: userId },
+    { $set: set, $unset: { sync_lock_until: '' } },
+  )
+}
+
+export async function markGmailNeedsReauth(userId, message) {
+  await gmailAccounts().updateOne(
+    { user_id: userId },
+    {
+      $set: {
+        status: 'needs_reauth',
+        last_error: String(message || 'Reconnect Gmail to continue syncing').slice(0, 300),
+        updated_at: new Date(),
+      },
+      $unset: { sync_lock_until: '' },
+    },
+  )
+}
+
+export async function insertIngestMessage(userId, message) {
+  const now = new Date()
+  const row = {
+    id: crypto.randomUUID(),
+    user_id: userId,
+    external_id: String(message.externalId),
+    sender: String(message.sender || ''),
+    subject: String(message.subject || ''),
+    received_at: message.receivedAt instanceof Date ? message.receivedAt : now,
+    parsed: message.parsed || null,
+    confidence: Number(message.confidence || 0),
+    warnings: Array.isArray(message.warnings) ? message.warnings : [],
+    status: message.status || 'pending',
+    reason: String(message.reason || ''),
+    bank: String(message.bank || ''),
+    expense_id: '',
+    created_at: now,
+    updated_at: now,
+  }
+
+  try {
+    await ingestMessages().insertOne(row)
+    return { message: publicIngestMessage(row), duplicate: false }
+  } catch (error) {
+    if (error.code !== 11000) throw error
+    const existing = await ingestMessages().findOne({ user_id: userId, external_id: row.external_id })
+    if (!existing) throw error
+    return { message: publicIngestMessage(existing), duplicate: true }
+  }
+}
+
+export async function listIngestMessages(userId, status = 'pending', limit = 50) {
+  const query = { user_id: userId }
+  if (status && status !== 'all') query.status = status
+  const rows = await ingestMessages()
+    .find(query)
+    .sort({ created_at: -1 })
+    .limit(Math.max(1, Math.min(200, Number(limit) || 50)))
+    .toArray()
+  return rows.map(publicIngestMessage)
+}
+
+export async function countIngestMessages(userId, status = 'pending') {
+  const query = { user_id: userId }
+  if (status && status !== 'all') query.status = status
+  return ingestMessages().countDocuments(query)
+}
+
+export async function getIngestMessage(userId, id) {
+  return ingestMessages().findOne({ user_id: userId, id: String(id) })
+}
+
+export async function claimIngestMessage(userId, id) {
+  return ingestMessages().findOneAndUpdate(
+    { user_id: userId, id: String(id), status: 'pending' },
+    { $set: { status: 'processing', updated_at: new Date() } },
+    { returnDocument: 'after' },
+  )
+}
+
+export async function releaseIngestMessage(userId, id) {
+  await ingestMessages().updateOne(
+    { user_id: userId, id: String(id), status: 'processing' },
+    { $set: { status: 'pending', updated_at: new Date() } },
+  )
+}
+
+export async function finishIngestMessage(userId, id, status, expenseId = '') {
+  const result = await ingestMessages().findOneAndUpdate(
+    { user_id: userId, id: String(id) },
+    { $set: { status, expense_id: String(expenseId || ''), updated_at: new Date() } },
+    { returnDocument: 'after' },
+  )
+  if (!result) throw new Error('Email message not found')
+  return publicIngestMessage(result)
+}
+
+function publicIngestMessage(message) {
+  const value = { ...message }
+  delete value._id
+  delete value.user_id
+  return {
+    ...value,
+    received_at: timestamp(value.received_at),
+    created_at: timestamp(value.created_at),
+    updated_at: timestamp(value.updated_at),
+  }
 }
 
 export async function getBudgetLimits(userId) {
@@ -346,8 +611,9 @@ function normalizeExpense(expense) {
 }
 
 function publicExpense(expense) {
-  const normalized = normalizeExpense(expense)
-  const { _id, user_id, ...publicValue } = normalized
+  const publicValue = { ...normalizeExpense(expense) }
+  delete publicValue._id
+  delete publicValue.user_id
   return publicValue
 }
 

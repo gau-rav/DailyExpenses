@@ -11,7 +11,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { parse, serialize } from 'cookie'
 import { OAuth2Client } from 'google-auth-library'
-import { connectDatabase, createExpense, createPasswordUser, createSession, deleteExpense, deleteSession, deleteUserSessions, getBudgetLimits, getMonthlyCycle, getUserByEmail, getUserBySession, getUserCurrency, listExpenses, pruneSessions, purgeExpense, restoreExpense, saveBudgetLimits, saveMonthlyCycle, saveUserCurrency, setPasswordHash, updateExpense, upsertGoogleUser } from './db.js'
+import { connectDatabase, createExpense, createPasswordUser, createSession, deleteExpense, deleteGmailAccount, deleteSession, deleteUserSessions, findGmailAccountBySub, getBudgetLimits, getGmailAccount, getGmailStatus, getMonthlyCycle, getUserByEmail, getUserBySession, getUserCurrency, listExpenses, listIngestMessages, pruneSessions, purgeExpense, restoreExpense, saveBudgetLimits, saveGmailAccount, saveIngestSettings, saveMonthlyCycle, saveUserCurrency, setPasswordHash, updateExpense, upsertGoogleUser } from './db.js'
+import { acceptIngestMessage, getIngestStatus, ignoreIngestMessage, IngestError } from './ingest.js'
+import { buildGmailAuthUrl, exchangeGmailCode, isGmailConfigured, revokeGmailToken, verifyGmailIdentity } from './gmailAuth.js'
+import { decryptToken, encryptToken, isTokenEncryptionConfigured } from './gmailTokenCrypto.js'
+import { GmailSyncError, syncAllGmailAccounts, syncGmailForUser } from './gmailSync.js'
 
 const app = express()
 const port = Number(process.env.PORT || process.env.AUTH_PORT || 8787)
@@ -37,6 +41,10 @@ const googleClient = googleConfigured
 const oauthStateCookie = 'penny_oauth_state'
 const oauthVerifierCookie = 'penny_oauth_verifier'
 const oauthReturnCookie = 'penny_oauth_return'
+const gmailStateCookie = 'penny_gmail_state'
+const gmailVerifierCookie = 'penny_gmail_verifier'
+const gmailReturnCookie = 'penny_gmail_return'
+const gmailUserCookie = 'penny_gmail_user'
 
 class AuthFlowError extends Error {}
 
@@ -101,6 +109,12 @@ function sanitizeReturnUrl(value) {
   } catch {
     return ''
   }
+}
+
+function valuesEqual(left, right) {
+  const first = Buffer.from(String(left || ''))
+  const second = Buffer.from(String(right || ''))
+  return first.length === second.length && crypto.timingSafeEqual(first, second)
 }
 
 app.post(['/auth/register', '/api/auth/register'], async (req, res) => {
@@ -416,6 +430,237 @@ app.put('/api/user-settings', async (req, res) => {
   } catch (error) {
     console.error('User settings save failed', error)
     res.status(400).json({ ok: false, error: error.message || 'Unable to save user settings' })
+  }
+})
+
+app.get('/api/integrations/status', async (req, res) => {
+  res.set('Cache-Control', 'private, no-store')
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+    const [status, gmail] = await Promise.all([getIngestStatus(user.id), getGmailStatus(user.id)])
+    res.json({
+      ok: true,
+      ...status,
+      gmail: {
+        ...gmail,
+        configured: isGmailConfigured() && isTokenEncryptionConfigured(),
+      },
+    })
+  } catch (error) {
+    console.error('Ingest status read failed', error)
+    res.status(500).json({ ok: false, error: 'Unable to load email capture status' })
+  }
+})
+
+app.get('/api/integrations/messages', async (req, res) => {
+  res.set('Cache-Control', 'private, no-store')
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+    const status = String(req.query.status || 'pending')
+    if (!['pending', 'added', 'ignored', 'all'].includes(status)) {
+      return res.status(400).json({ ok: false, error: 'Invalid message status' })
+    }
+    const messages = await listIngestMessages(user.id, status, req.query.limit)
+    res.json({ ok: true, messages })
+  } catch (error) {
+    console.error('Ingest messages read failed', error)
+    res.status(500).json({ ok: false, error: 'Unable to load captured emails' })
+  }
+})
+
+app.post('/api/integrations/messages/:id', async (req, res) => {
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+    const action = String(req.body?.action || '')
+    let result
+    if (action === 'accept') result = await acceptIngestMessage(user.id, req.params.id, req.body?.expense)
+    else if (action === 'ignore') result = await ignoreIngestMessage(user.id, req.params.id)
+    else return res.status(400).json({ ok: false, error: 'Action must be accept or ignore' })
+    res.json({ ok: true, ...result })
+  } catch (error) {
+    if (error instanceof IngestError) return res.status(error.status).json({ ok: false, error: error.message })
+    console.error('Ingest message update failed', error)
+    res.status(400).json({ ok: false, error: error.message || 'Unable to update captured email' })
+  }
+})
+
+app.put('/api/integrations/settings', async (req, res) => {
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+    const { enabled, autoAdd } = req.body || {}
+    if (enabled === undefined && autoAdd === undefined) {
+      return res.status(400).json({ ok: false, error: 'Provide enabled or autoAdd' })
+    }
+    if ((enabled !== undefined && typeof enabled !== 'boolean') || (autoAdd !== undefined && typeof autoAdd !== 'boolean')) {
+      return res.status(400).json({ ok: false, error: 'Settings must be true or false' })
+    }
+    res.json({ ok: true, settings: await saveIngestSettings(user.id, { enabled, autoAdd }) })
+  } catch (error) {
+    console.error('Ingest settings save failed', error)
+    res.status(500).json({ ok: false, error: 'Unable to save email capture settings' })
+  }
+})
+
+app.get('/api/integrations/gmail/connect', async (req, res) => {
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+    if (!isGmailConfigured()) return res.status(503).json({ ok: false, error: 'Gmail OAuth is not configured on the server' })
+    if (!isTokenEncryptionConfigured()) return res.status(503).json({ ok: false, error: 'TOKEN_ENCRYPTION_KEY is not configured on the server' })
+
+    const state = crypto.randomBytes(24).toString('base64url')
+    const codeVerifier = crypto.randomBytes(32).toString('base64url')
+    const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url')
+    const returnTo = sanitizeReturnUrl(req.get('referer') || req.get('origin')) || appUrl
+
+    setCookie(res, gmailStateCookie, state, { maxAge: 600 })
+    setCookie(res, gmailVerifierCookie, codeVerifier, { maxAge: 600 })
+    setCookie(res, gmailReturnCookie, returnTo, { maxAge: 600 })
+    setCookie(res, gmailUserCookie, user.id, { maxAge: 600 })
+
+    res.redirect(buildGmailAuthUrl({ state, codeChallenge, loginHint: user.email }))
+  } catch (error) {
+    console.error('Gmail connect failed', error)
+    res.status(500).json({ ok: false, error: 'Unable to start Gmail connection' })
+  }
+})
+
+app.get('/api/integrations/gmail/callback', async (req, res) => {
+  const returnTo = sanitizeReturnUrl(getCookie(req, gmailReturnCookie)) || appUrl
+  const settingsUrl = `${returnTo.replace(/\/+$/, '')}/settings`
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) throw new AuthFlowError('Sign in to connect Gmail')
+    if (!isGmailConfigured()) throw new AuthFlowError('Gmail OAuth is not configured on the server')
+    if (!isTokenEncryptionConfigured()) throw new AuthFlowError('Token encryption is not configured on the server')
+
+    const { code, state, error } = req.query
+    const savedState = getCookie(req, gmailStateCookie)
+    const codeVerifier = getCookie(req, gmailVerifierCookie)
+    const savedUser = getCookie(req, gmailUserCookie)
+    clearCookie(res, gmailStateCookie)
+    clearCookie(res, gmailVerifierCookie)
+    clearCookie(res, gmailReturnCookie)
+    clearCookie(res, gmailUserCookie)
+
+    if (error) throw new AuthFlowError('Gmail connection was cancelled')
+    if (!code || !state || !savedState) throw new AuthFlowError('Invalid Gmail connection request')
+    if (!valuesEqual(state, savedState)) throw new AuthFlowError('Invalid Gmail connection request')
+    if (!codeVerifier) throw new AuthFlowError('Gmail connection session expired, please try again')
+    if (!valuesEqual(savedUser, user.id)) throw new AuthFlowError('Gmail connection session changed, please try again')
+
+    const tokens = await exchangeGmailCode(String(code), codeVerifier)
+    const identity = await verifyGmailIdentity(tokens)
+    const linked = await findGmailAccountBySub(identity.sub)
+    if (linked && linked.user_id !== user.id) {
+      throw new AuthFlowError('That Gmail account is already connected to another PaisaWise account')
+    }
+
+    const existing = await getGmailAccount(user.id)
+    const refreshTokenEnc = tokens.refresh_token ? encryptToken(tokens.refresh_token) : ''
+    if (!refreshTokenEnc && !existing?.refresh_token_enc) {
+      throw new AuthFlowError('Google did not return a refresh token. Please try connecting again')
+    }
+
+    await saveGmailAccount(user.id, {
+      googleSub: identity.sub,
+      email: identity.email,
+      scopes: tokens.scope ? String(tokens.scope).split(' ') : [],
+      refreshTokenEnc,
+    })
+    await saveIngestSettings(user.id, { enabled: true })
+    res.redirect(`${settingsUrl}?gmail=connected`)
+  } catch (error) {
+    console.error('Gmail OAuth callback failed', error)
+    const message = error instanceof AuthFlowError ? error.message : 'Gmail connection failed'
+    clearCookie(res, gmailStateCookie)
+    clearCookie(res, gmailVerifierCookie)
+    clearCookie(res, gmailReturnCookie)
+    clearCookie(res, gmailUserCookie)
+    res.redirect(`${settingsUrl}?gmailError=${encodeURIComponent(message)}`)
+  }
+})
+
+app.get('/api/integrations/gmail/status', async (req, res) => {
+  res.set('Cache-Control', 'private, no-store')
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+    res.json({
+      ok: true,
+      gmail: {
+        ...await getGmailStatus(user.id),
+        configured: isGmailConfigured() && isTokenEncryptionConfigured(),
+      },
+    })
+  } catch (error) {
+    console.error('Gmail status read failed', error)
+    res.status(500).json({ ok: false, error: 'Unable to load Gmail status' })
+  }
+})
+
+app.post('/api/integrations/gmail/sync', async (req, res) => {
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+    const result = await syncGmailForUser(user.id)
+    res.json({ ok: true, ...result, gmail: await getGmailStatus(user.id) })
+  } catch (error) {
+    if (error instanceof GmailSyncError) return res.status(error.status).json({ ok: false, error: error.message })
+    console.error('Gmail sync failed', error)
+    res.status(500).json({ ok: false, error: 'Unable to sync Gmail' })
+  }
+})
+
+app.delete('/api/integrations/gmail', async (req, res) => {
+  try {
+    const user = await getUserBySession(getCookie(req, sessionCookie))
+    if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+    const account = await getGmailAccount(user.id)
+    if (account?.refresh_token_enc) {
+      try {
+        await revokeGmailToken(decryptToken(account.refresh_token_enc))
+      } catch (error) {
+        console.error('Gmail token revocation failed', error)
+      }
+    }
+    await deleteGmailAccount(user.id)
+    res.json({
+      ok: true,
+      gmail: {
+        ...await getGmailStatus(user.id),
+        configured: isGmailConfigured() && isTokenEncryptionConfigured(),
+      },
+    })
+  } catch (error) {
+    console.error('Gmail disconnect failed', error)
+    res.status(500).json({ ok: false, error: 'Unable to disconnect Gmail' })
+  }
+})
+
+app.post('/api/internal/gmail/sync', async (req, res) => {
+  const secret = String(process.env.GMAIL_SYNC_SECRET || '')
+  if (!secret) return res.status(503).json({ ok: false, error: 'GMAIL_SYNC_SECRET is not configured' })
+  if (!valuesEqual(req.get('authorization'), `Bearer ${secret}`)) {
+    return res.status(401).json({ ok: false, error: 'Invalid sync secret' })
+  }
+  try {
+    const result = await syncAllGmailAccounts()
+    res.json({
+      ok: true,
+      accounts: result.accounts,
+      imported: result.imported,
+      ignored: result.ignored,
+      duplicates: result.duplicates,
+      failed: result.failed,
+    })
+  } catch (error) {
+    console.error('Scheduled Gmail sync failed', error)
+    res.status(500).json({ ok: false, error: 'Unable to sync Gmail accounts' })
   }
 })
 

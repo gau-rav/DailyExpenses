@@ -1,5 +1,5 @@
 {
-  "name": "react-app-1",
+  "name": "paisa-wise",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "gmail:sync": "node server/gmailCron.js",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
@@ -45,13 +46,18 @@
     "vite": "^8.2.0",
     "vitest": "^3.2.7"
   },
-  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
-  "main": "eslint.config.js",
+  "description": "Personal expense tracker with Gmail bank-alert capture, budgets, and reports.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gau-rav/DailyExpenses.git"
   },
-  "keywords": [],
+  "keywords": [
+    "expenses",
+    "budgets",
+    "gmail",
+    "mongodb",
+    "react"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 function readAuthError() {
   if (typeof window === 'undefined') return ''
@@ -217,7 +218,12 @@ export default function AuthPage({ loading = false }) {
           </> : submitLabel}
         </button>
         <div className="auth-links">
-          {mode === 'login' ? <button type="button" onClick={() => changeMode('reset')}>Forgot password?</button> : mode === 'reset' ? <span className="auth-muted">Email recovery is coming soon.</span> : null}
+          {mode === 'login' && <button type="button" onClick={() => changeMode('reset')}>Change password</button>}
+          <span className="auth-legal-links">
+            <Link to="/privacy">Privacy</Link>
+            <span aria-hidden="true">·</span>
+            <Link to="/terms">Terms</Link>
+          </span>
         </div>
       </form>
     </section>

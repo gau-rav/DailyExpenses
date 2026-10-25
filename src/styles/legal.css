@@ -1,0 +1,229 @@
+/* Site footer */
+.site-footer {
+  flex: none;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.site-footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 10px 48px;
+}
+
+.site-footer-copy {
+  white-space: nowrap;
+}
+
+.site-footer-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.site-footer-links a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.site-footer-links a:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+/* Public legal pages */
+.legal-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--background);
+  color: var(--text-primary);
+}
+
+.legal-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px clamp(18px, 4vw, 48px);
+  border-bottom: 1px solid var(--border);
+  background: var(--topbar-surface);
+}
+
+.legal-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.legal-brand .brand-mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+}
+
+.legal-back {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.legal-back:hover {
+  color: var(--primary);
+}
+
+.legal-main {
+  flex: 1;
+  width: 100%;
+  max-width: 840px;
+  margin: 0 auto;
+  padding: clamp(28px, 5vw, 56px) clamp(18px, 4vw, 32px) 48px;
+}
+
+.legal-article {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.legal-eyebrow {
+  margin: 0 0 8px;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.legal-article h1 {
+  margin: 0 0 6px;
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.15;
+}
+
+.legal-updated {
+  margin: 0 0 28px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.legal-article h2 {
+  margin: 30px 0 10px;
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.legal-article p {
+  margin: 0 0 14px;
+}
+
+.legal-list {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding-left: 20px;
+}
+
+.legal-list li::marker {
+  color: var(--primary);
+}
+
+.legal-article strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.legal-article code {
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-subtle);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+}
+
+.legal-article a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.legal-article a:hover {
+  text-decoration: underline;
+}
+
+/* Legal links on the sign-in screen */
+.auth-links {
+  flex-wrap: wrap;
+}
+
+.auth-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 4px;
+  border-radius: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.auth-links a:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.auth-legal-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 1050px) {
+  .site-footer-inner {
+    padding-right: 28px;
+    padding-left: 28px;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-shell .main {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-shell .main > .content {
+    flex: 1 0 auto;
+    padding-bottom: 28px;
+  }
+
+  .site-footer-inner {
+    justify-content: center;
+    padding: 10px 15px;
+    text-align: center;
+  }
+
+  .app-shell .site-footer-inner {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+
+  .app-shell:has(.mobile-add-button) .site-footer-inner {
+    padding-right: 84px;
+  }
+}

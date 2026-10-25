@@ -8,6 +8,8 @@ For existing deployments only, the server can migrate the previous demo user to 
 
 This project uses a Node/Express backend for Google OAuth. Google tokens are handled only on the server. The browser receives an HTTP-only session cookie; access and refresh tokens are never stored in localStorage.
 
+Gmail auto-capture is a **separate OAuth flow** with its own redirect URI and the restricted `gmail.readonly` scope. See [`GOOGLE_GMAIL_OAUTH_SETUP.md`](./GOOGLE_GMAIL_OAUTH_SETUP.md) for Google Cloud verification, `TOKEN_ENCRYPTION_KEY`, the sync cron, and disconnect behaviour.
+
 ## 1. Install dependencies
 
 ```powershell
@@ -66,9 +68,14 @@ MONGODB_DB_NAME=penny_expenses_local
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_REDIRECT_URI=http://localhost:8787/api/auth/google/callback
+GOOGLE_GMAIL_CLIENT_ID=your-gmail-client-id.apps.googleusercontent.com
+GOOGLE_GMAIL_CLIENT_SECRET=your-gmail-client-secret
+GOOGLE_GMAIL_REDIRECT_URI=http://localhost:8787/api/integrations/gmail/callback
+TOKEN_ENCRYPTION_KEY=your-base64-32-byte-key
+GMAIL_SYNC_SECRET=your-random-sync-secret
 ```
 
-Leave the `GOOGLE_*` values blank to disable Google sign-in; the sign-in screen hides the Google button when the server reports it is not configured.
+Leave the `GOOGLE_*` values blank to disable Google sign-in; the sign-in screen hides the Google button when the server reports it is not configured. Gmail connection additionally requires `TOKEN_ENCRYPTION_KEY` and `GOOGLE_GMAIL_REDIRECT_URI`.
 
 Keep `.env`, `data/`, and the Google client secret out of source control.
 
@@ -119,6 +126,11 @@ MONGODB_DB_NAME=penny_expenses
 GOOGLE_CLIENT_ID=your-production-client-id
 GOOGLE_CLIENT_SECRET=your-production-client-secret
 GOOGLE_REDIRECT_URI=https://YOUR-SITE.netlify.app/api/auth/google/callback
+GOOGLE_GMAIL_CLIENT_ID=your-gmail-client-id.apps.googleusercontent.com
+GOOGLE_GMAIL_CLIENT_SECRET=your-gmail-client-secret
+GOOGLE_GMAIL_REDIRECT_URI=https://YOUR-SITE.netlify.app/api/integrations/gmail/callback
+TOKEN_ENCRYPTION_KEY=your-base64-32-byte-key
+GMAIL_SYNC_SECRET=your-random-sync-secret
 ```
 
 Register the same production callback URL in Google Cloud Console. Local development uses `.env.local` and `http://localhost:8787/api/auth/google/callback`.

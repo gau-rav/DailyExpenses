@@ -13,7 +13,10 @@ export const indiaDate = date => {
 export const today = indiaDate(new Date())
 export const todayDateLabel = new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(new Date())
 export const todayDay = new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric' }).format(new Date())
+export const getTodayDateLabel = () => todayDateLabel
 export const todayMonth = new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', month: 'short' }).format(new Date()).toUpperCase()
+export const getTodayDay = () => todayDay
+export const getTodayMonth = () => todayMonth
 export const indiaGreeting = () => {
   const hour = Number(new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', hour12: false }).format(new Date()))
   return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night'
@@ -88,6 +91,13 @@ export const seedExpenses = [
 ]
 export const money = n => formatMoney(n)
 export const formatDate = value => new Date(`${value}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+export const formatDateFull = value => new Intl.DateTimeFormat('en-IN', {
+  timeZone: 'Asia/Kolkata',
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+}).format(new Date(`${value}T12:00:00+05:30`))
 export const formatTimestamp = value => {
   if (!value) return ''
   const text = String(value)

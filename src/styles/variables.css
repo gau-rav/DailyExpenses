@@ -7,11 +7,17 @@
 
   --primary: #0d7377;
   --primary-dark: #0a5c5f;
+  --on-primary: #fff;
+  --primary-light: #e5f3ef;
   --accent: #f4a261;
   --accent-light: #fef3e2;
   --background: #fdf8f0;
   --surface: #fff;
   --surface-hover: #f8f4ec;
+  --surface-subtle: #f8fafc;
+  --surface-soft: #f1f5fb;
+  --shell-surface: #fff;
+  --topbar-surface: rgb(255 255 255 / 95%);
   --text-primary: #173f42;
   --text-secondary: #6b7280;
   --text-muted: #9ca3af;
@@ -19,21 +25,65 @@
   --error: #ef4444;
   --warning: #f59e0b;
   --border: #e8e2d8;
+  --hover: #d9d2c5;
   --shadow: 0 8px 28px rgb(54 46 32 / 7%);
+  --error-soft: #fdecec;
+
+  --mint: #34d399;
+  --mint-soft: color-mix(in srgb, var(--primary) 12%, transparent);
+  --glow: 0 18px 50px -24px color-mix(in srgb, var(--primary) 70%, transparent);
+  --hero-gradient: linear-gradient(135deg, color-mix(in srgb, var(--primary) 10%, var(--surface)) 0%, var(--surface) 62%);
+  --scrim: rgb(13 45 47 / 46%);
+
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+  --radius-full: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --dur-page: 360ms;
 }
 
 [data-theme='dark'] {
   color-scheme: dark;
   --primary: #2dd4bf;
   --primary-dark: #14b8a6;
+  --on-primary: #042f2e;
+  --primary-light: color-mix(in srgb, var(--primary) 18%, var(--surface));
   --accent: #f4a261;
   --accent-light: #4b382a;
   --background: #0f172a;
   --surface: #1e293b;
   --surface-hover: #334155;
+  --surface-subtle: #172033;
+  --surface-soft: #273449;
+  --shell-surface: #111c2e;
+  --topbar-surface: rgb(17 28 46 / 95%);
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   --border: #334155;
+  --hover: #475569;
   --shadow: 0 8px 28px rgb(0 0 0 / 20%);
+  --error-soft: rgb(239 68 68 / 14%);
+
+  --mint: #5eead4;
+  --mint-soft: color-mix(in srgb, var(--primary) 14%, transparent);
+  --glow: 0 22px 60px -28px color-mix(in srgb, var(--primary) 80%, transparent);
+  --hero-gradient: linear-gradient(140deg, color-mix(in srgb, var(--primary) 15%, var(--surface)) 0%, var(--surface) 55%, color-mix(in srgb, var(--accent) 8%, var(--surface)) 100%);
+  --scrim: rgb(3 8 16 / 66%);
 }

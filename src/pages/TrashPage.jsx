@@ -71,7 +71,7 @@ export default function TrashPage({ deleted, setDeleted, setExpenses, notify, on
 
   return <>
     <PageTitle
-      eyebrow="Workspace / Trash"
+      eyebrow="Recently deleted"
       title="Trash"
       subtitle="Restore something you deleted by mistake."
       action={deleted.length > 0 && (
