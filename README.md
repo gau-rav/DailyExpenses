@@ -206,45 +206,57 @@ paisa_wise/
 │   └── icons/ logo.jpg ...
 ├── src/
 │   ├── main.jsx                # React root + BrowserRouter
-│   ├── App.jsx                 # Auth gate, state, routing, layout, global modals
+│   ├── App.jsx                 # App shell, feature hooks, route composition, global UI
 │   ├── routes.js               # Path ↔ page maps, nav definitions, labels
+│   ├── app/                    # App-level route and shell composition
+│   ├── features/
+│   │   ├── auth/               # Auth pages, hooks, and services
+│   │   ├── dashboard/          # Overview page and reporting UI
+│   │   ├── expenses/           # Expense pages, domain rules, hooks, services
+│   │   ├── budgets/            # Budget pages, domain rules, hooks, services
+│   │   ├── inbox/              # Gmail review UI, hooks, and services
+│   │   ├── settings/           # Settings pages, cycle rules, hooks, services
+│   │   ├── due/                # Bills and due-date rules
+│   │   └── calendar/           # Calendar page and date selection
+│   ├── shared/                 # Cross-feature utilities
+│   ├── services/api/           # Shared HTTP JSON/error handling
 │   ├── api/
-│   │   ├── expensesApi.js      # Fetch/cache/queue/sync layer
-│   │   ├── gmailApi.js         # Gmail sync/disconnect calls
-│   │   └── ingestApi.js        # Email capture inbox/settings calls
+│   │   └── *.js                # Legacy compatibility re-exports
 │   ├── pages/
-│   │   ├── AuthPage.jsx        # Sign in / register / password flows
-│   │   ├── DashboardPage.jsx   # Overview KPIs, trend, categories, insights
-│   │   ├── ExpensesPage.jsx    # Search/filter/sort/bulk/CSV table
-│   │   ├── InboxPage.jsx       # Review captured bank emails
-│   │   ├── DuePage.jsx         # Due today, mark paid, postpone
-│   │   ├── CalendarPage.jsx    # Month grid + day details
-│   │   ├── BudgetsPage.jsx     # Budget limits + reports
-│   │   ├── TrashPage.jsx       # Restore / purge
-│   │   └── SettingsPage.jsx    # Theme, currency, cycle, Gmail, password, install
+│   │   └── *.jsx               # Legacy compatibility re-exports
 │   ├── components/
 │   │   ├── MobileBottomNav.jsx # 6-tab bottom nav with More menu
 │   │   ├── PageComponents.jsx  # Shared cards/charts (bar + donut)
 │   │   ├── SpendingTrendChart.jsx
 │   │   ├── PwaInstallButton.jsx
 │   │   └── Modal/              # ExpenseModal, DeleteModal (bottom sheets)
-│   ├── hooks/
-│   │   └── useIsMobile.js      # Viewport switch (donut vs bars, etc.)
 │   ├── utils/
-│   │   ├── appData.js          # Categories, seed data, date/cycle helpers
+│   │   ├── appData.js          # Seed data and compatibility exports
 │   │   └── currency.js         # Display-only INR → selected currency
 │   ├── styles/                 # 20+ focused CSS modules (responsive.css last)
 │   └── index.css               # Import order matters — see below
 ├── server/
-│   ├── index.js                # Express app: auth, budgets, expenses, settings, Gmail
-│   ├── db.js                   # MongoDB connection, collections, queries, Gmail accounts
-│   ├── gmailAuth.js            # Gmail OAuth client, consent URL, token refresh/revoke
+│   ├── index.js                # Runtime entrypoint; connects DB and starts Express
+│   ├── app.js                  # Express middleware and app-level OAuth/static setup
+│   ├── routes/                 # Auth, account-settings, expense, and ingest routers
+│   ├── controllers/            # HTTP request/response handling
+│   ├── services/               # Auth, settings, expense, ingest, and Gmail workflows
+│   ├── repositories/
+│   │   ├── authRepository.js
+│   │   ├── settingsRepository.js
+│   │   ├── expensesRepository.js
+│   │   ├── ingestRepository.js
+│   │   ├── gmailRepository.js  # Domain-specific persistence facades
+│   │   └── databaseRepository.js # Shared MongoDB connection/query adapter
+│   ├── domain/                 # Auth/settings validation and ingest parsing rules
+│   ├── db.js                   # Compatibility facade for the Mongo repository
+│   ├── gmailAuth.js            # Compatibility facade for Gmail OAuth service
 │   ├── gmailCron.js            # Standalone sync job for cron/Render
 │   ├── gmailExtract.js         # Gmail payload body/header extraction
-│   ├── gmailSync.js            # Gmail list/fetch sync pipeline
+│   ├── gmailSync.js            # Compatibility facade for Gmail sync service
 │   ├── gmailTokenCrypto.js     # AES-256-GCM refresh-token encryption
-│   ├── ingest.js               # Gmail ingest flow, accept/ignore actions
-│   ├── ingestParser.js         # Pure bank email parser (amount/date/merchant/category)
+│   ├── ingest.js               # Compatibility facade for ingest service
+│   ├── ingestParser.js         # Compatibility facade for the ingest domain parser
 │   ├── ingestParser.test.js    # Parser unit tests
 │   ├── gmail*.test.js          # Gmail crypto, extraction, and query tests
 ├── netlify/functions/api.mjs   # serverless-http wrapper for Netlify
@@ -259,7 +271,7 @@ paisa_wise/
 ### Frontend routing & auth gate
 `src/routes.js` maps paths to pages: `/` (Overview), `/expenses`, `/inbox`, `/due`, `/calendar`, `/budgets`, `/trash`, `/settings`. Anything else redirects to `/`.
 
-`App.jsx` is the single stateful shell:
+`App.jsx` composes the app shell and feature hooks:
 1. On mount it calls `GET /api/auth/me`. While the response is pending it shows a loading screen; if unauthenticated it renders `AuthPage` (tabbed **Sign in / Register / Reset password**) instead of the app.
 2. Once authenticated it loads budgets, the monthly cycle, user settings (currency), and email-capture status for that account.
 3. It renders the layout (sidebar + top bar on desktop, bottom nav + FAB on mobile) and the routed page inside `.content`.
@@ -267,8 +279,11 @@ paisa_wise/
 
 Pages are **lazy-loaded** (`React.lazy` + `Suspense`) for code splitting.
 
+### Backend layers
+The Express runtime entrypoint is `server/index.js`; it starts the app assembled in `server/app.js`. Feature routers for authentication, account settings, expenses, and inbox operations delegate HTTP handling to controllers, then services, with MongoDB persistence behind `server/repositories/databaseRepository.js`. The root `server/db.js` and older Gmail/ingest module paths remain compatibility facades. Gmail OAuth callback flows remain registered in the app composition because they coordinate session cookies, redirects, and provider state.
+
 ### Data flow & offline sync
-The expenses API layer (`src/api/expensesApi.js`) sits between the UI and the server:
+The expense feature service (`src/features/expenses/services/expensesService.js`) sits between the UI and the server:
 
 - **Reads:** `fetchExpenses()` pulls from `/api/expenses` and caches to `localStorage` (`penny-expenses`). If the network fails it serves the cache and reports the source as `cache`.
 - **Writes:** add/update/delete/restore/purge POST to `/api/expenses` with an `action` field. On failure the payload is pushed onto an **offline queue** (`penny-expense-sync-queue`).
@@ -289,8 +304,8 @@ Trash is soft-delete — expenses get a `deletedAt` timestamp and are filtered o
 - Password change/reset re-hash the password, invalidate all existing sessions, and issue a fresh one.
 
 ### Dates, cycles, currency
-- All dates are computed in the **Asia/Kolkata** timezone and stored as `YYYY-MM-DD` strings (`indiaDate()` in `appData.js`).
-- `getMonthlyCycleRange(cycleStartDate)` resolves the active cycle: without a custom start day it's the calendar month; with one, it walks back to the most recent cycle containing today.
+- All dates are computed in the **Asia/Kolkata** timezone and stored as `YYYY-MM-DD` strings (`indiaDate()` in `src/shared/utils/indiaDate.js`; `appData.js` re-exports it for compatibility).
+- `getMonthlyCycleRange(cycleStartDate)` in `src/features/settings/domain/monthlyCycleRules.js` resolves the active cycle: without a custom start day it's the calendar month; with one, it walks back to the most recent cycle containing today.
 - Currency conversion (`currency.js`) is **render-time only**: `fromINR()` / `toINR()` use fixed rates, `formatMoney()` formats via `Intl.NumberFormat`. Input fields convert back to INR before saving.
 
 ---

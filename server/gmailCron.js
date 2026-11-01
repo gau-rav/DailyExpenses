@@ -1,5 +1,5 @@
-import { closeDatabase, connectDatabase } from './db.js'
-import { syncAllGmailAccounts } from './gmailSync.js'
+import { closeDatabase, connectDatabase } from './repositories/databaseRepository.js'
+import { syncAllGmailAccounts } from './services/gmailSyncService.js'
 
 try {
   await connectDatabase()

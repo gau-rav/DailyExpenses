@@ -215,3 +215,25 @@ td strong,.amount-cell{color:var(--text-primary)}
 .table-wrap tbody tr:hover td {
   background: color-mix(in srgb, var(--surface-hover) 60%, transparent);
 }
+
+/* Recurring tag */
+.recurring-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 100px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+  color: var(--primary);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.expense-mobile-meta .recurring-tag {
+  margin-left: 0;
+}

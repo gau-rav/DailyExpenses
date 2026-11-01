@@ -2,9 +2,9 @@ import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
 import { render, screen, waitFor, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import InboxPage from './InboxPage.jsx'
-import * as ingestApi from '../api/ingestApi.js'
+import * as ingestApi from '../features/inbox/services/ingestService.js'
 
-vi.mock('../api/ingestApi.js', () => ({
+vi.mock('../features/inbox/services/ingestService.js', () => ({
   fetchIngestMessages: vi.fn(),
   acceptIngestMessage: vi.fn(),
   ignoreIngestMessage: vi.fn(),

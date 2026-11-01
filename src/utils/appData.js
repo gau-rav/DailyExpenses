@@ -1,14 +1,11 @@
 import { formatMoney } from './currency'
+import { indiaDate } from '../shared/utils/indiaDate.js'
 
 export const categories = ['Food', 'Grocery', 'Transport', 'Bills', 'Shopping', 'Entertainment', 'Health', 'Rent', 'Education', 'Other']
 export const defaultBudgets = { daily: 1500, weekly: 6500, monthly: 24000 }
 export const categoryMeta = { Food: ['#f4a261', '🍜'], Grocery: ['#42a879', '🛒'], Transport: ['#0d7377', '🚕'], Bills: ['#c67837', '🧾'], Shopping: ['#d88950', '🛍️'], Entertainment: ['#2f9c79', '🎧'], Health: ['#d96857', '💊'], Rent: ['#0a5c5f', '🏠'], Education: ['#398f89', '📚'], Other: ['#94a3b8', '✦'] }
 
-export const indiaDate = date => {
-  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date)
-  const values = Object.fromEntries(parts.filter(part => part.type !== 'literal').map(part => [part.type, part.value]))
-  return `${values.year}-${values.month}-${values.day}`
-}
+export { indiaDate } from '../shared/utils/indiaDate.js'
 
 export const today = indiaDate(new Date())
 export const todayDateLabel = new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(new Date())
@@ -26,59 +23,7 @@ export const dateOffset = n => {
   date.setDate(date.getDate() + n)
   return indiaDate(date)
 }
-export const formatUtcDate = date => date.toISOString().slice(0, 10)
-export const getPreviousMonthStart = (asOf = today) => {
-  const [year, month] = asOf.split('-').slice(0, 2).map(Number)
-  return formatUtcDate(new Date(Date.UTC(year, month - 2, 1)))
-}
-export const cycleDateInMonth = (year, month, day) => {
-  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate()
-  return formatUtcDate(new Date(Date.UTC(year, month, Math.min(day, lastDay))))
-}
-export const getMonthlyCycleRange = (cycleStartDate, asOf = today) => {
-  const [year, month] = asOf.split('-').slice(0, 2).map(Number)
-  if (!cycleStartDate || asOf < cycleStartDate) {
-    const start = `${asOf.slice(0, 7)}-01`
-    const nextMonth = new Date(Date.UTC(year, month, 1))
-    const end = formatUtcDate(new Date(nextMonth.getTime() - 86400000))
-    return { start, end }
-  }
-
-  const cycleDay = Number(cycleStartDate.slice(-2))
-  let start = cycleDateInMonth(year, month - 1, cycleDay)
-  if (start > asOf) start = cycleDateInMonth(year, month - 2, cycleDay)
-  const [startYear, startMonth] = start.split('-').slice(0, 2).map(Number)
-  const nextStart = cycleDateInMonth(startYear, startMonth, cycleDay)
-  const end = formatUtcDate(new Date(new Date(`${nextStart}T00:00:00.000Z`).getTime() - 86400000))
-  return { start, end }
-}
-export const cycleRangeLabel = ({ start, end }) => {
-  const format = value => new Date(`${value}T12:00:00.000Z`).toLocaleDateString('en-IN', { timeZone: 'UTC', month: 'short', day: 'numeric' })
-  return `${format(start)} – ${format(end)}`
-}
-export const cycleHeaderLabel = ({ start, end }) => {
-  const format = value => {
-    const date = new Date(`${value}T12:00:00.000Z`)
-    const day = date.toLocaleDateString('en-IN', { timeZone: 'UTC', day: 'numeric' })
-    const month = date.toLocaleDateString('en-IN', { timeZone: 'UTC', month: 'short' }).replace(/^Sep$/, 'Sept')
-    return `${day} ${month}`
-  }
-  return `${format(start)} – ${format(end)}`
-}
-export const previewCycleRange = startDate => {
-  if (!startDate) return getMonthlyCycleRange(null)
-  const [year, month, day] = startDate.split('-').map(Number)
-  const nextStart = cycleDateInMonth(year, month, day)
-  const end = formatUtcDate(new Date(new Date(`${nextStart}T00:00:00.000Z`).getTime() - 86400000))
-  return { start: startDate, end }
-}
-export const getCycleDateForSettings = (startDate, asOf = today) => {
-  if (!startDate) {
-    const [year, month] = asOf.split('-').slice(0, 2).map(Number)
-    return cycleDateInMonth(year, month - 1, 1)
-  }
-  return startDate > asOf ? startDate : getMonthlyCycleRange(startDate, asOf).start
-}
+export { formatUtcDate, getPreviousMonthStart, cycleDateInMonth, getMonthlyCycleRange, cycleRangeLabel, cycleHeaderLabel, previewCycleRange, getCycleDateForSettings } from '../features/settings/domain/monthlyCycleRules.js'
 export const seedExpenses = [
   { id: 1, title: 'Weekly groceries', amount: 86.42, category: 'Food', payment: 'Card', date: today, dueDate: today, notes: 'Fresh produce and pantry staples', recurring: true, status: 'Due Today' },
   { id: 2, title: 'Electricity bill', amount: 124.00, category: 'Bills', payment: 'Bank transfer', date: dateOffset(-2), dueDate: today, notes: 'September electricity', recurring: true, status: 'Due Today' },
