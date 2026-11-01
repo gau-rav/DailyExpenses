@@ -14,7 +14,7 @@
   top:-100%;
   left:0;
   background:var(--primary);
-  color:#fff;
+  color:var(--on-primary);
   padding:10px 16px;
   border-radius:0 0 8px 8px;
   font-size:12px;
@@ -31,7 +31,7 @@
 .app-shell{
   display:flex;
   min-height:100vh;
-  background:#f8fafc
+  background:var(--background)
 }
 .app-shell{
   background:var(--background);
@@ -39,7 +39,7 @@
 }
 
 /* Auth screen */
-.auth-screen{min-height:100vh;display:grid;place-items:center;background:#f8fafc;padding:24px}
+.auth-screen{min-height:100vh;display:grid;place-items:center;background:var(--background);padding:24px}
 .auth-screen{background:radial-gradient(ellipse at top left,rgb(244 162 97 / 13%),transparent 38%),var(--background)}
 
 /* Brand */
@@ -52,10 +52,10 @@
   gap:9px;
   padding:11px 10px;
   margin:0 0 23px;
-  background:#f8faff;
-  border:1px solid #eef2fb;
+  background:var(--surface-subtle);
+  border:1px solid var(--border);
   border-radius:10px;
-  color:#63718a;
+  color:var(--text-secondary);
   font-size:12px
 }
 
@@ -72,13 +72,13 @@
 }
 
 /* Sidebar */
-.sidebar{background:#fff;border-right:1px solid var(--line);padding:28px 16px 20px;display:flex;flex-direction:column}
+.sidebar{background:var(--shell-surface);border-right:1px solid var(--line);padding:28px 16px 20px;display:flex;flex-direction:column}
 
 /* Main */
 .main{flex:1;min-width:0}
 
 /* Top actions */
-.topbar{position:sticky;top:0;z-index:5;height:70px;padding:0 46px;border-bottom:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:space-between}
+.topbar{position:sticky;top:0;z-index:5;height:70px;padding:0 46px;border-bottom:1px solid var(--line);background:var(--topbar-surface);display:flex;align-items:center;justify-content:space-between}
 
 /* Content */
 .content{max-width:1240px;margin:auto;padding:40px 48px 70px}
@@ -87,7 +87,7 @@
 .page-title{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:30px}
 
 /* Connection status */
-.connection-status{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:#8793a7}
+.connection-status{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:var(--text-secondary)}
 .connection-status i{width:6px;height:6px;border-radius:50%;background:currentColor}
 .connection-status.connected{color:#2ebc86}
 .connection-status.connecting{color:#e0a12a}

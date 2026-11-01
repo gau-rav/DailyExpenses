@@ -19,7 +19,6 @@ describe('currency', () => {
   it('defaults to INR when storage is empty or unknown', async () => {
     const currency = await loadCurrency()
     expect(currency.getCurrencyCode()).toBe('INR')
-    expect(currency.getCurrency().code).toBe('INR')
 
     localStorage.setItem('penny-currency', 'XYZ')
     const fallback = await loadCurrency()

@@ -117,7 +117,7 @@
   place-items: center;
   margin-bottom: 12px;
   border-radius: 14px;
-  background: #e5f3ef;
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
   color: var(--primary);
 }
 
@@ -155,12 +155,12 @@
 }
 
 .budget-figure .big-number.is-over-budget {
-  color: #b7651f;
+  color: var(--accent);
 }
 
 .budget-figure span {
   font-size: 10px;
-  color: #96a2b2;
+  color: var(--text-secondary);
 }
 
 /* Chart list */
@@ -280,7 +280,7 @@
 }
 
 .trend-chart .recharts-cartesian-axis-tick-value {
-  fill: var(--text-muted);
+  fill: var(--text-secondary);
   font-size: 10px;
 }
 

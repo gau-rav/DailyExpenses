@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, MoreHorizontal, Sparkles } from 'lucide-react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { categories, categoryMeta, formatDate, money } from '../utils/appData'
 
 // PageTitle - Simple header component
@@ -70,15 +70,12 @@ export function FinHealthCheck({ monthlyBudget, monthSpend, biggestCategory, bil
 
 // Influence Card - Shows guidance for money-saving decisions
 export function InfluenceCard({ type, icon, title, insight, actionText, to }) {
-  const navigate = useNavigate()
-  const handleClick = () => to ? navigate(to) : undefined
-
   return <div className={`influence-card influence-${type}`}>
     <div className="influence-icon">{icon}</div>
     <div className="influence-content">
       <h3>{title}</h3>
       <p className="influence-insight">{insight}</p>
-      {actionText && <Link to={to} onClick={handleClick} className="influence-action">
+      {actionText && <Link to={to} className="influence-action">
         {actionText} <ArrowRight size={14} aria-hidden="true" />
       </Link>}
     </div>

@@ -25,8 +25,6 @@ let current = (() => {
 
 export const getCurrencyCode = () => current
 
-export const getCurrency = () => findCurrency(current)
-
 export const setCurrencyCode = code => {
   current = findCurrency(code).code
   try {

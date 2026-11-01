@@ -19,6 +19,8 @@ graphify-out/
 data/
 .claude*
 .playwright-mcp/
+# QA screenshots and testing artifacts
+testing/*
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

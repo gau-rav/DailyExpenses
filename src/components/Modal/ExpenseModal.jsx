@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Check, Plus, X } from 'lucide-react'
 import { categories, today, money } from '../../utils/appData'
 import { currencySymbol, fromINRInput, toINR } from '../../utils/currency'
 
-const getInitialData = (item) => {
+const getInitialData = (item, defaultDate) => {
   const rawPayments = Array.isArray(item?.splitPayments)
     ? item.splitPayments
     : (Array.isArray(item?.splitExpense?.payments) ? item.splitExpense.payments : [])
@@ -21,8 +21,8 @@ const getInitialData = (item) => {
     amount: item?.amount !== undefined && item?.amount !== null ? item.amount : '',
     category: item?.category || 'Grocery',
     payment: item?.payment || 'Card',
-    date: item?.date ? String(item.date).slice(0, 10) : today,
-    dueDate: (item?.dueDate || item?.date || today).slice(0, 10),
+    date: item?.date ? String(item.date).slice(0, 10) : (defaultDate || today),
+    dueDate: (item?.dueDate || item?.date || defaultDate || today).slice(0, 10),
     notes: item?.notes || '',
     recurring: Boolean(item?.recurring),
     status: item?.status || 'Paid',
@@ -33,14 +33,9 @@ const getInitialData = (item) => {
   }
 }
 
-export default function ExpenseModal({ expense, onClose, onSave }) {
-  const [data, setData] = useState(() => getInitialData(expense))
+export default function ExpenseModal({ expense, defaultDate, onClose, onSave }) {
+  const [data, setData] = useState(() => getInitialData(expense, defaultDate))
   const [errors, setErrors] = useState({})
-
-  useEffect(() => {
-    setData(getInitialData(expense))
-    setErrors({})
-  }, [expense])
 
   const update = (k, v) => setData(prev => ({ ...prev, [k]: v }))
 
@@ -91,9 +86,10 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
         </div>
 
         <div className="form-grid">
-          <label className="full-field" autoFocus>
+          <label className="full-field">
             Title
             <input
+              autoFocus
               value={data.title}
               onChange={e => update('title', e.target.value)}
               placeholder="e.g. Weekly groceries"
@@ -227,19 +223,17 @@ export default function ExpenseModal({ expense, onClose, onSave }) {
                         }}
                       />
                     </div>
-                    {idx >= 0 && (
-                      <button
-                        type="button"
-                        className="remove-btn"
-                        aria-label="Remove payer"
-                        onClick={() => {
-                          const newPayments = data.splitExpense.payments.filter((_, i) => i !== idx)
-                          update('splitExpense', { ...data.splitExpense, payments: newPayments })
-                        }}
-                      >
-                        <X size={14} aria-hidden="true" />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="remove-btn"
+                      aria-label="Remove payer"
+                      onClick={() => {
+                        const newPayments = data.splitExpense.payments.filter((_, i) => i !== idx)
+                        update('splitExpense', { ...data.splitExpense, payments: newPayments })
+                      }}
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </button>
                   </div>
                 ))}
                 <button
