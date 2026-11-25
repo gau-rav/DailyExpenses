@@ -28,6 +28,10 @@ const BudgetsPage = lazy(() => import('./features/budgets/pages/BudgetsPage.jsx'
 const TrashPage = lazy(() => import('./features/expenses/pages/TrashPage.jsx'))
 const SettingsPage = lazy(() => import('./features/settings/pages/SettingsPage.jsx'))
 const BillsPage = lazy(() => import('./features/due/pages/BillsPage.jsx'))
+const AdminLoginPage = lazy(() => import('./features/admin/pages/AdminLoginPage.jsx'))
+const AdminOverviewPage = lazy(() => import('./features/admin/pages/AdminOverviewPage.jsx'))
+const AdminUsersListPage = lazy(() => import('./features/admin/pages/AdminUsersListPage.jsx'))
+const AdminUserDetailPage = lazy(() => import('./features/admin/pages/AdminUserDetailPage.jsx'))
 const PageLoading = ({ label = 'Loading pageâ€¦', fullScreen = false }) => (
   <div className={`page-loading${fullScreen ? ' page-loading-screen' : ''}`} role="status" aria-live="polite">
     <span className="page-loading-spinner" aria-hidden="true" />
@@ -48,6 +52,14 @@ function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem('penny-theme') === 'dark' ? 'dark' : 'light')
   const [installPrompt, setInstallPrompt] = useState(null)
   const [appInstalled, setAppInstalled] = useState(() => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true)
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 720px)').matches)
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    const mq = window.matchMedia('(max-width: 720px)')
+    const handler = e => setIsMobile(e.matches)
+    mq.addEventListener ? mq.addEventListener('change', handler) : mq.addListener(handler)
+    return () => { mq.removeEventListener ? mq.removeEventListener('change', handler) : mq.removeListener(handler) }
+  }, [])
   useEffect(() => {
     const captureInstallPrompt = event => {
       event.preventDefault()
@@ -152,6 +164,13 @@ function App() {
   }
 
   const openAdd = (date) => { setEditing(null); setAddDate(typeof date === 'string' ? date : null); setFormOpen(true) }; const openEdit = (e) => { setEditing(e); setAddDate(null); setFormOpen(true) }
+  const handleQuickAdd = (date) => {
+    if (isMobile) {
+      setQuickAddOpen(true)
+    } else {
+      openAdd(date)
+    }
+  }
   const saveExpense = async data => {
     const currentEditing = editing
     setFormOpen(false)
@@ -171,6 +190,17 @@ function App() {
   const markPaid = items => markExpensesPaid(items, () => setDeleteTarget(null))
   const common = { onAdd: openAdd, onEdit: openEdit, onDelete: deleteExpense }
   if (legalKind) return <Suspense fallback={<PageLoading label="Loading legal informationâ€¦" fullScreen />}><LegalPage kind={legalKind} /></Suspense>
+  const path = location.pathname
+  if (path.startsWith('/admin/login')) return <Suspense fallback={<PageLoading label="Loading admin loginâ€¦" fullScreen />}><AdminLoginPage /></Suspense>
+  if (path.startsWith('/admin')) {
+    return <Suspense fallback={<PageLoading label="Loading admin panelâ€¦" fullScreen />}>
+      <Routes>
+        <Route path="/admin" element={<AdminOverviewPage />} />
+        <Route path="/admin/users" element={<AdminUsersListPage />} />
+        <Route path="/admin/users/:userId" element={<AdminUserDetailPage />} />
+      </Routes>
+    </Suspense>
+  }
   if (authUser === undefined) return <Suspense fallback={<PageLoading label="Loading PaisaWiseâ€¦" fullScreen />}><AuthPage loading /></Suspense>
   if (!authUser) return <Suspense fallback={<PageLoading label="Loading sign inâ€¦" fullScreen />}><AuthPage /></Suspense>
   const profileName = authUser.name || authUser.email.split('@')[0]
@@ -230,10 +260,10 @@ function App() {
       <div className="content">
         <Suspense fallback={<PageLoading />}>
           <Routes>
-            <Route path="/" element={<DashboardPage firstName={greetingName} today={today} todaySpend={todaySpend} monthSpend={monthSpend} monthCommitted={monthCommitted} monthExpenses={monthExpenses} cycleRange={cycleRange} cycleLabel={cycleLabel} budgets={budgets} dueToday={dueToday} overdue={[]} upcoming={upcoming} onPage={setPage} onQuickAdd={() => setQuickAddOpen(true)} />} />
-            <Route path="/expenses" element={<ExpensesPage expenses={expenses} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} exportCsv={exportCsv} onQuickAdd={() => setQuickAddOpen(true)} {...common} />} />
+            <Route path="/" element={<DashboardPage firstName={greetingName} today={today} todaySpend={todaySpend} monthSpend={monthSpend} monthCommitted={monthCommitted} monthExpenses={monthExpenses} cycleRange={cycleRange} cycleLabel={cycleLabel} budgets={budgets} dueToday={dueToday} overdue={[]} upcoming={upcoming} onPage={setPage} onQuickAdd={() => handleQuickAdd()} />} />
+            <Route path="/expenses" element={<ExpensesPage expenses={expenses} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} exportCsv={exportCsv} onQuickAdd={() => handleQuickAdd()} {...common} />} />
             <Route path="/inbox" element={<InboxPage notify={notify} onChanged={refreshIngestStatus} onExpenseAdded={expense => { if (expense) setExpenses(current => [expense, ...current]) }} />} />
-            <Route path="/bills" element={<BillsPage expenses={expenses} today={today} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} onEdit={openEdit} onMarkAsPaid={markPaid} budgets={budgets} monthSpend={monthSpend} onQuickAdd={() => setQuickAddOpen(true)} />} />
+            <Route path="/bills" element={<BillsPage expenses={expenses} today={today} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} onEdit={openEdit} onMarkAsPaid={markPaid} budgets={budgets} monthSpend={monthSpend} onQuickAdd={() => handleQuickAdd()} />} />
             <Route path="/due" element={<DuePage expenses={dueToday} selected={selected} setSelected={setSelected} onBulkDelete={handleBulkDelete} onMarkAsPaid={markPaid} budgets={budgets} monthSpend={monthSpend} {...common} />} />
             <Route path="/calendar" element={<CalendarPage month={month} setMonth={setMonth} expenses={expenses} today={today} budgets={budgets} onAdd={openAdd} onAddForDate={openAdd} />} />
             <Route path="/budgets" element={<BudgetsPage budgets={budgets} budgetsLoaded={budgetsLoaded} onSaveBudgets={saveBudgets} expenses={monthExpenses} monthSpend={monthSpend} cycleStart={cycleRange.start} cycleEnd={cycleRange.end} today={today} cycleLabel={cycleLabel} exportCsv={exportCsv} />} />
@@ -246,7 +276,7 @@ function App() {
       <SiteFooter />
     </main>
     <MobileBottomNav activePage={page} pendingCount={ingestStatus.pendingCount} />
-    {!['/settings', '/trash', '/inbox'].includes(location.pathname) && <button className="mobile-add-button" type="button" aria-label={location.pathname === '/bills' ? 'Add bill' : 'Add expense'} onClick={location.pathname === '/bills' ? () => setQuickAddOpen(true) : openAdd}>
+    {!['/settings', '/trash', '/inbox'].includes(location.pathname) && <button className="mobile-add-button" type="button" aria-label={location.pathname === '/bills' ? 'Add bill' : 'Add expense'} onClick={location.pathname === '/bills' ? () => handleQuickAdd() : () => handleQuickAdd()}>
       <span className="fab-label">{location.pathname === '/bills' ? 'Add bill' : 'Add expense'}</span>
       <Plus size={24} strokeWidth={2} aria-hidden="true" />
     </button>}

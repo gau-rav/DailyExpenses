@@ -1,4 +1,22 @@
-/* Dashboard - 5 Card Grid Layout */
+/* Dashboard - Enhanced Animations & Layout */
+.dashboard-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -25,14 +43,33 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 10px 30px rgb(46 57 72 / 5%);
+  animation: fadeInScale 0.5s ease-out backwards;
+}
+
+.dashboard-grid > .card:nth-child(1) { animation-delay: 0.05s; }
+.dashboard-grid > .card:nth-child(2) { animation-delay: 0.1s; }
+.dashboard-grid > .card:nth-child(3) { animation-delay: 0.15s; }
+.dashboard-grid > .card:nth-child(4) { animation-delay: 0.2s; }
+.dashboard-grid > .card:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .dashboard-grid > .card:hover,
 .dashboard-grid > .influence-card:hover {
   border-color: var(--primary);
-  box-shadow: 0 8px 24px rgba(13, 115, 119, 0.08);
+  box-shadow: 0 12px 32px rgba(13, 115, 119, 0.12);
+  transform: translateY(-2px);
 }
 
 /* Merged overview card: financial health + spending trend */
@@ -282,6 +319,29 @@
 .trend-chart .recharts-cartesian-axis-tick-value {
   fill: var(--text-secondary);
   font-size: 10px;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+}
+
+.radar-empty span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, color-mix(in srgb, #22c55e 15%, transparent), color-mix(in srgb, #22c55e 5%, transparent));
+  color: #22c55e;
+  font-size: 24px;
+  margin-bottom: 12px;
+  animation: pulseGlow 2s ease-in-out infinite;
 }
 
 @media (max-width: 768px) {

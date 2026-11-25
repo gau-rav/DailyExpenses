@@ -241,8 +241,28 @@ body {
 /* ---------- Shared page elements ---------- */
 
 .page-add-button {
-  gap: 7px;
-  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-add-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+  animation: button-line 2s linear infinite;
+}
+
+@keyframes button-line {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 .card {
@@ -276,12 +296,30 @@ body {
   cursor: pointer;
   text-decoration: none;
   padding: 4px 2px;
+  position: relative;
+}
+
+.text-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
 }
 
 .text-btn:hover {
   color: var(--primary-dark);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
+}
+
+.text-btn:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
 }
 
 .icon-btn {
@@ -1988,6 +2026,16 @@ body {
 
 /* ---------- Quick add ---------- */
 
+.quick-add.mobile-only {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .quick-add.mobile-only {
+    display: block;
+  }
+}
+
 .quick-add .dialog-head {
   padding-bottom: 0;
 }
@@ -2823,6 +2871,28 @@ input:focus, select:focus, textarea:focus {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.primary-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer-slide 3s infinite;
+}
+
+@keyframes shimmer-slide {
+  0% {
+    left: -100%;
+  }
+  50%, 100% {
+    left: 100%;
+  }
 }
 
 .primary-btn:hover {

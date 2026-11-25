@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { endCurrentSession, fetchCurrentUser } from '../services/authService.js'
+import { clearExpenseStorage } from '../../expenses/services/expensesService.js'
 
 /** @typedef {{id: string, email: string, name?: string, firstName?: string, lastName?: string}} AuthUser */
 
@@ -15,8 +16,12 @@ export function useAuth() {
   }, [])
 
   const logout = useCallback(async () => {
-    await endCurrentSession()
-    setAuthUser(null)
+    try {
+      await endCurrentSession()
+    } finally {
+      clearExpenseStorage()
+      setAuthUser(null)
+    }
   }, [])
 
   return { authUser, logout }

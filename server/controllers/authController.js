@@ -2,6 +2,39 @@ import { normalizeEmail, validateCredentials } from '../domain/authRules.js'
 import { changePasswordAccount, loginPasswordAccount, logoutSession, registerPasswordAccount, resetPasswordAccount } from '../services/authService.js'
 
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7
+const AUTH_ATTEMPT_WINDOW_MS = 15 * 60 * 1000
+const MAX_AUTH_ATTEMPTS = 10
+const authAttempts = new Map()
+
+function authAttemptKey(req, email) {
+  return `${req.ip || req.socket?.remoteAddress || 'unknown'}:${email || '*'}`
+}
+
+function isThrottled(key) {
+  const attempt = authAttempts.get(key)
+  if (!attempt) return false
+  if (attempt.resetAt <= Date.now()) {
+    authAttempts.delete(key)
+    return false
+  }
+  return attempt.count >= MAX_AUTH_ATTEMPTS
+}
+
+function recordAttempt(key) {
+  const now = Date.now()
+  const attempt = authAttempts.get(key)
+  if (!attempt || attempt.resetAt <= now) authAttempts.set(key, { count: 1, resetAt: now + AUTH_ATTEMPT_WINDOW_MS })
+  else attempt.count += 1
+  if (authAttempts.size > 10_000) {
+    for (const [storedKey, storedAttempt] of authAttempts) {
+      if (storedAttempt.resetAt <= now) authAttempts.delete(storedKey)
+    }
+  }
+}
+
+function clearAttempts(key) {
+  authAttempts.delete(key)
+}
 
 function publicUser(user) {
   const nameParts = String(user.name || '').trim().split(/\s+/)
@@ -12,6 +45,7 @@ function publicUser(user) {
     firstName: user.first_name || nameParts[0] || '',
     lastName: user.last_name || nameParts.slice(1).join(' '),
     picture: user.picture || '',
+    role: user.role || 'user',
   }
 }
 
@@ -20,6 +54,8 @@ export function createAuthController({ getUserFromRequest, getSessionToken, sess
     register: async (req, res) => {
       try {
         const email = normalizeEmail(req.body?.email)
+        const attemptKey = authAttemptKey(req, email || '*')
+        if (isThrottled(attemptKey)) return res.status(429).json({ ok: false, error: 'Too many attempts. Try again later.' })
         const password = String(req.body?.password || '')
         const firstName = String(req.body?.firstName || '').trim()
         const lastName = String(req.body?.lastName || '').trim()
@@ -32,6 +68,7 @@ export function createAuthController({ getUserFromRequest, getSessionToken, sess
         }
 
         const { user, session } = await registerPasswordAccount(email, password, firstName, lastName)
+        clearAttempts(attemptKey)
         setCookie(res, sessionCookie, session.rawToken, { maxAge: SESSION_MAX_AGE })
         res.status(201).json({ ok: true, user: publicUser(user) })
       } catch (error) {
@@ -45,9 +82,15 @@ export function createAuthController({ getUserFromRequest, getSessionToken, sess
         const email = normalizeEmail(req.body?.email)
         const password = String(req.body?.password || '')
         if (!email || !password) return res.status(400).json({ ok: false, error: 'Email and password are required' })
+        const attemptKey = authAttemptKey(req, email)
+        if (isThrottled(attemptKey)) return res.status(429).json({ ok: false, error: 'Too many attempts. Try again later.' })
 
         const result = await loginPasswordAccount(email, password, dummyEmail, dummyPassword)
-        if (!result) return res.status(401).json({ ok: false, error: 'Invalid email or password' })
+        if (!result) {
+          recordAttempt(attemptKey)
+          return res.status(401).json({ ok: false, error: 'Invalid email or password' })
+        }
+        clearAttempts(attemptKey)
         setCookie(res, sessionCookie, result.session.rawToken, { maxAge: SESSION_MAX_AGE })
         res.json({ ok: true, user: publicUser(result.user) })
       } catch (error) {
@@ -60,6 +103,8 @@ export function createAuthController({ getUserFromRequest, getSessionToken, sess
         const email = normalizeEmail(req.body?.email)
         const currentPassword = String(req.body?.currentPassword || '')
         const newPassword = String(req.body?.newPassword || '')
+        const attemptKey = authAttemptKey(req, email)
+        if (isThrottled(attemptKey)) return res.status(429).json({ ok: false, error: 'Too many attempts. Try again later.' })
         const validationError = validateCredentials(email, newPassword)
         if (validationError) return res.status(400).json({ ok: false, error: validationError })
         if (!currentPassword) return res.status(400).json({ ok: false, error: 'Current password is required' })
@@ -68,7 +113,11 @@ export function createAuthController({ getUserFromRequest, getSessionToken, sess
         }
 
         const result = await resetPasswordAccount(email, currentPassword, newPassword)
-        if (!result) return res.status(401).json({ ok: false, error: 'Email or current password is incorrect' })
+        if (!result) {
+          recordAttempt(attemptKey)
+          return res.status(401).json({ ok: false, error: 'Email or current password is incorrect' })
+        }
+        clearAttempts(attemptKey)
         setCookie(res, sessionCookie, result.session.rawToken, { maxAge: SESSION_MAX_AGE })
         res.json({ ok: true, user: publicUser(result.user) })
       } catch (error) {
@@ -80,6 +129,8 @@ export function createAuthController({ getUserFromRequest, getSessionToken, sess
       try {
         const user = await getUserFromRequest(req)
         if (!user) return res.status(401).json({ ok: false, error: 'Authentication required' })
+        const attemptKey = authAttemptKey(req, user.email)
+        if (isThrottled(attemptKey)) return res.status(429).json({ ok: false, error: 'Too many attempts. Try again later.' })
         const currentPassword = String(req.body?.currentPassword || '')
         const newPassword = String(req.body?.newPassword || '')
         const validationError = validateCredentials(user.email, newPassword)
@@ -89,7 +140,11 @@ export function createAuthController({ getUserFromRequest, getSessionToken, sess
           return res.status(400).json({ ok: false, error: 'Passwords do not match' })
         }
         const session = await changePasswordAccount(user, currentPassword, newPassword)
-        if (!session) return res.status(401).json({ ok: false, error: 'Current password is incorrect' })
+        if (!session) {
+          recordAttempt(attemptKey)
+          return res.status(401).json({ ok: false, error: 'Current password is incorrect' })
+        }
+        clearAttempts(attemptKey)
         setCookie(res, sessionCookie, session.rawToken, { maxAge: SESSION_MAX_AGE })
         res.json({ ok: true })
       } catch (error) {

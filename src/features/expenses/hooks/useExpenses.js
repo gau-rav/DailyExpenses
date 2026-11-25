@@ -33,6 +33,12 @@ function readDeletedExpenses() {
   try { return JSON.parse(localStorage.getItem('penny-trash') || '[]') } catch { return [] }
 }
 
+function csvCell(value) {
+  let text = String(value ?? '')
+  if (/^[=+\-@]/.test(text)) text = `'${text}`
+  return `"${text.replace(/"/g, '""')}"`
+}
+
 /** @param {{notify: (message: string) => void}} options */
 export function useExpenses({ notify }) {
   const [expenses, setExpenses] = useState(readInitialExpenses)
@@ -152,7 +158,7 @@ export function useExpenses({ notify }) {
       ['Title', 'Amount', 'Category', 'Payment', 'Date', 'Due date', 'Status'],
       ...expenses.map(expense => [expense.title, expense.amount, expense.category, expense.payment, expense.date, expense.dueDate, expense.status]),
     ]
-    const blob = new Blob([rows.map(row => row.join(',')).join('\n')], { type: 'text/csv' })
+    const blob = new Blob([rows.map(row => row.map(csvCell).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' })
     const anchor = document.createElement('a')
     const url = URL.createObjectURL(blob)
     anchor.href = url

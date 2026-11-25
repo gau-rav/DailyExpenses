@@ -28,7 +28,9 @@ const mockClientInstance = {
 }
 
 vi.mock('google-auth-library', () => ({
-  OAuth2Client: vi.fn().mockImplementation(() => mockClientInstance),
+  OAuth2Client: vi.fn().mockImplementation(function MockOAuth2Client() {
+    return mockClientInstance
+  }),
 }))
 
 const originalEnv = process.env

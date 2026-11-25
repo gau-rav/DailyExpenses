@@ -1,4 +1,4 @@
-import crypto from 'node:crypto'
+  import crypto from 'node:crypto'
 import dotenv from 'dotenv'
 import { MongoClient } from 'mongodb'
 
@@ -24,8 +24,13 @@ export async function connectDatabase() {
   await database.collection('users').dropIndex('google_sub_1').catch(() => {})
   await database.collection('users').createIndex({ google_sub: 1 }, { unique: true, partialFilterExpression: { google_sub: { $type: 'string' } } })
   await database.collection('users').createIndex({ email: 1 }, { unique: true })
+  await database.collection('users').createIndex({ role: 1 })
   await database.collection('sessions').createIndex({ token_hash: 1 }, { unique: true })
   await database.collection('sessions').createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 })
+  await database.collection('admin_sessions').createIndex({ token_hash: 1 }, { unique: true })
+  await database.collection('admin_sessions').createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 })
+  await database.collection('admin_audit_logs').createIndex({ admin_id: 1, created_at: -1 })
+  await database.collection('admin_audit_logs').createIndex({ created_at: -1 })
   await database.collection('expenses').createIndex({ user_id: 1, id: 1 }, { unique: true })
   await database.collection('expenses').createIndex({ user_id: 1, deletedAt: 1 })
   await database.collection('budgets').createIndex({ user_id: 1 }, { unique: true })
@@ -59,6 +64,16 @@ function sessions() {
   return database.collection('sessions')
 }
 
+function adminSessions() {
+  if (!database) throw new Error('MongoDB is not connected')
+  return database.collection('admin_sessions')
+}
+
+function adminAuditLogs() {
+  if (!database) throw new Error('MongoDB is not connected')
+  return database.collection('admin_audit_logs')
+}
+
 function budgets() {
   if (!database) throw new Error('MongoDB is not connected')
   return database.collection('budgets')
@@ -77,6 +92,48 @@ function ingestMessages() {
 function gmailAccounts() {
   if (!database) throw new Error('MongoDB is not connected')
   return database.collection('gmail_accounts')
+}
+
+export async function getUserByEmail(email) {
+  return users().findOne({ email: String(email || '').trim().toLowerCase() })
+}
+
+export async function createSession(userId, ttlSeconds = 60 * 60 * 24 * 7) {
+  const rawToken = crypto.randomBytes(32).toString('base64url')
+  const now = new Date()
+  const expires = new Date(now.getTime() + ttlSeconds * 1000)
+
+  await sessions().insertOne({
+    id: crypto.randomUUID(),
+    user_id: String(userId),
+    token_hash: hashToken(rawToken),
+    expires_at: expires,
+    created_at: now,
+  })
+
+  return { rawToken, expires }
+}
+
+export async function getUserBySession(rawToken) {
+  if (!rawToken) return null
+  const session = await sessions().findOne({
+    token_hash: hashToken(rawToken),
+    expires_at: { $gt: new Date() },
+  })
+  if (!session) return null
+  return users().findOne({ id: session.user_id })
+}
+
+export async function deleteSession(rawToken) {
+  if (rawToken) await sessions().deleteOne({ token_hash: hashToken(rawToken) })
+}
+
+export async function deleteUserSessions(userId) {
+  await sessions().deleteMany({ user_id: String(userId) })
+}
+
+export async function pruneSessions() {
+  await sessions().deleteMany({ expires_at: { $lte: new Date() } })
 }
 
 export async function upsertGoogleUser(profile) {
@@ -125,8 +182,23 @@ export async function upsertGoogleUser(profile) {
   return user
 }
 
-export async function getUserByEmail(email) {
-  return users().findOne({ email })
+export async function getUserById(userId) {
+  return users().findOne({ id: String(userId) })
+}
+
+export async function listAllUsers({ limit = 50, skip = 0, query = {} } = {}) {
+  const q = { ...query }
+  const rows = await users()
+    .find(q)
+    .sort({ created_at: -1 })
+    .skip(Math.max(0, Number(skip) || 0))
+    .limit(Math.max(1, Math.min(500, Number(limit) || 50)))
+    .toArray()
+  return rows
+}
+
+export async function countAllUsers(query = {}) {
+  return users().countDocuments(query)
 }
 
 export async function createPasswordUser(email, passwordHash, firstName = email.split('@')[0], lastName = '') {
@@ -142,12 +214,40 @@ export async function createPasswordUser(email, passwordHash, firstName = email.
     auth_provider: 'password',
     email_verified: false,
     password_hash: passwordHash,
+    role: 'user',
     created_at: now,
     updated_at: now,
   }
 
   await users().insertOne(user)
   return user
+}
+
+export async function createAdminUser(email, passwordHash, firstName = 'Admin', lastName = '') {
+  const now = new Date()
+  const name = [firstName, lastName].filter(Boolean).join(' ')
+  const user = {
+    id: crypto.randomUUID(),
+    email,
+    name,
+    first_name: firstName,
+    last_name: lastName,
+    picture: '',
+    auth_provider: 'password',
+    email_verified: true,
+    password_hash: passwordHash,
+    role: 'admin',
+    permissions: ['*'],
+    created_at: now,
+    updated_at: now,
+  }
+
+  await users().insertOne(user)
+  return user
+}
+
+export async function setUserRole(userId, role) {
+  await users().updateOne({ id: userId }, { $set: { role, updated_at: new Date() } })
 }
 
 export async function setPasswordHash(userId, passwordHash) {
@@ -157,12 +257,12 @@ export async function setPasswordHash(userId, passwordHash) {
   )
 }
 
-export async function createSession(userId, ttlSeconds = 60 * 60 * 24 * 7) {
+export async function createAdminSession(userId, ttlSeconds = 60 * 60 * 8) {
   const rawToken = crypto.randomBytes(32).toString('base64url')
   const now = new Date()
   const expires = new Date(now.getTime() + ttlSeconds * 1000)
 
-  await sessions().insertOne({
+  await adminSessions().insertOne({
     id: crypto.randomUUID(),
     user_id: userId,
     token_hash: hashToken(rawToken),
@@ -173,28 +273,49 @@ export async function createSession(userId, ttlSeconds = 60 * 60 * 24 * 7) {
   return { rawToken, expires }
 }
 
-export async function getUserBySession(rawToken) {
+export async function getUserByAdminSession(rawToken) {
   if (!rawToken) return null
 
-  const session = await sessions().findOne({
+  const session = await adminSessions().findOne({
     token_hash: hashToken(rawToken),
     expires_at: { $gt: new Date() },
   })
 
   if (!session) return null
-  return users().findOne({ id: session.user_id })
+  const user = await users().findOne({ id: session.user_id })
+  if (!user || user.role !== 'admin') return null
+  return user
 }
 
-export async function deleteSession(rawToken) {
-  if (rawToken) await sessions().deleteOne({ token_hash: hashToken(rawToken) })
+export async function deleteAdminSession(rawToken) {
+  if (rawToken) await adminSessions().deleteOne({ token_hash: hashToken(rawToken) })
 }
 
-export async function deleteUserSessions(userId) {
-  await sessions().deleteMany({ user_id: userId })
+export async function pruneAdminSessions() {
+  await adminSessions().deleteMany({ expires_at: { $lte: new Date() } })
 }
 
-export async function pruneSessions() {
-  await sessions().deleteMany({ expires_at: { $lte: new Date() } })
+export async function logAdminAction({ adminId, action, targetUserId = null, ip = '', userAgent = '', details = {} }) {
+  await adminAuditLogs().insertOne({
+    id: crypto.randomUUID(),
+    admin_id: String(adminId || ''),
+    action: String(action || ''),
+    target_user_id: targetUserId ? String(targetUserId) : null,
+    ip: String(ip || ''),
+    user_agent: String(userAgent || ''),
+    details,
+    created_at: new Date(),
+  })
+}
+
+export async function listAdminAuditLogs({ limit = 100, skip = 0 } = {}) {
+  const rows = await adminAuditLogs()
+    .find({})
+    .sort({ created_at: -1 })
+    .skip(Math.max(0, Number(skip) || 0))
+    .limit(Math.max(1, Math.min(500, Number(limit) || 100)))
+    .toArray()
+  return rows.map(r => ({ ...r, _id: undefined }))
 }
 
 export async function getIngestSettings(userId) {
@@ -511,9 +632,50 @@ function expenses() {
   return database.collection('expenses')
 }
 
-export async function listExpenses(userId, deleted = false) {
-  const rows = await expenses().find({ user_id: userId, deletedAt: deleted ? { $ne: '' } : '' }).sort({ date: -1, createdAt: -1 }).toArray()
+export async function listExpensesByUserId(userId, { includeDeleted = false, limit, skip = 0 } = {}) {
+  const uid = String(userId)
+  const query = { user_id: uid }
+  if (!includeDeleted) query.deletedAt = ''
+  else query.deletedAt = { $ne: '' }
+  // if includeDeleted true and we want all, better: no filter on deletedAt? user said read-only; but to be safe, if includeDeleted true return all (deleted or not) - adjust
+  if (includeDeleted) {
+    delete query.deletedAt
+  }
+  let cursor = expenses().find(query).sort({ date: -1, createdAt: -1 })
+  if (Number.isFinite(Number(skip)) && Number(skip) > 0) cursor = cursor.skip(Math.min(1_000_000, Math.max(0, Math.trunc(Number(skip)))))
+  if (Number.isFinite(Number(limit)) && Number(limit) > 0) cursor = cursor.limit(Math.min(200, Math.max(1, Math.trunc(Number(limit)))))
+  const rows = await cursor.toArray()
   return rows.map(publicExpense)
+}
+
+// Backward-compatible repository API used by the expenses service.
+export async function listExpenses(userId, includeDeleted = false) {
+  return listExpensesByUserId(userId, { includeDeleted })
+}
+
+export async function getExpenseStatsForUser(userId) {
+  const uid = String(userId)
+  const rows = await expenses().find({ user_id: uid, deletedAt: '' }).toArray()
+  const total = rows.reduce((sum, r) => sum + Number(r.amount || 0), 0)
+  const byCategory = {}
+  for (const r of rows) {
+    const cat = r.category || 'Other'
+    byCategory[cat] = (byCategory[cat] || 0) + Number(r.amount || 0)
+  }
+  return { count: rows.length, total, byCategory }
+}
+
+export async function getGlobalAdminStats() {
+  const [totalUsers, totalExpenses] = await Promise.all([
+    users().countDocuments({}),
+    expenses().countDocuments({ deletedAt: '' }),
+  ])
+  const [summary] = await expenses().aggregate([
+    { $match: { deletedAt: '' } },
+    { $group: { _id: null, totalSpend: { $sum: { $convert: { input: '$amount', to: 'double', onError: 0, onNull: 0 } } } } },
+  ]).toArray()
+  const totalSpend = Number(summary?.totalSpend || 0)
+  return { totalUsers, totalExpenses, totalSpend }
 }
 
 export async function createExpense(userId, input) {

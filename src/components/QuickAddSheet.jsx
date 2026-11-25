@@ -61,13 +61,13 @@ export default function QuickAddSheet({ open, onClose, onSave, defaultDate }) {
     }
   }
 
-  return <AppDialog
+  <AppDialog
     open={open}
     onOpenChange={next => { if (!next) { reset(); onClose() } }}
-    title="Quick add"
+    title="Quick Add"
     description="Log a payment in two taps. Edit details later from Expenses."
     variant="sheet"
-    className="quick-add"
+    className="quick-add mobile-only"
   >
     <div className="quick-add-amount" aria-live="polite">
       <span className="quick-add-currency">{currencySymbol()}</span>

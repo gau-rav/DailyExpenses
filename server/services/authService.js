@@ -13,6 +13,8 @@ export async function loginPasswordAccount(email, password, dummyEmail, dummyPas
   }
   if (!user) return null
 
+  if (user.role === 'admin') return null
+
   if (user.password_hash) {
     if (!await verifyPassword(password, user.password_hash)) return null
   } else if (email === dummyEmail && password === dummyPassword) {
@@ -26,14 +28,14 @@ export async function loginPasswordAccount(email, password, dummyEmail, dummyPas
 
 export async function resetPasswordAccount(email, currentPassword, newPassword) {
   const user = await getUserByEmail(email)
-  if (!user?.password_hash || !await verifyPassword(currentPassword, user.password_hash)) return null
+  if (!user?.password_hash || user.role === 'admin' || !await verifyPassword(currentPassword, user.password_hash)) return null
   await setPasswordHash(user.id, await hashPassword(newPassword))
   await deleteUserSessions(user.id)
   return { user, session: await createSession(user.id) }
 }
 
 export async function changePasswordAccount(user, currentPassword, newPassword) {
-  if (!user.password_hash || !await verifyPassword(currentPassword, user.password_hash)) return null
+  if (!user.password_hash || user.role === 'admin' || !await verifyPassword(currentPassword, user.password_hash)) return null
   await setPasswordHash(user.id, await hashPassword(newPassword))
   await deleteUserSessions(user.id)
   return createSession(user.id)

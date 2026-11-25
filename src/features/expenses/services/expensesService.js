@@ -18,6 +18,12 @@ export function writeExpenseCache(expenses) {
   localStorage.setItem(CACHE_KEY, JSON.stringify(expenses))
 }
 
+export function clearExpenseStorage() {
+  localStorage.removeItem(CACHE_KEY)
+  localStorage.removeItem(QUEUE_KEY)
+  localStorage.removeItem('penny-trash')
+}
+
 function readQueue() {
   try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]') } catch { return [] }
 }

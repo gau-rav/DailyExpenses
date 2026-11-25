@@ -20,16 +20,27 @@ import { createAccountSettingsRouter } from './routes/accountSettingsRoutes.js'
 import { createAuthRouter } from './routes/authRoutes.js'
 import { createExpensesRouter } from './routes/expensesRoutes.js'
 import { createIngestRouter } from './routes/ingestRoutes.js'
+import { createAdminAuthRouter } from './routes/adminAuthRoutes.js'
+import { createAdminRouter } from './routes/adminRoutes.js'
+import { getUserByAdminSession, pruneAdminSessions } from './repositories/authRepository.js'
 
 const app = express()
 const port = Number(process.env.PORT || process.env.AUTH_PORT || 8787)
 const isProduction = process.env.NODE_ENV === 'production'
 const sessionCookie = 'penny_session'
+const adminSessionCookie = 'penny_admin_session'
 const dummyEmail = (process.env.AUTH_DUMMY_EMAIL || '').trim().toLowerCase()
 const dummyPassword = process.env.AUTH_DUMMY_PASSWORD || ''
 const distPath = path.join(process.cwd(), 'dist')
 
 const appUrl = process.env.APP_URL || 'http://localhost:5173'
+const appOrigin = (() => {
+  try {
+    return new URL(appUrl).origin
+  } catch {
+    return 'http://localhost:5173'
+  }
+})()
 const googleClientId = process.env.GOOGLE_CLIENT_ID
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
 const googleRedirectUri = process.env.GOOGLE_REDIRECT_URI || `http://localhost:${port}/api/auth/google/callback`
@@ -48,6 +59,21 @@ const gmailStateCookie = 'penny_gmail_state'
 const gmailVerifierCookie = 'penny_gmail_verifier'
 const gmailReturnCookie = 'penny_gmail_return'
 const gmailUserCookie = 'penny_gmail_user'
+
+// Keep browser-facing responses from being embedded or content-sniffed. API
+// responses are never cacheable because they may contain account data.
+app.use((req, res, next) => {
+  res.set('X-Content-Type-Options', 'nosniff')
+  res.set('X-Frame-Options', 'DENY')
+  res.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  res.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  if (isProduction) {
+    res.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'")
+  }
+  if (req.path === '/api' || req.path.startsWith('/api/')) res.set('Cache-Control', 'no-store')
+  if (isProduction) res.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+  next()
+})
 
 class AuthFlowError extends Error {}
 
@@ -107,12 +133,31 @@ function sanitizeReturnUrl(value) {
   if (!value) return ''
   try {
     const url = new URL(value)
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') return ''
-    return url.origin
+    if (url.origin !== appOrigin) return ''
+    return appOrigin
   } catch {
     return ''
   }
 }
+
+// Cookie-authenticated state changes must originate from the configured app.
+// Requests without Origin/Referer remain valid for server-to-server callers.
+app.use((req, res, next) => {
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next()
+  const origin = req.get('origin') || req.get('referer')
+  if (!origin && !req.path.startsWith('/api/internal/')) {
+    return res.status(403).json({ ok: false, error: 'Request origin is required' })
+  }
+  if (!origin) return next()
+  try {
+    if (new URL(origin).origin !== appOrigin && !req.path.startsWith('/api/internal/')) {
+      return res.status(403).json({ ok: false, error: 'Request origin is not allowed' })
+    }
+  } catch {
+    return res.status(403).json({ ok: false, error: 'Request origin is not allowed' })
+  }
+  next()
+})
 
 function valuesEqual(left, right) {
   const first = Buffer.from(String(left || ''))
@@ -129,10 +174,19 @@ const routeDependencies = {
   dummyEmail,
   dummyPassword,
 }
+const adminRouteDependencies = {
+  getAdminUserFromRequest: req => getUserByAdminSession(getCookie(req, adminSessionCookie)),
+  getAdminSessionToken: req => getCookie(req, adminSessionCookie),
+  adminSessionCookie,
+  setCookie,
+  clearCookie,
+}
 app.use(createAuthRouter(routeDependencies))
 app.use(createAccountSettingsRouter(routeDependencies))
 app.use(createExpensesRouter(routeDependencies))
 app.use(createIngestRouter(routeDependencies))
+app.use(createAdminAuthRouter(adminRouteDependencies))
+app.use(createAdminRouter(adminRouteDependencies))
 
 app.get(['/auth/providers', '/api/auth/providers'], (_req, res) => {
   res.json({ ok: true, providers: { google: Boolean(googleClient) } })
@@ -381,6 +435,7 @@ if (fs.existsSync(path.join(distPath, 'index.html'))) {
 }
 
 setInterval(() => pruneSessions().catch(error => console.error('Session cleanup failed', error)), 60 * 60 * 1000).unref()
+setInterval(() => pruneAdminSessions().catch(error => console.error('Admin session cleanup failed', error)), 60 * 60 * 1000).unref()
 
 export { app }
 
