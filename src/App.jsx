@@ -32,7 +32,7 @@ const AdminLoginPage = lazy(() => import('./features/admin/pages/AdminLoginPage.
 const AdminOverviewPage = lazy(() => import('./features/admin/pages/AdminOverviewPage.jsx'))
 const AdminUsersListPage = lazy(() => import('./features/admin/pages/AdminUsersListPage.jsx'))
 const AdminUserDetailPage = lazy(() => import('./features/admin/pages/AdminUserDetailPage.jsx'))
-const PageLoading = ({ label = 'Loading pageâ€¦', fullScreen = false }) => (
+const PageLoading = ({ label = 'Loading page...', fullScreen = false }) => (
   <div className={`page-loading${fullScreen ? ' page-loading-screen' : ''}`} role="status" aria-live="polite">
     <span className="page-loading-spinner" aria-hidden="true" />
     <span>{label}</span>
@@ -189,11 +189,11 @@ function App() {
   }
   const markPaid = items => markExpensesPaid(items, () => setDeleteTarget(null))
   const common = { onAdd: openAdd, onEdit: openEdit, onDelete: deleteExpense }
-  if (legalKind) return <Suspense fallback={<PageLoading label="Loading legal informationâ€¦" fullScreen />}><LegalPage kind={legalKind} /></Suspense>
+  if (legalKind) return <Suspense fallback={<PageLoading label="Loading legal information..." fullScreen />}><LegalPage kind={legalKind} /></Suspense>
   const path = location.pathname
-  if (path.startsWith('/admin/login')) return <Suspense fallback={<PageLoading label="Loading admin loginâ€¦" fullScreen />}><AdminLoginPage /></Suspense>
+  if (path.startsWith('/admin/login')) return <Suspense fallback={<PageLoading label="Loading admin login..." fullScreen />}><AdminLoginPage /></Suspense>
   if (path.startsWith('/admin')) {
-    return <Suspense fallback={<PageLoading label="Loading admin panelâ€¦" fullScreen />}>
+    return <Suspense fallback={<PageLoading label="Loading admin panel..." fullScreen />}>
       <Routes>
         <Route path="/admin" element={<AdminOverviewPage />} />
         <Route path="/admin/users" element={<AdminUsersListPage />} />
@@ -201,8 +201,8 @@ function App() {
       </Routes>
     </Suspense>
   }
-  if (authUser === undefined) return <Suspense fallback={<PageLoading label="Loading PaisaWiseâ€¦" fullScreen />}><AuthPage loading /></Suspense>
-  if (!authUser) return <Suspense fallback={<PageLoading label="Loading sign inâ€¦" fullScreen />}><AuthPage /></Suspense>
+  if (authUser === undefined) return <Suspense fallback={<PageLoading label="Loading PaisaWise..." fullScreen />}><AuthPage loading /></Suspense>
+  if (!authUser) return <Suspense fallback={<PageLoading label="Loading sign in..." fullScreen />}><AuthPage /></Suspense>
   const profileName = authUser.name || authUser.email.split('@')[0]
   const profileInitials = [authUser.firstName, authUser.lastName]
     .map(name => name?.trim().charAt(0))
@@ -238,9 +238,9 @@ function App() {
             }
           }}>
             <i></i>
-            {apiStatus === 'connected' ? 'Synced' : apiStatus === 'connecting' ? 'Connectingâ€¦' : 'Offline'}
+            {apiStatus === 'connected' ? 'Synced' : apiStatus === 'connecting' ? 'Connecting...' : 'Offline'}
             {apiStatus === 'offline' && (
-              <span className="sync-retry" aria-label="Try again">âŸ³</span>
+              <span className="sync-retry" aria-label="Try again">Retry</span>
             )}
           </button>
           <button className="icon-btn" aria-label="Notifications" onClick={() => notify(dueToday.length ? `${dueToday.length} expense(s) due today` : 'You are all caught up')}>
@@ -268,7 +268,7 @@ function App() {
             <Route path="/calendar" element={<CalendarPage month={month} setMonth={setMonth} expenses={expenses} today={today} budgets={budgets} onAdd={openAdd} onAddForDate={openAdd} />} />
             <Route path="/budgets" element={<BudgetsPage budgets={budgets} budgetsLoaded={budgetsLoaded} onSaveBudgets={saveBudgets} expenses={monthExpenses} monthSpend={monthSpend} cycleStart={cycleRange.start} cycleEnd={cycleRange.end} today={today} cycleLabel={cycleLabel} exportCsv={exportCsv} />} />
             <Route path="/trash" element={<TrashPage deleted={deleted} setDeleted={setDeleted} setExpenses={setExpenses} notify={notify} onRestore={restoreFromTrash} onPurge={emptyTrash} />} />
-            <Route path="/settings" element={monthlyCycleLoaded ? <SettingsPage notify={notify} theme={theme} setTheme={setTheme} currency={currency} setCurrency={changeCurrency} monthlyCycleStartDate={monthlyCycleStartDate} onSaveMonthlyCycle={saveMonthlyCycle} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} appInstalled={appInstalled} setAppInstalled={setAppInstalled} ingestStatus={ingestStatus} refreshIngestStatus={refreshIngestStatus} /> : <PageLoading label="Loading your settingsâ€¦" />} />
+            <Route path="/settings" element={monthlyCycleLoaded ? <SettingsPage notify={notify} theme={theme} setTheme={setTheme} currency={currency} setCurrency={changeCurrency} monthlyCycleStartDate={monthlyCycleStartDate} onSaveMonthlyCycle={saveMonthlyCycle} installPrompt={installPrompt} setInstallPrompt={setInstallPrompt} appInstalled={appInstalled} setAppInstalled={setAppInstalled} ingestStatus={ingestStatus} refreshIngestStatus={refreshIngestStatus} /> : <PageLoading label="Loading your settings..." />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
@@ -294,7 +294,7 @@ function App() {
     />
     {formOpen && <ExpenseModal key={editing?.id || 'new'} expense={editing} defaultDate={addDate} onClose={() => { setFormOpen(false); setEditing(null); setAddDate(null) }} onSave={saveExpense} />}
     {deleteTarget && <DeleteModal target={deleteTarget} onClose={() => setDeleteTarget(null)} onPaid={() => markPaid(deleteTarget.items)} onDelete={() => moveToTrash(deleteTarget.items)} onPostpone={() => { setExpenses(e => e.map(x => deleteTarget.items.some(i => i.id === x.id) ? { ...x, status: 'Upcoming', dueDate: dateOffset(1) } : x)); setDeleteTarget(null); notify('Expense postponed until tomorrow') }} />}
-    {toast && <div className="toast">âœ“ &nbsp;{toast}</div>}
+    {toast && <div className="toast">Done &nbsp;{toast}</div>}
   </div>
 }
 export default App

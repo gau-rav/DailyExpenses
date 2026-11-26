@@ -129,3 +129,55 @@
     padding: 10px 12px;
   }
 }
+
+/* Desktop expense modal: keep the header and close control fixed while only
+   the form body scrolls. This prevents the close button from drifting with a
+   long form or being covered by the scrollbar. */
+@media (min-width: 721px) {
+  .modal:has(.form-grid) {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: min(680px, calc(100vw - 48px));
+    max-height: min(90dvh, 760px);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .modal:has(.form-grid) .modal-head {
+    position: relative;
+    flex: none;
+    align-items: flex-start;
+    margin: 0;
+    padding: 24px 76px 16px 28px;
+  }
+
+  .modal:has(.form-grid) .close {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .modal:has(.form-grid) .form-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    align-content: start;
+    padding: 0 28px 24px;
+    scrollbar-gutter: stable;
+  }
+
+  .modal:has(.form-grid) .modal-actions {
+    flex: none;
+    margin: 0;
+    padding: 16px 28px;
+    background: var(--surface);
+  }
+}

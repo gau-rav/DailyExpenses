@@ -41,6 +41,14 @@ const appOrigin = (() => {
     return 'http://localhost:5173'
   }
 })()
+// Local development normally serves React from Vite on port 5173 while the
+// API listens on port 8787. Keep production strict, but allow both local
+// frontend hosts during development so cookie-authenticated writes are not
+// rejected by the CSRF origin check.
+const allowedOrigins = new Set([
+  appOrigin,
+  ...(!isProduction ? ['http://localhost:5173', 'http://127.0.0.1:5173'] : []),
+])
 const googleClientId = process.env.GOOGLE_CLIENT_ID
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
 const googleRedirectUri = process.env.GOOGLE_REDIRECT_URI || `http://localhost:${port}/api/auth/google/callback`
@@ -150,7 +158,7 @@ app.use((req, res, next) => {
   }
   if (!origin) return next()
   try {
-    if (new URL(origin).origin !== appOrigin && !req.path.startsWith('/api/internal/')) {
+    if (!allowedOrigins.has(new URL(origin).origin) && !req.path.startsWith('/api/internal/')) {
       return res.status(403).json({ ok: false, error: 'Request origin is not allowed' })
     }
   } catch {
