@@ -61,7 +61,7 @@ export default function QuickAddSheet({ open, onClose, onSave, defaultDate }) {
     }
   }
 
-  <AppDialog
+  return <AppDialog
     open={open}
     onOpenChange={next => { if (!next) { reset(); onClose() } }}
     title="Quick Add"
