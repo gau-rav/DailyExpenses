@@ -4,6 +4,10 @@ export async function requestJson(path, options = {}, fallbackMessage = status =
 
   const response = await fetch(path, requestOptions)
   const data = await response.json().catch(() => ({}))
-  if (!response.ok || !data.ok) throw new Error(data.error || fallbackMessage(response.status))
+  if (!response.ok || !data.ok) {
+    const error = new Error(data.error || fallbackMessage(response.status))
+    error.status = response.status
+    throw error
+  }
   return data
 }

@@ -144,7 +144,7 @@ function App() {
   }, [profileOpen])
   const [formOpen, setFormOpen] = useState(false), [editing, setEditing] = useState(null), [addDate, setAddDate] = useState(null), [deleteTarget, setDeleteTarget] = useState(null), [toast, setToast] = useState('')
   const notify = useCallback(message => setToast(message), [])
-  const { apiStatus, deleted, emptyTrash, exportCsv, expenses, markPaid: markExpensesPaid, moveToTrash: moveExpensesToTrash, refreshExpenses, restoreFromTrash, saveExpense: persistExpense, selected, setApiStatus, setDeleted, setExpenses, setSelected } = useExpenses({ notify })
+  const { apiStatus, deleted, emptyTrash, exportCsv, expenses, markPaid: markExpensesPaid, moveToTrash: moveExpensesToTrash, refreshExpenses, restoreFromTrash, saveExpense: persistExpense, selected, setApiStatus, setDeleted, setExpenses, setSelected } = useExpenses({ notify, enabled: Boolean(authUser) })
   const [month, setMonth] = useState(new Date())
   const { budgets, budgetsLoaded, saveBudgets } = useBudgets(authUser?.id, { setApiStatus, setToast })
   const { monthlyCycleStartDate, monthlyCycleLoaded, saveMonthlyCycle } = useMonthlyCycle(authUser?.id, { setApiStatus, setToast })

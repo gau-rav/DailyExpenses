@@ -44,6 +44,10 @@ function queue(payload) {
   writeQueue([...readQueue(), { ...payload, queuedAt: new Date().toISOString() }])
 }
 
+function shouldQueue(error) {
+  return !error?.status || error.status === 408 || error.status === 429 || error.status >= 500
+}
+
 export async function fetchExpenses() {
   try {
     const data = await requestJson(API_URL, {}, status => `Unable to read MongoDB expenses (${status})`)
@@ -70,27 +74,27 @@ export async function fetchDeletedExpenses() {
 
 export async function addExpense(expense) {
   const payload = { action: 'add', expense: normalizeExpense({ ...expense, id: expense.id || crypto.randomUUID() }) }
-  try { return await request(payload) } catch (error) { queue(payload); throw error }
+  try { return await request(payload) } catch (error) { if (shouldQueue(error)) queue(payload); throw error }
 }
 
 export async function updateExpense(expense) {
   const payload = { action: 'update', expense: normalizeExpense(expense) }
-  try { return await request(payload) } catch (error) { queue(payload); throw error }
+  try { return await request(payload) } catch (error) { if (shouldQueue(error)) queue(payload); throw error }
 }
 
 export async function deleteExpense(id) {
   const payload = { action: 'delete', id }
-  try { return await request(payload) } catch (error) { queue(payload); throw error }
+  try { return await request(payload) } catch (error) { if (shouldQueue(error)) queue(payload); throw error }
 }
 
 export async function restoreExpense(id) {
   const payload = { action: 'restore', id }
-  try { return await request(payload) } catch (error) { queue(payload); throw error }
+  try { return await request(payload) } catch (error) { if (shouldQueue(error)) queue(payload); throw error }
 }
 
 export async function purgeExpense(id) {
   const payload = { action: 'purge', id }
-  try { return await request(payload) } catch (error) { queue(payload); throw error }
+  try { return await request(payload) } catch (error) { if (shouldQueue(error)) queue(payload); throw error }
 }
 
 export async function syncQueuedActions() {

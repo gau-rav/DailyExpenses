@@ -40,7 +40,7 @@ function csvCell(value) {
 }
 
 /** @param {{notify: (message: string) => void}} options */
-export function useExpenses({ notify }) {
+export function useExpenses({ notify, enabled = true }) {
   const [expenses, setExpenses] = useState(readInitialExpenses)
   const [deleted, setDeleted] = useState(readDeletedExpenses)
   const [selected, setSelected] = useState([])
@@ -48,14 +48,14 @@ export function useExpenses({ notify }) {
 
   /** @type {(isActive?: () => boolean) => Promise<Expense[]>} */
   const loadExpenses = useCallback(async isActive => {
-    await syncQueuedActions()
+    const queueSynced = await syncQueuedActions()
     const remoteExpenses = await fetchExpenses()
     const remoteDeleted = await fetchDeletedExpenses()
     if (isActive && !isActive()) return remoteExpenses
 
     setExpenses(remoteExpenses)
     if (remoteDeleted) setDeleted(remoteDeleted)
-    setApiStatus(getLastExpensesSource() === 'remote' ? 'connected' : 'offline')
+    setApiStatus(queueSynced && getLastExpensesSource() === 'remote' ? 'connected' : 'offline')
     return remoteExpenses
   }, [])
 
@@ -79,9 +79,11 @@ export function useExpenses({ notify }) {
       }
       setApiStatus('connected')
       notify(wasEditing ? 'Expense updated' : 'Expense added')
-    } catch {
+    } catch (error) {
       setApiStatus('offline')
-      notify('Saved locally. It will sync when you reconnect.')
+      if (error?.status === 401) notify('Your session expired. Please sign in again.')
+      else if (error?.status && error.status < 500) notify(error.message || 'Expense could not be saved.')
+      else notify('Saved locally. It will sync when you reconnect.')
     }
   }, [notify])
 
@@ -178,6 +180,10 @@ export function useExpenses({ notify }) {
   }, [deleted])
 
   useEffect(() => {
+    if (!enabled) {
+      setApiStatus('connecting')
+      return undefined
+    }
     let active = true
     const refresh = () => loadExpenses(() => active)
     refresh()
@@ -186,7 +192,7 @@ export function useExpenses({ notify }) {
       active = false
       window.removeEventListener('online', refresh)
     }
-  }, [loadExpenses])
+  }, [enabled, loadExpenses])
 
   return {
     apiStatus,
