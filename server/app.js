@@ -49,6 +49,20 @@ const allowedOrigins = new Set([
   appOrigin,
   ...(!isProduction ? ['http://localhost:5173', 'http://127.0.0.1:5173'] : []),
 ])
+
+function isAllowedOrigin(req, origin) {
+  const originUrl = new URL(origin)
+  if (allowedOrigins.has(originUrl.origin)) return true
+
+  // The API may be opened directly from a phone or another device on the
+  // local network. Same-host requests are safe because the browser origin
+  // and the API host are identical in that mode.
+  if (originUrl.host === req.get('host')) return true
+
+  // Vite can be accessed through a LAN hostname during development. Allow
+  // that development frontend port without weakening production checks.
+  return !isProduction && originUrl.protocol === 'http:' && originUrl.port === '5173'
+}
 const googleClientId = process.env.GOOGLE_CLIENT_ID
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
 const googleRedirectUri = process.env.GOOGLE_REDIRECT_URI || `http://localhost:${port}/api/auth/google/callback`
@@ -158,7 +172,7 @@ app.use((req, res, next) => {
   }
   if (!origin) return next()
   try {
-    if (!allowedOrigins.has(new URL(origin).origin) && !req.path.startsWith('/api/internal/')) {
+    if (!isAllowedOrigin(req, origin) && !req.path.startsWith('/api/internal/')) {
       return res.status(403).json({ ok: false, error: 'Request origin is not allowed' })
     }
   } catch {
